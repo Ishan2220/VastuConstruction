@@ -213,10 +213,10 @@ export default function Header() {
     <>
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-md md:px-6 shadow-xs">
         {/* Left: Mobile menu + Back button + Page title */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => setSidebarMobileOpen(true)}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 lg:hidden transition-colors"
+            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 lg:hidden transition-colors shrink-0"
             title="Open Menu"
           >
             <Menu className="h-5 w-5" />
@@ -226,25 +226,25 @@ export default function Header() {
           {!isDashboard && (
             <button
               onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-bold text-xs transition-all border border-slate-200 shadow-xs hover:shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-bold text-xs transition-all border border-slate-200 shadow-xs hover:shadow-sm shrink-0"
               title="Go back to previous screen or dashboard"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Back</span>
+              <span className="hidden sm:inline">Back</span>
             </button>
           )}
 
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight font-heading">{pageTitle}</h1>
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight font-heading truncate">{pageTitle}</h1>
               {!isDashboard && (
-                <span className="hidden sm:inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-wider">
+                <span className="hidden sm:inline-flex shrink-0 items-center text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-wider">
                   Live Module
                 </span>
               )}
             </div>
             {isDashboard && (
-              <p className="text-xs text-slate-500 hidden sm:block">
+              <p className="text-xs text-slate-500 hidden sm:block truncate">
                 Welcome back, <strong className="text-slate-700">{user?.name || 'Sandeep Jadhav'}</strong> • Authorized Executive Access
               </p>
             )}

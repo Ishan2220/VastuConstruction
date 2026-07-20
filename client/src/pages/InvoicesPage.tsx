@@ -114,7 +114,10 @@ export default function InvoicesPage() {
       return;
     }
     
+    const generatedInvoiceNumber = 'INV-' + Date.now().toString().slice(-6);
+    
     createMutation.mutate({
+      invoiceNumber: generatedInvoiceNumber,
       clientId: newInvoice.clientId,
       projectId: newInvoice.projectId || undefined,
       issueDate: new Date(newInvoice.issueDate),

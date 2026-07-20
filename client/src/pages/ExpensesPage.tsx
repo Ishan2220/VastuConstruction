@@ -132,14 +132,15 @@ export default function ExpensesPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase text-slate-500">
-                <th className="p-4">Category</th>
-                <th className="p-4">Project Site</th>
+                <th className="p-4">Type</th>
+                <th className="p-4">Project Contract</th>
                 <th className="p-4">Vendor / Payee</th>
-                <th className="p-4">Date</th>
+                <th className="p-4">Payment Date</th>
                 <th className="p-4">Description</th>
                 <th className="p-4">Amount (₹)</th>
                 <th className="p-4 text-center">Action</th>
@@ -148,7 +149,7 @@ export default function ExpensesPage() {
             <tbody className="divide-y divide-slate-100 text-sm">
               {expenses.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-400">No site expenses logged yet.</td>
+                  <td colSpan={7} className="p-8 text-center text-slate-400">No site expenses logged yet.</td>
                 </tr>
               ) : (
                 expenses.map((exp: any) => (
@@ -181,6 +182,55 @@ export default function ExpensesPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden flex flex-col divide-y divide-slate-100">
+          {expenses.length === 0 ? (
+            <div className="p-8 text-center text-slate-400">No site expenses logged yet.</div>
+          ) : (
+            expenses.map((exp: any) => (
+              <div key={exp.id} className="p-4 flex flex-col gap-3 hover:bg-slate-50/50 transition-colors">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase px-2 py-1 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                      {exp.type.replace('_', ' ')}
+                    </span>
+                    <div className="font-bold text-slate-900 mt-2">{exp.vendor?.name || 'Direct Disburse'}</div>
+                  </div>
+                  <div className="font-mono font-extrabold text-rose-600 text-lg">
+                    {formatCurrency(Number(exp.amount))}
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-1 text-xs text-slate-500">
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-slate-700">{exp.project?.name || 'Main Site'}</span>
+                    <span>{formatDate(exp.paymentDate)}</span>
+                  </div>
+                  <div className="text-slate-600 truncate mt-1">
+                    {exp.description || 'Routine site expenditure'}
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center mt-2 pt-3 border-t border-slate-100">
+                  <span className="font-mono text-[10px] uppercase bg-slate-100 text-slate-600 px-2 py-1 rounded">
+                    {exp.paymentMethod || 'CASH'}
+                  </span>
+                  <button
+                    onClick={() => {
+                      if (confirm('Are you sure you want to delete this expense record?')) {
+                        deleteMutation.mutate(exp.id);
+                      }
+                    }}
+                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

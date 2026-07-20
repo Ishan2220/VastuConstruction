@@ -131,7 +131,8 @@ export default function IncomePage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase text-slate-500">
@@ -147,7 +148,7 @@ export default function IncomePage() {
             <tbody className="divide-y divide-slate-100 text-sm">
               {incomes.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-400">No income receipts logged yet.</td>
+                  <td colSpan={7} className="p-8 text-center text-slate-400">No income receipts logged yet.</td>
                 </tr>
               ) : (
                 incomes.map((inc: any) => (
@@ -176,6 +177,50 @@ export default function IncomePage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden flex flex-col divide-y divide-slate-100">
+          {incomes.length === 0 ? (
+            <div className="p-8 text-center text-slate-400">No income receipts logged yet.</div>
+          ) : (
+            incomes.map((inc: any) => (
+              <div key={inc.id} className="p-4 flex flex-col gap-3 hover:bg-slate-50/50 transition-colors">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-mono font-bold text-indigo-600">{inc.invoiceNo || inc.reference || 'INV-001'}</div>
+                    <div className="font-bold text-slate-900 mt-1">{inc.client?.name || 'Corporate Client'}</div>
+                  </div>
+                  <div className="font-mono font-extrabold text-emerald-600 text-lg">
+                    {formatCurrency(Number(inc.amount))}
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-1 text-xs text-slate-500">
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-slate-700">{inc.project?.name || 'Main Site'}</span>
+                    <span>{formatDate(inc.paymentDate)}</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center mt-2 pt-3 border-t border-slate-100">
+                  <span className="font-mono text-[10px] uppercase bg-slate-100 text-slate-600 px-2 py-1 rounded">
+                    {inc.paymentMethod}
+                  </span>
+                  <button
+                    onClick={() => {
+                      if (confirm('Are you sure you want to delete this income receipt?')) {
+                        deleteMutation.mutate(inc.id);
+                      }
+                    }}
+                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

@@ -34,6 +34,8 @@ export default function VendorsPage() {
     gstin: '',
     address: '',
     city: 'Mumbai',
+    state: 'Maharashtra',
+    openingBalance: '',
   });
 
   const { data: vendors = [], isLoading } = useQuery({
@@ -97,19 +99,21 @@ export default function VendorsPage() {
       toast.error('Vendor Name and Contact Person are required');
       return;
     }
-    const { gstin, ...rest } = newVendor;
+    const { gstin, openingBalance, ...rest } = newVendor;
     createMutation.mutate({
       ...rest,
-      gst: gstin,
+      gstin,
+      openingBalance: openingBalance ? parseFloat(openingBalance as string) : 0,
     });
   };
 
   const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
-    const { gstin, gst, ...rest } = editingVendor;
+    const { gstin, gst, openingBalance, ...rest } = editingVendor;
     updateMutation.mutate({
       ...rest,
       gst: gst || gstin,
+      openingBalance: openingBalance ? parseFloat(openingBalance as string) : 0,
     });
   };
 
@@ -207,6 +211,22 @@ export default function VendorsPage() {
                   )}
                 </div>
               </div>
+              <div className="pt-4 space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500 font-medium">Purchased</span>
+                  <span className="font-bold text-slate-800">₹{(vendor.totalPurchased || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500 font-medium">Paid</span>
+                  <span className="font-bold text-emerald-600">₹{(vendor.totalPaid || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm font-bold pt-2 border-t border-slate-50">
+                  <span className="text-slate-900">Outstanding</span>
+                  <span className={(vendor.outstanding || 0) > 0 ? 'text-rose-600' : 'text-slate-500'}>
+                    ₹{(vendor.outstanding || 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                 <span className="flex items-center gap-1">
@@ -253,11 +273,27 @@ export default function VendorsPage() {
                   defaultOptions={['CEMENT', 'STEEL', 'AGGREGATE', 'BRICKS', 'ELECTRICAL', 'PLUMBING']}
                   placeholder="Select Category..."
                 />
-                <input
+                  <input
                   type="text"
-                  placeholder="City *"
+                  placeholder="City"
                   value={newVendor.city}
                   onChange={(e) => setNewVendor({ ...newVendor, city: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="State"
+                  value={newVendor.state || ''}
+                  onChange={(e) => setNewVendor({ ...newVendor, state: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                />
+                <input
+                  type="number"
+                  placeholder="Opening Balance"
+                  value={newVendor.openingBalance}
+                  onChange={(e) => setNewVendor({ ...newVendor, openingBalance: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
                 />
               </div>
@@ -317,11 +353,27 @@ export default function VendorsPage() {
                   defaultOptions={['CEMENT', 'STEEL', 'BRICKS', 'PLUMBING', 'ELECTRICAL', 'AGGREGATES']}
                   placeholder="Select Category..."
                 />
-                <input
+                  <input
                   type="text"
                   placeholder="City"
                   value={editingVendor.city || ''}
                   onChange={(e) => setEditingVendor({ ...editingVendor, city: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                  <input
+                  type="text"
+                  placeholder="State"
+                  value={editingVendor.state || ''}
+                  onChange={(e) => setEditingVendor({ ...editingVendor, state: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                />
+                <input
+                  type="number"
+                  placeholder="Opening Balance"
+                  value={editingVendor.openingBalance || ''}
+                  onChange={(e) => setEditingVendor({ ...editingVendor, openingBalance: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
                 />
               </div>

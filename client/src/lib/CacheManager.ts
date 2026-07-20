@@ -8,6 +8,8 @@ export class CacheManager {
   static invalidateOnExpense(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: ['expenses-list'] });
     queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['vendors-list'] });
+    queryClient.invalidateQueries({ queryKey: ['vendors-select'] });
     // Potential future granular keys:
     queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
     queryClient.invalidateQueries({ queryKey: ['bank-accounts-select'] });

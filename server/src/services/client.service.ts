@@ -52,7 +52,8 @@ export const list = async (params: ListParams) => {
   const data = rawData.map(client => {
     const totalBilled = client.invoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
     const totalPaid = client.incomes.reduce((sum, inc) => sum + Number(inc.amount || 0), 0);
-    const outstanding = totalBilled - totalPaid;
+    const openingBal = Number(client.openingBalance || 0);
+    const outstanding = openingBal + totalBilled - totalPaid;
     
     const { invoices, incomes, ...rest } = client;
     

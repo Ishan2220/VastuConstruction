@@ -170,7 +170,8 @@ export default function InvoicesPage() {
           </button>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
@@ -223,6 +224,48 @@ export default function InvoicesPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden flex flex-col divide-y divide-slate-100">
+          {isLoading ? (
+            <div className="p-8 text-center text-slate-500">Loading invoices...</div>
+          ) : invoices.length === 0 ? (
+            <div className="p-8 text-center text-slate-500">No invoices found.</div>
+          ) : (
+            invoices.map((invoice) => (
+              <div key={invoice.id} className="p-4 flex flex-col gap-3 hover:bg-slate-50/50 transition-colors">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-mono font-bold text-indigo-600">{invoice.invoiceNumber}</div>
+                    <div className="font-bold text-slate-900 mt-1">{invoice.client?.companyName || invoice.client?.name}</div>
+                  </div>
+                  <div className="font-mono font-extrabold text-slate-900 text-lg">
+                    ₹{Number(invoice.totalAmount).toLocaleString('en-IN')}
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-1 text-xs text-slate-500">
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-slate-700">{invoice.project?.name || '-'}</span>
+                    <span>{format(new Date(invoice.issueDate), 'dd MMM yyyy')}</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center mt-2 pt-3 border-t border-slate-100">
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] uppercase font-bold border ${getStatusColor(invoice.status)}`}>
+                    {invoice.status}
+                  </span>
+                  <button
+                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                    title="Download PDF"
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

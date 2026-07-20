@@ -18,6 +18,7 @@ export default function ClientsPage() {
     address: '',
     city: 'Mumbai',
     state: 'Maharashtra',
+    openingBalance: '',
   });
 
   const { data: clients = [], isLoading } = useQuery({
@@ -81,19 +82,21 @@ export default function ClientsPage() {
       toast.error('Client Name and Phone are required');
       return;
     }
-    const { gstin, ...rest } = newClient;
+    const { gstin, openingBalance, ...rest } = newClient;
     createMutation.mutate({
       ...rest,
       gst: gstin,
+      openingBalance: openingBalance ? parseFloat(openingBalance as string) : 0,
     });
   };
 
   const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
-    const { gstin, gst, ...rest } = editingClient;
+    const { gstin, gst, openingBalance, ...rest } = editingClient;
     updateMutation.mutate({
       ...rest,
       gst: gst || gstin,
+      openingBalance: openingBalance ? parseFloat(openingBalance as string) : 0,
     });
   };
 
@@ -279,6 +282,13 @@ export default function ClientsPage() {
                   className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
                 />
               </div>
+              <input
+                type="number"
+                placeholder="Opening Balance (Optional)"
+                value={newClient.openingBalance}
+                onChange={(e) => setNewClient({ ...newClient, openingBalance: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+              />
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 rounded-xl border text-slate-600 text-sm font-semibold">Cancel</button>
                 <button type="submit" disabled={createMutation.isPending} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow">Register Client</button>
@@ -352,6 +362,13 @@ export default function ClientsPage() {
                   className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
                 />
               </div>
+              <input
+                type="number"
+                placeholder="Opening Balance (Optional)"
+                value={editingClient.openingBalance || ''}
+                onChange={(e) => setEditingClient({ ...editingClient, openingBalance: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+              />
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <button type="button" onClick={() => setEditingClient(null)} className="px-4 py-2 rounded-xl border text-slate-600 text-sm font-semibold">Cancel</button>
                 <button type="submit" disabled={updateMutation.isPending} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow">Save Updates</button>

@@ -264,6 +264,7 @@ model Client {
   gst         String?
   pan         String?
   companyName String? @map("company_name")
+  openingBalance Decimal? @default(0) @map("opening_balance") @db.Decimal(12, 2)
 
   leadId      String? @unique @map("lead_id")
   lead        Lead?   @relation(fields: [leadId], references: [id])
@@ -414,6 +415,7 @@ model Vendor {
   category      String? // Material type they supply
   rating        Int?    @default(0) // 0-5
   isActive      Boolean @default(true) @map("is_active")
+  openingBalance Decimal? @default(0) @map("opening_balance") @db.Decimal(12, 2)
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")

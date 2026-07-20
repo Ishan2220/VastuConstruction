@@ -33,18 +33,36 @@ export const list = async (params: ListParams) => {
     ...(city && { city: { contains: city, mode: 'insensitive' } }),
   };
 
-  const [data, total] = await Promise.all([
+  const [rawData, total] = await Promise.all([
     prisma.vendor.findMany({
       where,
       skip,
       take: limitNum,
       orderBy: { [sortBy]: sortOrder },
       include: {
-        _count: { select: { materials: true, materialOrders: true, payments: true } },
+        _count: { select: { materials: true } },
+        purchaseOrders: { select: { totalAmount: true } },
+        expenses: { select: { amount: true } }
       },
     }),
     prisma.vendor.count({ where }),
   ]);
+
+  const data = rawData.map(vendor => {
+    const totalPurchased = vendor.purchaseOrders.reduce((sum, po) => sum + Number(po.totalAmount || 0), 0);
+    const totalPaid = vendor.expenses.reduce((sum, ex) => sum + Number(ex.amount || 0), 0);
+    const openingBal = Number(vendor.openingBalance || 0);
+    const outstanding = openingBal + totalPurchased - totalPaid;
+
+    const { purchaseOrders, expenses, ...rest } = vendor;
+
+    return {
+      ...rest,
+      totalPurchased,
+      totalPaid,
+      outstanding
+    };
+  });
 
   return { data, total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) };
 };

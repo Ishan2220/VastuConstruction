@@ -131,8 +131,14 @@ export default function Sidebar() {
               exit={{ opacity: 0, width: 0 }}
               className="overflow-hidden whitespace-nowrap"
             >
-              <h1 className="text-sm font-bold tracking-wide text-white">VASTU CONSTRUCTION</h1>
-              <p className="text-[10px] font-medium text-amber-400/80">Building Your Dreams</p>
+              <div className="flex flex-col">
+                <h1 className="text-xs font-bold tracking-wider text-white leading-tight">
+                  VASTU <span className="text-amber-500 font-extrabold">×</span> CONSTRACORE
+                </h1>
+                <p className="text-[9px] font-semibold text-slate-400 tracking-widest mt-0.5 uppercase">
+                  By Shivlink Technologies
+                </p>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

@@ -33,19 +33,36 @@ export const list = async (params: ListParams) => {
     ...(city && { city: { contains: city, mode: 'insensitive' } }),
   };
 
-  const [data, total] = await Promise.all([
+  const [rawData, total] = await Promise.all([
     prisma.client.findMany({
       where,
       skip,
       take: limitNum,
       orderBy: { [sortBy]: sortOrder },
       include: {
-        _count: { select: { projects: true, incomes: true } },
+        _count: { select: { projects: true } },
         createdBy: { select: { name: true } },
+        invoices: { where: { status: { not: 'CANCELLED' } }, select: { totalAmount: true } },
+        incomes: { select: { amount: true } }
       },
     }),
     prisma.client.count({ where }),
   ]);
+
+  const data = rawData.map(client => {
+    const totalBilled = client.invoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+    const totalPaid = client.incomes.reduce((sum, inc) => sum + Number(inc.amount || 0), 0);
+    const outstanding = totalBilled - totalPaid;
+    
+    const { invoices, incomes, ...rest } = client;
+    
+    return {
+      ...rest,
+      totalBilled,
+      totalPaid,
+      outstanding
+    };
+  });
 
   return { data, total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) };
 };

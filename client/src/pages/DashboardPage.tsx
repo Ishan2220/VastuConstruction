@@ -279,6 +279,11 @@ export default function DashboardPage() {
     }));
   }, [serverDashboard]);
 
+  const topOutstandingClients = useMemo(() => {
+    if (!serverDashboard?.topOutstandingClients) return [];
+    return serverDashboard.topOutstandingClients;
+  }, [serverDashboard]);
+
   const toggleTaskComplete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     toast.info('Status updates should be done in Tasks module');
@@ -653,8 +658,9 @@ export default function DashboardPage() {
       {/* =========================================== */}
       {/* ALERTS ROW */}
       {/* =========================================== */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className={`md:col-span-3 ${cardBase} p-6 border-l-4 border-rose-500`}>
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        {/* Alerts Column */}
+        <div className={`xl:col-span-3 ${cardBase} p-6 border-l-4 border-rose-500`}>
           <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
             <h3 className="text-base font-bold text-slate-900 font-heading flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-rose-500" /> Critical System Alerts
@@ -691,6 +697,36 @@ export default function DashboardPage() {
                 <button className="mt-2 text-[10px] font-bold px-2 py-1 bg-rose-200 text-rose-800 rounded hover:bg-rose-300">PROCESS PAYMENTS</button>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Top Outstanding Accounts Column */}
+        <div className={`xl:col-span-1 ${cardBase} p-6 border-l-4 border-indigo-500 flex flex-col`}>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 font-heading">Outstanding Ledgers</h3>
+            </div>
+            <Link to="/clients" className="text-xs font-bold text-indigo-600 hover:underline">All Clients</Link>
+          </div>
+          
+          <div className="space-y-3 flex-1 overflow-y-auto pr-1">
+            {topOutstandingClients.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 text-xs">No outstanding balances.</div>
+            ) : (
+              topOutstandingClients.map((client: any) => (
+                <div key={client.id} className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold text-slate-900 truncate font-heading">{client.name}</div>
+                    <div className="text-[10px] text-slate-500 truncate">{client.companyName || 'Private Client'}</div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-xs font-bold text-rose-600">
+                      ₹{(client.outstanding || 0).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

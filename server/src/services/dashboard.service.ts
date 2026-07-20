@@ -191,6 +191,30 @@ export const getAdminDashboard = async () => {
     };
   });
 
+  const allClientsFinancials = await prisma.client.findMany({
+    where: { deletedAt: null },
+    select: {
+      id: true,
+      name: true,
+      companyName: true,
+      invoices: { where: { status: { not: 'CANCELLED' } }, select: { totalAmount: true } },
+      incomes: { select: { amount: true } }
+    }
+  });
+
+  const topOutstandingClients = allClientsFinancials.map(client => {
+    const totalBilled = client.invoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+    const totalPaid = client.incomes.reduce((sum, inc) => sum + Number(inc.amount || 0), 0);
+    return {
+      id: client.id,
+      name: client.name,
+      companyName: client.companyName,
+      outstanding: totalBilled - totalPaid,
+    };
+  }).filter(c => c.outstanding > 0)
+    .sort((a, b) => b.outstanding - a.outstanding)
+    .slice(0, 5);
+
   return {
     kpis: {
       leadCount,
@@ -215,6 +239,7 @@ export const getAdminDashboard = async () => {
     todayTasks,
     recentLeads,
     upcomingReminders,
+    topOutstandingClients,
   };
 };
 

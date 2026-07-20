@@ -190,11 +190,28 @@ export default function ClientsPage() {
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <div className="space-y-2 mt-2 pt-4 border-t border-slate-100">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-medium">Total Billed</span>
+                  <span className="font-bold text-slate-700">₹{(client.totalBilled || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-medium">Total Paid</span>
+                  <span className="font-bold text-emerald-600">₹{(client.totalPaid || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm font-bold pt-2 border-t border-slate-50">
+                  <span className="text-slate-900">Outstanding</span>
+                  <span className={(client.outstanding || 0) > 0 ? 'text-rose-600' : 'text-slate-500'}>
+                    ₹{(client.outstanding || 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-4 mt-2 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-50">
                 <span className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" /> {client.city || 'Mumbai'}
+                  <MapPin className="w-3.5 h-3.5" /> {client.city || 'Mumbai'}
                 </span>
-                <span className="font-semibold text-slate-700">Active Contract</span>
+                <span className="font-semibold text-slate-500 uppercase tracking-wider">Client Account</span>
               </div>
             </div>
           ))}

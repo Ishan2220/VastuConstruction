@@ -19,6 +19,7 @@ export class CacheManager {
   static invalidateOnIncome(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: ['incomes-list'] });
     queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['clients-directory'] });
     queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
     queryClient.invalidateQueries({ queryKey: ['bank-accounts-select'] });
   }

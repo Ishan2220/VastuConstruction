@@ -108,7 +108,8 @@ export default function InvoicesPage() {
       toast.error('Client is required');
       return;
     }
-    const amount = Number(newInvoice.totalAmount) || newInvoice.items.reduce((s, i) => s + (Number(i.amount) || 0), 0);
+    const calculatedSubtotal = newInvoice.items.reduce((s, i) => s + (Number(i.amount) || 0), 0);
+    const amount = Number(newInvoice.totalAmount) || calculatedSubtotal;
     if (!amount) {
       toast.error('Total amount must be greater than 0');
       return;
@@ -123,17 +124,23 @@ export default function InvoicesPage() {
       issueDate: new Date(newInvoice.issueDate),
       dueDate: new Date(newInvoice.dueDate),
       status: newInvoice.status,
-      items: newInvoice.items.filter(i => i.description).map(i => ({
-        description: i.description,
-        quantity: 1,
-        unitPrice: Number(i.amount) || 0,
-        amount: Number(i.amount) || 0,
-      }))
+      subtotal: calculatedSubtotal || amount,
+      taxAmount: 0,
+      totalAmount: amount
     });
   };
 
   const addItem = () => {
     setNewInvoice({ ...newInvoice, items: [...newInvoice.items, { description: '', amount: '' }] });
+  };
+
+  const handleDownloadPDF = (invoice: any) => {
+    // In a real app, this would call a backend endpoint that returns a PDF blob
+    // For now, we simulate a print/download action
+    toast.success(`Preparing PDF for ${invoice.invoiceNumber}...`);
+    setTimeout(() => {
+      window.print(); // Simple fallback to browser print for the current view
+    }, 500);
   };
 
   return (
@@ -155,20 +162,19 @@ export default function InvoicesPage() {
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-slate-100 flex items-center gap-4 bg-slate-50">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search invoice number or client..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
-            />
-          </div>
-          <button className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-medium transition-colors border border-slate-200 flex items-center gap-2">
-            Filter <ChevronDown className="w-4 h-4" />
-          </button>
+      <div className="sticky top-16 z-20 bg-white/90 backdrop-blur-md rounded-xl md:rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center gap-3 p-3 md:p-4">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search invoice number or client..."
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-shadow shadow-inner"
+          />
         </div>
+        <button className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-medium transition-colors border border-slate-200 flex items-center justify-center gap-2 w-full md:w-auto shrink-0 shadow-sm">
+          <Filter className="w-4 h-4" /> Filter
+        </button>
+      </div>
 
         {/* Desktop Table View */}
         <div className="hidden md:block overflow-x-auto">
@@ -214,7 +220,7 @@ export default function InvoicesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors" title="Download PDF">
+                        <button onClick={(e) => { e.stopPropagation(); handleDownloadPDF(invoice); }} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors" title="Download PDF">
                           <Download className="w-4 h-4" />
                         </button>
                       </div>

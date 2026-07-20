@@ -58,3 +58,13 @@ export const getAttendance = asyncHandler(async (req: Request, res: Response) =>
   const attendance = await empService.getAttendance(req.params.id as string, currentMonth, currentYear);
   res.json(new ApiResponse(200, attendance, 'Employee attendance fetched successfully'));
 });
+
+export const listSalaries = asyncHandler(async (req: Request, res: Response) => {
+  const salaries = await empService.listSalaries();
+  res.json(new ApiResponse(200, salaries, 'Salaries fetched successfully'));
+});
+
+export const paySalary = asyncHandler(async (req: Request, res: Response) => {
+  const payment = await empService.paySalary(req.body, req.user!.userId);
+  res.status(201).json(new ApiResponse(201, payment, 'Salary recorded successfully'));
+});

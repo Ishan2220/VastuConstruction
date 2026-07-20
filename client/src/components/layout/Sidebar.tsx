@@ -24,6 +24,7 @@ import {
   X,
   ClipboardList,
   Database,
+  Wallet
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/store/uiStore';
@@ -48,13 +49,14 @@ const navItems: NavItem[] = [
   { label: 'Accounts', icon: Landmark, href: '/accounts', roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'] },
   { label: 'Invoices', icon: FileText, href: '/invoices', roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'] },
   { label: 'Vendors', icon: Truck, href: '/vendors', roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'] },
-  { label: 'Labour Management', icon: HardHat, href: '/labour', roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'] },
-  { label: 'Clients', icon: Users, href: '/clients', roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'] },
+  { label: 'Labour / Staff', icon: Users, href: '/labour', roles: ['ADMIN', 'MANAGER'] },
+  { label: 'Clients', icon: Building2, href: '/clients', roles: ['ADMIN', 'MANAGER'] },
+  { label: 'Employees', icon: UserCog, href: '/employees', roles: ['ADMIN', 'ACCOUNTANT'] },
+  { label: 'Salaries', icon: Wallet, href: '/salaries', roles: ['ADMIN', 'ACCOUNTANT'] },
   { label: 'Documents', icon: FileText, href: '/documents' },
   { label: 'Reports', icon: BarChart3, href: '/reports', roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'] },
   { label: 'Calendar', icon: Calendar, href: '/calendar' },
   { label: 'Tasks', icon: CheckSquare, href: '/tasks' },
-  { label: 'Employees', icon: UserCog, href: '/employees', roles: ['ADMIN', 'MANAGER'] },
   { label: 'Audit Logs', icon: ClipboardList, href: '/audit-logs', roles: ['ADMIN'] },
   { label: 'Storage Analytics', icon: Database, href: '/storage-analytics', roles: ['ADMIN'] },
   { label: 'Settings', icon: Settings, href: '/settings', roles: ['ADMIN'] },
@@ -70,7 +72,7 @@ function Clock({ sidebarCollapsed }: { sidebarCollapsed: boolean }) {
 
   return (
     <div className={cn(
-      "border-t border-white/10 px-4 py-3 bg-[#0f172a] z-10 relative shrink-0",
+      "border-t border-white/10 px-4 py-3 bg-indigo-700 z-10 relative shrink-0",
       sidebarCollapsed && "px-2 text-center"
     )}>
       {!sidebarCollapsed ? (
@@ -114,7 +116,7 @@ export default function Sidebar() {
   };
 
   const sidebarContent = (
-    <div className="flex h-full flex-col bg-[#0f172a] overflow-hidden">
+    <div className="flex h-full flex-col bg-indigo-600 overflow-hidden">
       {/* Logo */}
       <div className={cn(
         "flex items-center gap-3 border-b border-white/10 px-4 py-5",
@@ -158,14 +160,14 @@ export default function Sidebar() {
                   className={cn(
                     "relative group flex items-center gap-3 rounded-md px-3 py-2 text-[13px] font-medium transition-all duration-200 overflow-hidden",
                     active
-                      ? "bg-amber-500/15 text-amber-400 font-semibold"
-                      : "text-slate-400 hover:bg-white/5 hover:text-slate-200",
+                      ? "bg-white/20 text-white font-bold"
+                      : "text-indigo-100 hover:bg-white/10 hover:text-white",
                     sidebarCollapsed && "justify-center px-2"
                   )}
                 >
                   <Icon className={cn(
                     "h-[18px] w-[18px] shrink-0 transition-colors",
-                    active ? "text-amber-400" : "text-slate-500 group-hover:text-slate-300"
+                    active ? "text-white" : "text-indigo-200 group-hover:text-white"
                   )} />
                   <AnimatePresence>
                     {!sidebarCollapsed && (

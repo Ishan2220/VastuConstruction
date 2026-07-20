@@ -21,4 +21,8 @@ router.post('/temp-admin', authorize('ADMIN', { page: 'Employees' }), ctrl.grant
 router.patch('/leaves/:id/status', authorize('ADMIN', { page: 'Employees' }), ctrl.updateLeaveStatus);
 router.get('/:id/attendance', authorize('ADMIN', 'ACCOUNTANT', { page: 'Employees' }), ctrl.getAttendance);
 
+// Salary Routes
+router.get('/salaries/all', authorize('ADMIN', 'ACCOUNTANT', { page: 'Employees' }), ctrl.listSalaries);
+router.post('/salaries/pay', authorize('ADMIN', 'ACCOUNTANT', { page: 'Employees' }), ctrl.paySalary);
+
 export default router;

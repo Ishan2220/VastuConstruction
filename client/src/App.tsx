@@ -23,6 +23,7 @@ import CalendarPage from '@/pages/CalendarPage';
 import TasksPage from '@/pages/TasksPage';
 import EmployeesPage from '@/pages/EmployeesPage';
 import EmployeeDetailsPage from '@/pages/EmployeeDetailsPage';
+import SalaryPaymentsPage from '@/pages/SalaryPaymentsPage';
 import AuditLogsPage from '@/pages/AuditLogsPage';
 import SettingsPage from '@/pages/SettingsPage';
 import SiteProfitLossPage from '@/pages/SiteProfitLossPage';
@@ -113,6 +114,7 @@ export default function App() {
           <Route path="tasks" element={<TasksPage />} />
           <Route path="employees" element={<EmployeesPage />} />
           <Route path="employees/:id" element={<EmployeeDetailsPage />} />
+          <Route path="salaries" element={<SalaryPaymentsPage />} />
           <Route path="audit-logs" element={<AuditLogsPage />} />
           <Route path="storage-analytics" element={<StorageAnalyticsPage />} />
           <Route path="invoices" element={<InvoicesPage />} />

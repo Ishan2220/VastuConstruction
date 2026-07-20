@@ -107,3 +107,23 @@ export const getAttendance = async (employeeId: string, month: number, year: num
     orderBy: { date: 'asc' }
   });
 };
+
+// Salaries
+export const listSalaries = async () => {
+  return prisma.salaryPayment.findMany({
+    include: {
+      employee: {
+        include: {
+          user: { select: { name: true, email: true } }
+        }
+      }
+    },
+    orderBy: { paymentDate: 'desc' }
+  });
+};
+
+export const paySalary = async (data: Prisma.SalaryPaymentUncheckedCreateInput, userId: string) => {
+  const payment = await prisma.salaryPayment.create({ data });
+  eventBus.publishMutation('SalaryPayment', 'CREATE', userId, payment.id, crypto.randomUUID() || crypto.randomUUID(), payment, null);
+  return payment;
+};

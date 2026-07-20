@@ -380,7 +380,7 @@ export default function DashboardPage() {
       {/* =========================================== */}
       {/* ROW 1: Five KPI Cards */}
       {/* =========================================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
         {/* Total Leads */}
         <motion.div whileHover={{ y: -3 }} onClick={() => navigate('/leads')}
           className={`${cardBase} p-5 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group flex flex-col justify-between`}>
@@ -471,7 +471,7 @@ export default function DashboardPage() {
       {/* =========================================== */}
       {/* ROW 2: Five Financial Cards */}
       {/* =========================================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
         {/* Cash in Hand */}
         <div onClick={() => navigate('/accounts')}
           className={`${cardBase} p-4 hover:border-emerald-300 transition-all cursor-pointer flex items-center justify-between gap-3 group`}>

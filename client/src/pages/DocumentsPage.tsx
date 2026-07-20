@@ -129,7 +129,8 @@ export default function DocumentsPage() {
 
   const triggerRealDownload = (doc: any) => {
     if (doc.fileUrl && doc.fileUrl.startsWith('/uploads')) {
-      window.open(window.location.origin + doc.fileUrl, '_blank');
+      const baseUrl = api.defaults.baseURL?.replace('/api', '') || window.location.origin;
+      window.open(baseUrl + doc.fileUrl, '_blank');
       return;
     }
     if (doc.fileUrl && (doc.fileUrl.startsWith('http://') || doc.fileUrl.startsWith('https://'))) {

@@ -134,6 +134,13 @@
   }
 }
 
+@layer base {
+  body {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+}
+
 /* Custom scrollbar */
 @layer base {
   ::-webkit-scrollbar {

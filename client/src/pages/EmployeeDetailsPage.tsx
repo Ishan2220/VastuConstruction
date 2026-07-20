@@ -40,7 +40,7 @@ export default function EmployeeDetailsPage() {
   const statusStr = employee.user?.isActive === false || employee.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE';
 
   return (
-    <div className="p-6 md:p-8 space-y-6 bg-slate-50 min-h-full font-sans pb-24">
+    <div className="p-4 md:p-8 lg:p-8 space-y-6 bg-slate-50 min-h-full font-sans pb-24">
       {/* Header */}
       <div className="flex items-center gap-4">
         <button

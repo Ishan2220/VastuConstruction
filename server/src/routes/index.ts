@@ -1,0 +1,66 @@
+import { Router } from 'express';
+import authRoutes from './auth.routes.js';
+import dashboardRoutes from './dashboard.routes.js';
+import clientRoutes from './client.routes.js';
+import leadRoutes from './lead.routes.js';
+import projectRoutes from './project.routes.js';
+import materialRoutes from './material.routes.js';
+import materialOrderRoutes from './materialOrder.routes.js';
+import vendorRoutes from './vendor.routes.js';
+import labourRoutes from './labour.routes.js';
+import incomeRoutes from './income.routes.js';
+import expenseRoutes from './expense.routes.js';
+import bankAccountRoutes from './bankAccount.routes.js';
+import documentRoutes from './document.routes.js';
+import taskRoutes from './task.routes.js';
+import employeeRoutes from './employee.routes.js';
+import calendarRoutes from './calendar.routes.js';
+import notificationRoutes from './notification.routes.js';
+import reportRoutes from './report.routes.js';
+import auditRoutes from './audit.routes.js';
+import fileRoutes from './file.routes.js';
+import categoryRoutes from './category.routes.js';
+import systemRoutes from './system.routes.js';
+import activityRoutes from './activity.routes.js';
+import invoiceRoutes from './invoice.routes.js';
+import purchaseOrderRoutes from './purchaseOrder.routes.js';
+import searchRoutes from './search.routes.js';
+import milestoneRoutes from './milestone.routes.js';
+import approvalRoutes from './approval.routes.js';
+
+const router = Router();
+
+router.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+router.use('/auth', authRoutes);
+router.use('/dashboard', dashboardRoutes);
+router.use('/clients', clientRoutes);
+router.use('/leads', leadRoutes);
+router.use('/projects', projectRoutes);
+router.use('/materials', materialRoutes);
+router.use('/material-orders', materialOrderRoutes);
+router.use('/vendors', vendorRoutes);
+router.use('/labour', labourRoutes);
+router.use('/income', incomeRoutes);
+router.use('/expenses', expenseRoutes);
+router.use('/bank-accounts', bankAccountRoutes);
+router.use('/documents', documentRoutes);
+router.use('/tasks', taskRoutes);
+router.use('/employees', employeeRoutes);
+router.use('/calendar', calendarRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/reports', reportRoutes);
+router.use('/audit-logs', auditRoutes);
+router.use('/files', fileRoutes);
+router.use('/categories', categoryRoutes);
+router.use('/system', systemRoutes);
+router.use('/activities', activityRoutes);
+router.use('/invoices', invoiceRoutes);
+router.use('/purchase-orders', purchaseOrderRoutes);
+router.use('/search', searchRoutes);
+router.use('/milestones', milestoneRoutes);
+router.use('/approvals', approvalRoutes);
+
+export default router;

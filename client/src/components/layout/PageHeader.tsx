@@ -1,0 +1,53 @@
+import type { ReactNode } from 'react';
+import { useNavigate } from 'react-router';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+
+interface PageHeaderProps {
+  title: string;
+  description?: string;
+  children?: ReactNode;
+  action?: {
+    label: string;
+    onClick: () => void;
+    icon?: React.ElementType;
+  };
+  className?: string;
+  showBack?: boolean;
+}
+
+export default function PageHeader({ title, description, children, action, className, showBack = true }: PageHeaderProps) {
+  const navigate = useNavigate();
+  const isDashboard = title.toLowerCase().includes('dashboard');
+
+  return (
+    <div className={cn("flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4 mb-4", className)}>
+      <div className="space-y-1.5">
+        {showBack && !isDashboard && (
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-bold text-xs transition-all border border-slate-200/80 shadow-2xs mb-1 group"
+            title="Go Back"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-indigo-600 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Back to Previous Page</span>
+          </button>
+        )}
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 font-heading">{title}</h1>
+        {description && (
+          <p className="text-sm text-slate-500">{description}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        {children}
+        {action && (
+          <Button onClick={action.onClick} className="gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-sm rounded-xl px-4 py-2">
+            {action.icon && <action.icon className="h-4 w-4" />}
+            {action.label}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}

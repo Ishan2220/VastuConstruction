@@ -1,0 +1,657 @@
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '@/lib/api';
+import {
+  Menu,
+  Search,
+  Plus,
+  Bell,
+  Calendar,
+  LogOut,
+  Settings,
+  User,
+  ArrowLeft,
+  Building2,
+  HardHat,
+  PackageCheck,
+  IndianRupee,
+  FileText,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
+  Briefcase,
+  Layers,
+  Check,
+  CheckSquare,
+  X,
+  ChevronRight,
+} from 'lucide-react';
+import { useUIStore } from '@/store/uiStore';
+import { useAuthStore } from '@/store/authStore';
+import { cn, getInitials, formatCurrency } from '@/lib/utils';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+
+const pageTitles: Record<string, string> = {
+  '/': 'Dashboard Control Tower',
+  '/leads': 'Leads & CRM Tenders',
+  '/projects': 'Construction Projects & Timeline',
+  '/sites': 'Site Operations',
+  '/expenses': 'Expenses & Outflow Ledger',
+  '/income': 'Income & Client Billing',
+  '/accounts': 'Accounting & Ledger',
+  '/materials': 'Material Management & Inventory',
+  '/vendors': 'Vendor Agencies Directory',
+  '/labour': 'Site Labour & Muster Roll',
+  '/clients': 'Client Contracts Directory',
+  '/documents': 'Document Vault & Blueprints',
+  '/reports': 'Executive Reports & Telemetry',
+  '/calendar': 'Master Construction Schedule',
+  '/tasks': 'Engineering Tasks & Deadlines',
+  '/employees': 'Staff & Field Engineers',
+  '/settings': 'System Settings & Profile',
+  '/audit-logs': 'Security Audit & Compliance Logs',
+};
+
+function getPageTitle(pathname: string): string {
+  if (pageTitles[pathname]) return pageTitles[pathname];
+  if (pathname.startsWith('/projects/')) return 'Project Site Details & Daily Logs';
+  const base = '/' + pathname.split('/')[1];
+  return pageTitles[base] ?? 'Enterprise Module';
+}
+
+export default function Header() {
+  const { setSidebarMobileOpen } = useUIStore();
+  const { user, logout } = useAuthStore();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const queryClient = useQueryClient();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const { data: notifData } = useQuery({
+    queryKey: ['notifications-list'],
+    queryFn: async () => {
+      const { data } = await api.get('/notifications');
+      return data.data || { data: [], unreadCount: 0 };
+    },
+    refetchInterval: 30000,
+  });
+
+  const { data: globalSearchResults = [] } = useQuery({
+    queryKey: ['global-search', searchQuery],
+    queryFn: async () => {
+      if (!isSearchOpen || searchQuery.trim().length < 2) return [];
+      const { data } = await api.get(`/search?query=${encodeURIComponent(searchQuery)}`);
+      return data.data || [];
+    },
+    enabled: isSearchOpen && searchQuery.trim().length >= 2,
+  });
+
+  const notifications = Array.isArray(notifData?.data) ? notifData.data : (Array.isArray(notifData) ? notifData : []);
+  const unreadNotifications = typeof notifData?.unreadCount === 'number' ? notifData.unreadCount : notifications.filter((n: any) => !n.isRead).length;
+
+  const markAllReadMutation = useMutation({
+    mutationFn: async () => {
+      await api.patch('/notifications/mark-all-read');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications-list'] });
+    },
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.patch(`/notifications/${id}/read`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications-list'] });
+    },
+  });
+
+  const pageTitle = getPageTitle(location.pathname);
+  const isDashboard = location.pathname === '/';
+
+  const baseNavItems = [
+    { title: 'Dashboard Control Tower', category: 'MODULE', link: '/', icon: Building2 },
+    { title: 'Construction Projects & Timeline', category: 'MODULE', link: '/projects', icon: Building2 },
+    { title: 'Material Management & Inventory', category: 'MODULE', link: '/materials', icon: PackageCheck },
+    { title: 'Site Operations & Progress', category: 'MODULE', link: '/sites', icon: HardHat },
+    { title: 'Site Labour & Muster Roll', category: 'MODULE', link: '/labour', icon: HardHat },
+    { title: 'Income & Client Billing Ledger', category: 'MODULE', link: '/income', icon: IndianRupee },
+    { title: 'Expenses & Outflow Ledger', category: 'MODULE', link: '/expenses', icon: IndianRupee },
+    { title: 'Master Construction Schedule', category: 'MODULE', link: '/calendar', icon: Calendar },
+    { title: 'Document Vault & Blueprints', category: 'MODULE', link: '/documents', icon: FileText },
+    { title: 'Engineering Tasks Checklist', category: 'MODULE', link: '/tasks', icon: CheckCircle2 },
+    { title: 'Audit Logs & Security Compliance', category: 'MODULE', link: '/audit-logs', icon: Layers },
+  ];
+
+  const dynamicGlobalItems = (Array.isArray(globalSearchResults) ? globalSearchResults : []).map((res: any) => ({
+    title: res.title,
+    subtitle: res.subtitle,
+    category: res.type.toUpperCase(),
+    link: getLinkForType(res.type, res.id),
+    icon: getIconForType(res.type),
+  }));
+
+  const searchItems = [...dynamicGlobalItems, ...baseNavItems];
+
+  const filteredSearch = searchQuery.trim().length < 2
+    ? baseNavItems.slice(0, 7)
+    : searchItems;
+
+  function getLinkForType(type: string, id: string) {
+    switch (type) {
+      case 'Project': return `/projects/${id}`;
+      case 'Client': return `/clients`;
+      case 'Vendor': return `/vendors`;
+      case 'Employee': return `/employees`;
+      case 'Invoice': return `/invoices`;
+      case 'Purchase Order': return `/purchase-orders`;
+      default: return `/`;
+    }
+  }
+
+  function getIconForType(type: string) {
+    switch (type) {
+      case 'Project': return Building2;
+      case 'Client': return User;
+      case 'Vendor': return PackageCheck;
+      case 'Employee': return Briefcase;
+      case 'Invoice': return FileText;
+      case 'Purchase Order': return PackageCheck;
+      default: return Search;
+    }
+  }
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [searchQuery, isSearchOpen]);
+
+  // Keyboard shortcuts and arrow key navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      } else if (e.key === 'Escape' && isSearchOpen) {
+        setIsSearchOpen(false);
+      } else if (isSearchOpen && filteredSearch.length > 0) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev + 1) % filteredSearch.length);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev - 1 + filteredSearch.length) % filteredSearch.length);
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          const selected = filteredSearch[selectedIndex] || filteredSearch[0];
+          if (selected) {
+            setIsSearchOpen(false);
+            setSearchQuery('');
+            navigate(selected.link);
+          }
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchOpen, filteredSearch, selectedIndex, navigate]);
+
+  return (
+    <>
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-md md:px-6 shadow-xs">
+        {/* Left: Mobile menu + Back button + Page title */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSidebarMobileOpen(true)}
+            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 lg:hidden transition-colors"
+            title="Open Menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+
+          {/* Universal Back Button whenever not on Dashboard */}
+          {!isDashboard && (
+            <button
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-bold text-xs transition-all border border-slate-200 shadow-xs hover:shadow-sm"
+              title="Go back to previous screen or dashboard"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Back</span>
+            </button>
+          )}
+
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight font-heading">{pageTitle}</h1>
+              {!isDashboard && (
+                <span className="hidden sm:inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-wider">
+                  Live Module
+                </span>
+              )}
+            </div>
+            {isDashboard && (
+              <p className="text-xs text-slate-500 hidden sm:block">
+                Welcome back, <strong className="text-slate-700">{user?.name || 'Sandeep Jadhav'}</strong> • Authorized Executive Access
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Center: Search Trigger Input */}
+        <div className="hidden max-w-md flex-1 md:block">
+          <div
+            onClick={() => setIsSearchOpen(true)}
+            className="relative cursor-pointer group"
+          >
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+            <div
+              className={cn(
+                "flex items-center justify-between h-10 w-full rounded-xl border border-slate-200 bg-slate-50/80 pl-10 pr-3 text-sm text-slate-500",
+                "group-hover:border-indigo-300 group-hover:bg-white group-hover:shadow-xs transition-all duration-200"
+              )}
+            >
+              <span>Search projects, materials, labour, or logs...</span>
+              <kbd className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-mono font-bold text-slate-400 shadow-2xs group-hover:text-indigo-600 group-hover:border-indigo-200">
+                Ctrl+K
+              </kbd>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Quick Add Menu, Calendar, Notifications, User Admin Account */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Mobile Search Button */}
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-indigo-600 md:hidden transition-colors"
+            title="Search Platform"
+          >
+            <Search className="h-5 w-5" />
+          </button>
+
+          {/* Quick Add Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="gap-1.5 rounded-xl bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-500 shadow-sm transition-all cursor-pointer px-3.5 py-2 inline-flex items-center">
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Quick Add</span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-60 p-2 rounded-2xl shadow-xl border border-slate-200">
+              <DropdownMenuLabel className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
+                Create New Entry
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="my-1" />
+              <DropdownMenuItem
+                onSelect={() => {
+                  navigate('/projects', { state: { action: 'create' } });
+                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'project' }));
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'project' })), 300);
+                }}
+                onClick={() => {
+                  navigate('/projects', { state: { action: 'create' } });
+                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'project' }));
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'project' })), 300);
+                }}
+                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 focus:bg-indigo-50 focus:text-indigo-600 transition-colors"
+              >
+                <Building2 className="mr-2.5 h-4 w-4 text-indigo-500" />
+                <span>+ Add Site Project</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  navigate('/expenses', { state: { action: 'create' } });
+                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'expense' }));
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'expense' })), 300);
+                }}
+                onClick={() => {
+                  navigate('/expenses', { state: { action: 'create' } });
+                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'expense' }));
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'expense' })), 300);
+                }}
+                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-rose-50 hover:text-rose-600 focus:bg-rose-50 focus:text-rose-600 transition-colors"
+              >
+                <IndianRupee className="mr-2.5 h-4 w-4 text-rose-500" />
+                <span>+ Record Site Expense</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  navigate('/materials', { state: { action: 'create' } });
+                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'material' }));
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'material' })), 300);
+                }}
+                onClick={() => {
+                  navigate('/materials', { state: { action: 'create' } });
+                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'material' }));
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'material' })), 300);
+                }}
+                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-600 focus:bg-amber-50 focus:text-amber-600 transition-colors"
+              >
+                <PackageCheck className="mr-2.5 h-4 w-4 text-amber-500" />
+                <span>+ Order Material Stock</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  navigate('/labour', { state: { action: 'create' } });
+                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'labour' }));
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'labour' })), 300);
+                }}
+                onClick={() => {
+                  navigate('/labour', { state: { action: 'create' } });
+                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'labour' }));
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'labour' })), 300);
+                }}
+                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 transition-colors"
+              >
+                <HardHat className="mr-2.5 h-4 w-4 text-blue-500" />
+                <span>+ Check-in Labour Muster</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  navigate('/tasks', { state: { action: 'create' } });
+                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'task' }));
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'task' })), 300);
+                }}
+                onClick={() => {
+                  navigate('/tasks', { state: { action: 'create' } });
+                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'task' }));
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'task' })), 300);
+                }}
+                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-cyan-50 hover:text-cyan-600 focus:bg-cyan-50 focus:text-cyan-600 transition-colors"
+              >
+                <CheckSquare className="mr-2.5 h-4 w-4 text-cyan-500" />
+                <span>+ Assign Engineering Task</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  navigate('/documents', { state: { action: 'create' } });
+                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'document' }));
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'document' })), 300);
+                }}
+                onClick={() => {
+                  navigate('/documents', { state: { action: 'create' } });
+                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'document' }));
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'document' })), 300);
+                }}
+                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-violet-50 hover:text-violet-600 focus:bg-violet-50 focus:text-violet-600 transition-colors"
+              >
+                <FileText className="mr-2.5 h-4 w-4 text-violet-500" />
+                <span>+ Upload Blueprint / NOC</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  navigate('/leads', { state: { action: 'create' } });
+                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'lead' }));
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'lead' })), 300);
+                }}
+                onClick={() => {
+                  navigate('/leads', { state: { action: 'create' } });
+                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'lead' }));
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'lead' })), 300);
+                }}
+                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-600 focus:bg-emerald-50 focus:text-emerald-600 transition-colors"
+              >
+                <Briefcase className="mr-2.5 h-4 w-4 text-emerald-500" />
+                <span>+ Add CRM Lead / Tender</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Calendar Navigation Button */}
+          <button
+            onClick={() => navigate('/calendar')}
+            className={cn(
+              "rounded-xl p-2.5 transition-all border shadow-2xs",
+              location.pathname === '/calendar'
+                ? "bg-indigo-50 text-indigo-600 border-indigo-200 font-bold"
+                : "bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-200"
+            )}
+            title="Open Master Schedule & Milestones"
+          >
+            <Calendar className="h-4 w-4" />
+          </button>
+
+          {/* Notifications Bell Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="relative rounded-xl p-2.5 bg-white border border-slate-200/80 text-slate-600 transition-all hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-200 shadow-2xs cursor-pointer focus:outline-none inline-flex items-center justify-center"
+              title="View Notifications & Alerts"
+            >
+              <Bell className="h-4 w-4 pointer-events-none" />
+              {unreadNotifications > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-xs animate-pulse pointer-events-none">
+                  {unreadNotifications}
+                </span>
+              )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 p-3 rounded-2xl shadow-xl border border-slate-200 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <Bell className="w-3.5 h-3.5 text-indigo-600" /> Site Notifications
+                </span>
+                {unreadNotifications > 0 && (
+                  <button
+                    onClick={() => markAllReadMutation.mutate()}
+                    className="text-[11px] font-bold text-indigo-600 hover:underline flex items-center gap-1"
+                  >
+                    <Check className="w-3 h-3" /> Mark all read
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-2 max-h-72 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="py-8 text-center text-slate-400 text-xs">
+                    No notifications logged right now.
+                  </div>
+                ) : (
+                  notifications.slice(0, 8).map((n: any) => (
+                    <div
+                      key={n.id}
+                      onClick={() => {
+                        if (!n.isRead) markReadMutation.mutate(n.id);
+                        if (n.linkUrl) navigate(n.linkUrl);
+                      }}
+                      className={cn(
+                        "p-2.5 rounded-xl border transition-all cursor-pointer space-y-1",
+                        n.isRead
+                          ? "bg-slate-50/60 border-slate-100 opacity-75"
+                          : "bg-indigo-50/60 border-indigo-100 hover:bg-indigo-100/70 shadow-2xs"
+                      )}
+                    >
+                      <div className="flex items-center justify-between text-xs font-bold text-slate-900">
+                        <span className="flex items-center gap-1.5 truncate">
+                          <AlertCircle className={cn("w-3.5 h-3.5 shrink-0", n.isRead ? "text-slate-400" : "text-indigo-600")} />
+                          {n.title || 'System Notification'}
+                        </span>
+                        <span className="text-[10px] text-slate-400 shrink-0">
+                          {n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-700 leading-snug">
+                        {n.message || 'Updated project state.'}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="border-t border-slate-100 pt-2 text-center">
+                <button
+                  onClick={() => navigate('/audit-logs')}
+                  className="text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors inline-flex items-center gap-1"
+                >
+                  View All System Logs <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* User Admin Profile Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="ml-1 flex items-center gap-2.5 rounded-xl p-1.5 transition-all bg-white border border-slate-200/80 hover:bg-slate-50 hover:border-indigo-200 shadow-2xs cursor-pointer focus:outline-none"
+              title="User Profile & Admin Options"
+            >
+              <Avatar className="h-8 w-8 border border-indigo-200 rounded-lg pointer-events-none">
+                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-violet-600 text-xs font-bold text-white rounded-lg pointer-events-none">
+                  {getInitials(user?.name || 'Sandeep Jadhav')}
+                </AvatarFallback>
+              </Avatar>
+              <div className="hidden text-left md:block pr-1">
+                <p className="text-xs font-bold text-slate-800 leading-tight">{user?.name || 'Sandeep Jadhav'}</p>
+                <p className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider">
+                  {user?.role ?? 'ADMIN'}
+                </p>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-60 p-2 rounded-2xl shadow-xl border border-slate-200">
+              <div className="px-3 py-2 border-b border-slate-100 mb-1">
+                <p className="text-xs font-bold text-slate-900">{user?.name || 'Sandeep Jadhav'}</p>
+                <p className="text-[11px] text-slate-500 truncate">{user?.email || 'admin@vastuconstruction.in'}</p>
+                <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  <Sparkles className="w-3 h-3 text-indigo-600" /> Full Admin Control
+                </div>
+              </div>
+
+              <DropdownMenuItem
+                onClick={() => navigate('/')}
+                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-slate-100 focus:bg-slate-100 transition-colors"
+              >
+                <Building2 className="mr-2.5 h-4 w-4 text-slate-500" />
+                <span>Dashboard Control Tower</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => navigate('/settings')}
+                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-slate-100 focus:bg-slate-100 transition-colors"
+              >
+                <User className="mr-2.5 h-4 w-4 text-slate-500" />
+                <span>Executive Profile</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => navigate('/settings')}
+                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-slate-100 focus:bg-slate-100 transition-colors"
+              >
+                <Settings className="mr-2.5 h-4 w-4 text-slate-500" />
+                <span>Platform Settings</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator className="my-1" />
+
+              <DropdownMenuItem
+                onClick={() => {
+                  logout();
+                  navigate('/login');
+                }}
+                className="cursor-pointer rounded-xl p-2.5 font-bold text-rose-600 hover:bg-rose-50 focus:bg-rose-50 transition-colors"
+              >
+                <LogOut className="mr-2.5 h-4 w-4 text-rose-500" />
+                <span>Sign Out of Workspace</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
+
+      {/* Global Interactive Search Command Modal (`Ctrl+K`) */}
+      {isSearchOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Search Input Header */}
+            <div className="flex items-center px-4 py-3.5 border-b border-slate-200/80 bg-slate-50/50">
+              <Search className="w-5 h-5 text-indigo-600 mr-3 shrink-0" />
+              <input
+                type="text"
+                autoFocus
+                placeholder="Type to search projects, inventory, tasks, or billing..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-transparent text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="p-1 rounded-lg hover:bg-slate-200/60 text-slate-400 mr-2">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={() => setIsSearchOpen(false)}
+                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-500 hover:bg-slate-100 shrink-0"
+              >
+                ESC
+              </button>
+            </div>
+
+            {/* Results Body */}
+            <div className="p-3 max-h-96 overflow-y-auto space-y-2 divide-y divide-slate-100/60">
+              {filteredSearch.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 text-sm space-y-1">
+                  <Search className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                  <p className="font-bold text-slate-600">No matching records found for "{searchQuery}"</p>
+                  <p className="text-xs">Try searching for "project", "cement", "labour", or "income"</p>
+                </div>
+              ) : (
+                <>
+                  <div className="px-2 pt-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    {searchQuery ? `Search Results (${filteredSearch.length})` : 'Quick Jump & Modules'}
+                  </div>
+                  {filteredSearch.map((item, idx) => {
+                    const Icon = item.icon;
+                    const isSelected = idx === selectedIndex;
+                    return (
+                      <div
+                        key={item.title + idx}
+                        onClick={() => {
+                          setIsSearchOpen(false);
+                          setSearchQuery('');
+                          navigate(item.link);
+                        }}
+                        className={cn(
+                          "p-3 rounded-xl transition-all flex items-center justify-between cursor-pointer group",
+                          isSelected ? "bg-indigo-50 border border-indigo-200/80 shadow-2xs" : "hover:bg-indigo-50/70"
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-9 h-9 rounded-xl flex items-center justify-center transition-colors",
+                            isSelected ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white"
+                          )}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className={cn("text-sm font-bold transition-colors", isSelected ? "text-indigo-600" : "text-slate-800 group-hover:text-indigo-600")}>{item.title}</div>
+                            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{item.category}</div>
+                          </div>
+                        </div>
+                        <ChevronRight className={cn("w-4 h-4 transition-all", isSelected ? "text-indigo-600 translate-x-1" : "text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1")} />
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+              <span>Use <kbd className="px-1.5 py-0.5 rounded bg-white border border-slate-200 font-mono">↑</kbd> <kbd className="px-1.5 py-0.5 rounded bg-white border border-slate-200 font-mono">↓</kbd> to navigate or click to open</span>
+              <span className="text-indigo-600 font-bold">VastuConstruction Search Engine</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

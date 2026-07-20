@@ -62,7 +62,7 @@ export default function LoginPage() {
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/25 ring-1 ring-white/20">
             <Building2 className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-white font-heading">Vastu ERP</span>
+          <span className="text-xl font-bold tracking-tight text-white font-heading">VASTU <span className="text-amber-500 font-extrabold">×</span> CONSTRACORE</span>
         </div>
 
         <div className="relative z-10 max-w-lg space-y-6">
@@ -73,27 +73,14 @@ export default function LoginPage() {
             Next-Generation Intelligence for Construction & Infrastructure
           </h1>
           <p className="text-slate-400 text-base leading-relaxed">
-            Manage multiple sites, track real-time financial milestones, optimize material procurement, and automate labour attendance from a single, high-precision SaaS platform.
+            Manage multiple sites, track real-time financial milestones, optimize material procurement, and automate labour attendance from a single, high-precision SaaS platform powered by SHIVLINK Technologies.
           </p>
-
-          <div className="grid grid-cols-3 gap-4 pt-6 border-t border-slate-800/80">
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-white font-heading">₹120Cr+</div>
-              <div className="text-xs text-slate-400">Projects Managed</div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-white font-heading">99.9%</div>
-              <div className="text-xs text-slate-400">Audit Compliance</div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-white font-heading">35+</div>
-              <div className="text-xs text-slate-400">Active Sites</div>
-            </div>
-          </div>
         </div>
 
+
+
         <div className="relative z-10 flex items-center justify-between text-xs text-slate-500">
-          <span>Vastu Construction Technologies Pvt. Ltd.</span>
+          <span>Shivlink Technologies Pvt. Ltd.</span>
           <span>v2.4 Production</span>
         </div>
       </div>
@@ -111,7 +98,7 @@ export default function LoginPage() {
             <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg">
               <Building2 className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-white font-heading">Vastu ERP</span>
+            <span className="text-xl font-bold tracking-tight text-white font-heading">VASTU <span className="text-amber-500 font-extrabold">×</span> CONSTRACORE</span>
           </div>
 
           <div className="space-y-2">

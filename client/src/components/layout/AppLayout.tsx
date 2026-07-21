@@ -9,7 +9,7 @@ export default function AppLayout() {
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>

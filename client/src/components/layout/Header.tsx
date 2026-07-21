@@ -77,6 +77,7 @@ export default function Header() {
 
   const queryClient = useQueryClient();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -209,6 +210,20 @@ export default function Header() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isSearchOpen, filteredSearch, selectedIndex, navigate]);
 
+  // Click outside handler for Quick Add dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('#quick-add-dropdown') && !target.closest('#quick-add-btn')) {
+        setIsQuickAddOpen(false);
+      }
+    };
+    if (isQuickAddOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isQuickAddOpen]);
+
   return (
     <>
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-md md:px-6 shadow-xs">
@@ -282,132 +297,102 @@ export default function Header() {
           >
             <Search className="h-5 w-5" />
           </button>
-
           {/* Quick Add Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger className="gap-1.5 rounded-xl bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-500 shadow-sm transition-all cursor-pointer px-3.5 py-2 inline-flex items-center">
+          <div className="relative">
+            <button 
+              id="quick-add-btn"
+              onClick={() => setIsQuickAddOpen(!isQuickAddOpen)}
+              className="gap-1.5 rounded-xl bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-500 shadow-sm transition-all cursor-pointer px-3.5 py-2 inline-flex items-center"
+            >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Quick Add</span>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-60 p-2 rounded-2xl shadow-xl border border-slate-200">
-              <DropdownMenuLabel className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
-                Create New Entry
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator className="my-1" />
-              <DropdownMenuItem
-                onSelect={() => {
-                  navigate('/projects', { state: { action: 'create' } });
-                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'project' }));
-                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'project' })), 300);
-                }}
-                onClick={() => {
-                  navigate('/projects', { state: { action: 'create' } });
-                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'project' }));
-                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'project' })), 300);
-                }}
-                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 focus:bg-indigo-50 focus:text-indigo-600 transition-colors"
-              >
-                <Building2 className="mr-2.5 h-4 w-4 text-indigo-500" />
-                <span>+ Add Site Project</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => {
-                  navigate('/expenses', { state: { action: 'create' } });
-                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'expense' }));
-                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'expense' })), 300);
-                }}
-                onClick={() => {
-                  navigate('/expenses', { state: { action: 'create' } });
-                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'expense' }));
-                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'expense' })), 300);
-                }}
-                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-rose-50 hover:text-rose-600 focus:bg-rose-50 focus:text-rose-600 transition-colors"
-              >
-                <IndianRupee className="mr-2.5 h-4 w-4 text-rose-500" />
-                <span>+ Record Site Expense</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => {
-                  navigate('/materials', { state: { action: 'create' } });
-                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'material' }));
-                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'material' })), 300);
-                }}
-                onClick={() => {
-                  navigate('/materials', { state: { action: 'create' } });
-                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'material' }));
-                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'material' })), 300);
-                }}
-                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-600 focus:bg-amber-50 focus:text-amber-600 transition-colors"
-              >
-                <PackageCheck className="mr-2.5 h-4 w-4 text-amber-500" />
-                <span>+ Order Material Stock</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => {
-                  navigate('/labour', { state: { action: 'create' } });
-                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'labour' }));
-                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'labour' })), 300);
-                }}
-                onClick={() => {
-                  navigate('/labour', { state: { action: 'create' } });
-                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'labour' }));
-                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'labour' })), 300);
-                }}
-                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 focus:bg-blue-50 focus:text-blue-600 transition-colors"
-              >
-                <HardHat className="mr-2.5 h-4 w-4 text-blue-500" />
-                <span>+ Check-in Labour Muster</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => {
-                  navigate('/tasks', { state: { action: 'create' } });
-                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'task' }));
-                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'task' })), 300);
-                }}
-                onClick={() => {
-                  navigate('/tasks', { state: { action: 'create' } });
-                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'task' }));
-                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'task' })), 300);
-                }}
-                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-cyan-50 hover:text-cyan-600 focus:bg-cyan-50 focus:text-cyan-600 transition-colors"
-              >
-                <CheckSquare className="mr-2.5 h-4 w-4 text-cyan-500" />
-                <span>+ Assign Engineering Task</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => {
-                  navigate('/documents', { state: { action: 'create' } });
-                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'document' }));
-                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'document' })), 300);
-                }}
-                onClick={() => {
-                  navigate('/documents', { state: { action: 'create' } });
-                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'document' }));
-                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'document' })), 300);
-                }}
-                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-violet-50 hover:text-violet-600 focus:bg-violet-50 focus:text-violet-600 transition-colors"
-              >
-                <FileText className="mr-2.5 h-4 w-4 text-violet-500" />
-                <span>+ Upload Blueprint / NOC</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => {
-                  navigate('/leads', { state: { action: 'create' } });
-                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'lead' }));
-                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'lead' })), 300);
-                }}
-                onClick={() => {
-                  navigate('/leads', { state: { action: 'create' } });
-                  window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'lead' }));
-                  setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'lead' })), 300);
-                }}
-                className="cursor-pointer rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-600 focus:bg-emerald-50 focus:text-emerald-600 transition-colors"
-              >
-                <Briefcase className="mr-2.5 h-4 w-4 text-emerald-500" />
-                <span>+ Add CRM Lead / Tender</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </button>
+            {isQuickAddOpen && (
+              <div id="quick-add-dropdown" className="absolute right-0 top-full mt-2 w-64 p-2 rounded-2xl shadow-xl border border-slate-200 bg-white z-50 flex flex-col gap-0.5">
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-3 py-2">
+                  Create New Entry
+                </div>
+                <div className="h-px bg-slate-100 my-1" />
+                <button
+                  onClick={() => {
+                    setIsQuickAddOpen(false);
+                    navigate('/projects', { state: { action: 'create' } });
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'project' })), 100);
+                  }}
+                  className="w-full flex items-center rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-sm text-left"
+                >
+                  <Building2 className="mr-2.5 h-4 w-4 text-indigo-500 shrink-0" />
+                  <span>+ Add Site Project</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setIsQuickAddOpen(false);
+                    navigate('/expenses', { state: { action: 'create' } });
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'expense' })), 100);
+                  }}
+                  className="w-full flex items-center rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-rose-50 hover:text-rose-600 transition-colors text-sm text-left"
+                >
+                  <IndianRupee className="mr-2.5 h-4 w-4 text-rose-500 shrink-0" />
+                  <span>+ Record Site Expense</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setIsQuickAddOpen(false);
+                    navigate('/materials', { state: { action: 'create' } });
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'material' })), 100);
+                  }}
+                  className="w-full flex items-center rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-600 transition-colors text-sm text-left"
+                >
+                  <PackageCheck className="mr-2.5 h-4 w-4 text-amber-500 shrink-0" />
+                  <span>+ Order Material Stock</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setIsQuickAddOpen(false);
+                    navigate('/labour', { state: { action: 'create' } });
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'labour' })), 100);
+                  }}
+                  className="w-full flex items-center rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors text-sm text-left"
+                >
+                  <HardHat className="mr-2.5 h-4 w-4 text-blue-500 shrink-0" />
+                  <span>+ Check-in Labour Muster</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setIsQuickAddOpen(false);
+                    navigate('/tasks', { state: { action: 'create' } });
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'task' })), 100);
+                  }}
+                  className="w-full flex items-center rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-cyan-50 hover:text-cyan-600 transition-colors text-sm text-left"
+                >
+                  <CheckSquare className="mr-2.5 h-4 w-4 text-cyan-500 shrink-0" />
+                  <span>+ Assign Engineering Task</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setIsQuickAddOpen(false);
+                    navigate('/documents', { state: { action: 'create' } });
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'document' })), 100);
+                  }}
+                  className="w-full flex items-center rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-violet-50 hover:text-violet-600 transition-colors text-sm text-left"
+                >
+                  <FileText className="mr-2.5 h-4 w-4 text-violet-500 shrink-0" />
+                  <span>+ Upload Blueprint / NOC</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setIsQuickAddOpen(false);
+                    navigate('/leads', { state: { action: 'create' } });
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'lead' })), 100);
+                  }}
+                  className="w-full flex items-center rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors text-sm text-left"
+                >
+                  <User className="mr-2.5 h-4 w-4 text-emerald-500 shrink-0" />
+                  <span>+ Add Client Inquiry (Lead)</span>
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Calendar Navigation Button */}
           <button

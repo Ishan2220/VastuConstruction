@@ -16,6 +16,7 @@ interface PurchaseOrder {
 export default function PurchaseOrdersPage() {
   const [pos, setPos] = useState<PurchaseOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchPOs();
@@ -48,6 +49,11 @@ export default function PurchaseOrdersPage() {
     }
   };
 
+  const filteredPOs = pos.filter((po) => 
+    po.poNumber.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    po.vendor?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -70,6 +76,8 @@ export default function PurchaseOrdersPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search PO number or vendor..."
               className="w-full pl-9 pr-4 py-2 bg-slate-900/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-400 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 transition-all"
             />
@@ -95,10 +103,10 @@ export default function PurchaseOrdersPage() {
             <tbody className="divide-y divide-white/5">
               {isLoading ? (
                 <tr><td colSpan={7} className="p-8 text-center text-slate-400">Loading purchase orders...</td></tr>
-              ) : pos.length === 0 ? (
+              ) : filteredPOs.length === 0 ? (
                 <tr><td colSpan={7} className="p-8 text-center text-slate-400">No purchase orders found.</td></tr>
               ) : (
-                pos.map((po) => (
+                filteredPOs.map((po) => (
                   <tr key={po.id} className="hover:bg-white/5 transition-colors">
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-2">

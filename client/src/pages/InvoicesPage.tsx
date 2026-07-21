@@ -23,6 +23,7 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Form State
   const [newInvoice, setNewInvoice] = useState({
@@ -214,6 +215,12 @@ export default function InvoicesPage() {
     }
   };
 
+  const filteredInvoices = invoices.filter((inv) =>
+    inv.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    inv.client?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    inv.client?.companyName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="p-4 md:p-8 lg:p-8 space-y-6 bg-slate-50 min-h-full font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -238,6 +245,8 @@ export default function InvoicesPage() {
           <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
           <input
             type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search invoice number or client..."
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-shadow shadow-inner"
           />
@@ -263,11 +272,19 @@ export default function InvoicesPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
               {isLoading ? (
-                <tr><td colSpan={7} className="p-8 text-center text-slate-500">Loading invoices...</td></tr>
-              ) : invoices.length === 0 ? (
-                <tr><td colSpan={7} className="p-8 text-center text-slate-500">No invoices found.</td></tr>
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-sm text-slate-500">
+                    Loading invoices...
+                  </td>
+                </tr>
+              ) : filteredInvoices.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-sm text-slate-500">
+                    No invoices found.
+                  </td>
+                </tr>
               ) : (
-                invoices.map((invoice) => (
+                filteredInvoices.map((invoice) => (
                   <tr key={invoice.id} className="hover:bg-slate-50 transition-colors group cursor-pointer">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-bold text-indigo-600 font-mono">{invoice.invoiceNumber}</span>
@@ -316,10 +333,10 @@ export default function InvoicesPage() {
         <div className="md:hidden flex flex-col divide-y divide-slate-100">
           {isLoading ? (
             <div className="p-8 text-center text-slate-500">Loading invoices...</div>
-          ) : invoices.length === 0 ? (
+          ) : filteredInvoices.length === 0 ? (
             <div className="p-8 text-center text-slate-500">No invoices found.</div>
           ) : (
-            invoices.map((invoice) => (
+            filteredInvoices.map((invoice) => (
               <div key={invoice.id} className="p-4 flex flex-col gap-3 hover:bg-slate-50/50 transition-colors">
                 <div className="flex justify-between items-start">
                   <div>

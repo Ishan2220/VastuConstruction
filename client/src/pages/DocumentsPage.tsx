@@ -317,7 +317,7 @@ export default function DocumentsPage() {
             {/* Modal Body */}
             <div className="p-6 space-y-6 overflow-y-auto flex-1">
               {/* Metadata Badges */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-white/40 p-4 rounded-xl border border-violet-100/30">
+              <div className="grid grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-4 bg-white/40 p-3 sm:p-4 rounded-xl border border-violet-100/30">
                 <div>
                   <span className="text-[11px] font-semibold text-slate-400 uppercase">Site Project</span>
                   <div className="text-sm font-bold text-slate-800">{previewDoc.site}</div>
@@ -381,20 +381,20 @@ export default function DocumentsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 bg-white/50 border-t border-violet-100/40 flex items-center justify-between gap-4">
-              <span className="text-xs text-slate-500">
+            <div className="p-4 sm:p-6 bg-white/50 border-t border-violet-100/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <span className="text-xs text-slate-500 text-center sm:text-left">
                 Instant digital download certified by Vastu Engineering Vault.
               </span>
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
                 <button
                   onClick={() => setPreviewDoc(null)}
-                  className="px-4 py-2 rounded-xl text-slate-600 font-semibold text-sm hover:bg-white/50"
+                  className="px-4 py-2 rounded-xl text-slate-600 font-semibold text-sm hover:bg-white/50 w-full sm:w-auto text-center"
                 >
                   Close Preview
                 </button>
                 <button
                   onClick={() => triggerRealDownload(previewDoc)}
-                  className="clay-btn px-5 py-2 text-white font-bold text-sm flex items-center gap-2"
+                  className="clay-btn px-5 py-2 text-white font-bold text-sm flex items-center justify-center gap-2 w-full sm:w-auto"
                 >
                   <Download className="w-4 h-4" />
                   <span>Download Original ({previewDoc.size})</span>

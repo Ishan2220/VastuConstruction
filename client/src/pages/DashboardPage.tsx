@@ -480,13 +480,13 @@ export default function DashboardPage() {
               sites.map((site: any) => (
                 <div key={site.id} onClick={() => navigate('/site-profit-loss')}
                   className="p-3 rounded-xl bg-white/60 border border-violet-100/40 hover:border-[#7C6EF0]/30 transition-all cursor-pointer flex items-center justify-between gap-3 group">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="w-9 h-9 rounded-xl bg-clay-violet flex items-center justify-center text-[#7C6EF0] shrink-0">
                       <HardHat className="w-4 h-4" />
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="text-sm font-bold text-slate-800 group-hover:text-[#7C6EF0] transition-colors font-heading truncate">{site.name}</div>
-                      <div className="text-[11px] text-slate-400">{site.location}</div>
+                      <div className="text-[11px] text-slate-400 truncate">{site.location}</div>
                     </div>
                   </div>
                   <div className="text-right min-w-[100px] space-y-1">

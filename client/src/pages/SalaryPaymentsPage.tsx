@@ -28,7 +28,7 @@ export default function SalaryPaymentsPage() {
     queryKey: ['employees-list'],
     queryFn: async () => {
       const { data } = await api.get('/employees');
-      return data.data || [];
+      return data.data?.data || data.data || [];
     }
   });
 

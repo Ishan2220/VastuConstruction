@@ -25,7 +25,7 @@ export default function ReportsPage() {
       const query = dateRange.startDate && dateRange.endDate
         ? `?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`
         : '';
-      const { data } = await api.get(`/reports/financial-summary${query}`);
+      const { data } = await api.get(`/reports/financial${query}`);
       return data.data;
     },
     staleTime: 0,
@@ -35,7 +35,7 @@ export default function ReportsPage() {
   const { data: projectReports = [], isLoading: projLoading } = useQuery({
     queryKey: ['project-reports'],
     queryFn: async () => {
-      const { data } = await api.get('/reports/project-summary');
+      const { data } = await api.get('/reports/projects');
       return data.data || [];
     },
     staleTime: 0,

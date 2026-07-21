@@ -184,9 +184,9 @@ export default function LeadsPage() {
           {filteredLeads.map((lead: any) => (
             <div key={lead.id} className="clay-card p-4 space-y-4 flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="flex flex-wrap items-start justify-between pb-3 border-b border-violet-100/30 gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-clay-violet text-[#7C6EF0]">{lead.source}</span>
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between pb-3 border-b border-violet-100/30 gap-3">
+                  <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-clay-violet text-[#7C6EF0] whitespace-nowrap">{lead.source}</span>
                     <button
                       onClick={() => setEditingLead(lead)}
                       className="p-1 text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer"
@@ -220,14 +220,14 @@ export default function LeadsPage() {
                   </select>
                 </div>
 
-                <h3 className="text-lg font-bold text-slate-900 font-heading">{lead.name}</h3>
-                <div className="text-xs text-slate-500 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-3.5 h-3.5 text-slate-400" /> <span>{lead.phone}</span>
+                <h3 className="text-lg font-bold text-slate-900 font-heading truncate">{lead.name}</h3>
+                <div className="text-xs text-slate-500 space-y-1 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" /> <span className="truncate">{lead.phone}</span>
                   </div>
                   {lead.email && (
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-3.5 h-3.5 text-slate-400" /> <span>{lead.email}</span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" /> <span className="truncate">{lead.email}</span>
                     </div>
                   )}
                 </div>

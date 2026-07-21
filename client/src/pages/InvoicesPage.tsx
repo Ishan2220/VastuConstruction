@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Search, Plus, ChevronDown, Download, X, Trash2 } from 'lucide-react';
+import { FileText, Search, Plus, ChevronDown, Download, X, Trash2, Filter } from 'lucide-react';
 import api from '@/lib/api';
 import { format } from 'date-fns';
 import { toast } from 'sonner';

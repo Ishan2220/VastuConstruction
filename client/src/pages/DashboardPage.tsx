@@ -421,19 +421,10 @@ export default function DashboardPage() {
 
         {/* Active Sites */}
         <motion.div whileHover={{ y: -3 }} onClick={() => navigate('/sites')}
-          className={`${cardBase} p-5 hover:shadow-md hover:border-amber-300 transition-all cursor-pointer group flex flex-col justify-between`}>
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
-              <HardHat className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Active Sites</span>
-            <span className="text-2xl font-extrabold text-slate-900 font-heading group-hover:text-amber-600 transition-colors">
           className={`${cardBase} p-3.5 hover:shadow-md hover:border-amber-300 transition-all cursor-pointer group flex flex-col justify-between`}>
           <div className="flex items-center justify-between">
             <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
-              <Building2 className="w-4 h-4" />
+              <HardHat className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-2.5">

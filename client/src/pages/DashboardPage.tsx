@@ -554,7 +554,7 @@ export default function DashboardPage() {
       {/* =========================================== */}
       {/* MIDDLE ROW: Active Sites Progress + Reminders */}
       {/* =========================================== */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Active Sites Progress (2 cols) */}
         <div className={`lg:col-span-2 ${cardBase} p-6`}>
           <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
@@ -656,9 +656,9 @@ export default function DashboardPage() {
       </div>
 
       {/* =========================================== */}
-      {/* ALERTS ROW */}
+      {/* FOURTH ROW: Analytics */}
       {/* =========================================== */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {/* Alerts Column */}
         <div className={`xl:col-span-3 ${cardBase} p-6 border-l-4 border-rose-500`}>
           <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
@@ -734,7 +734,7 @@ export default function DashboardPage() {
       {/* =========================================== */}
       {/* ROW 3: Expense Categories + Payment Modes + Site P/L */}
       {/* =========================================== */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Card 1: Expense by Category */}
         {user?.role !== 'ENGINEER' && (
         <div className={`${cardBase} p-6 flex flex-col justify-between`}>
@@ -907,8 +907,9 @@ export default function DashboardPage() {
       {/* =========================================== */}
       {/* ROW 4: Recent Activities + Today's Tasks + Recent Leads */}
       {/* =========================================== */}
-      <div className="grid grid-cols-2 md:grid-cols-2 gap-6">        {/* Card 2: Today's Tasks */}
-        <div className={`${cardBase} p-6 flex flex-col justify-between`}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Card 2: Today's Tasks */}
+        <div className={`${cardBase} p-6 h-full flex flex-col justify-between`}>
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
               <h3 className="text-base font-bold text-slate-900 font-heading">Today's Tasks</h3>

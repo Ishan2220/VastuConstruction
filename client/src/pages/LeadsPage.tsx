@@ -183,11 +183,9 @@ export default function LeadsPage() {
           {filteredLeads.map((lead: any) => (
             <div key={lead.id} className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="flex justify-between items-start gap-2">
+                <div className="flex flex-wrap items-start justify-between pb-3 border-b border-slate-100 gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">
-                      {lead.source}
-                    </span>
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">{lead.source}</span>
                     <button
                       onClick={() => setEditingLead(lead)}
                       className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"

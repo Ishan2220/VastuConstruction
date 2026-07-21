@@ -365,10 +365,10 @@ export default function CalendarPage() {
           </div>
 
           {/* Calendar Grid Cells */}
-          <div className="grid grid-cols-7 gap-2 flex-1">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 flex-1">
             {calendarDays.map((cell, idx) => {
               if (!cell.dayNumber || !cell.dateStr) {
-                return <div key={`pad-${idx}`} className="h-24 bg-slate-50/40 rounded-xl border border-slate-100/50" />;
+                return <div key={`pad-${idx}`} className="min-h-[60px] sm:min-h-[96px] bg-slate-50/40 rounded-xl border border-slate-100/50" />;
               }
 
               const isSelected = cell.dateStr === selectedDateStr;
@@ -379,7 +379,7 @@ export default function CalendarPage() {
                 <div
                   key={cell.dateStr}
                   onClick={() => setSelectedDateStr(cell.dateStr!)}
-                  className={`h-24 p-2 rounded-xl border transition-all cursor-pointer flex flex-col justify-between overflow-hidden relative group ${
+                  className={`min-h-[60px] sm:min-h-[96px] p-1 sm:p-2 rounded-xl border transition-all cursor-pointer flex flex-col overflow-hidden relative group ${
                     isSelected
                       ? 'border-indigo-600 ring-2 ring-indigo-500/30 bg-indigo-50/30 shadow-md'
                       : isToday
@@ -389,7 +389,7 @@ export default function CalendarPage() {
                 >
                   <div className="flex items-center justify-between">
                     <span
-                      className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs font-mono transition-colors ${
+                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center font-bold text-[10px] sm:text-xs font-mono transition-colors ${
                         isSelected
                           ? 'bg-indigo-600 text-white'
                           : isToday

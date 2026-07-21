@@ -444,7 +444,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="mt-2.5">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Income</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Income (This Month)</span>
             <span className="text-xl font-extrabold text-slate-900 font-mono group-hover:text-emerald-600 transition-colors">
               {formatCurrency(kpis.monthlyIncome)}
             </span>
@@ -460,7 +460,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="mt-2.5">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Expenses</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Expenses (This Month)</span>
             <span className="text-xl font-extrabold text-slate-900 font-mono group-hover:text-rose-600 transition-colors">
               {formatCurrency(kpis.monthlyExpenses)}
             </span>

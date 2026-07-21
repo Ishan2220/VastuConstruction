@@ -354,7 +354,11 @@ export default function DocumentsPage() {
                 <div className="h-96 rounded-xl border-2 border-dashed border-slate-700 bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden">
                   {previewDoc.fileUrl ? (
                     <iframe
-                      src={previewDoc.fileUrl}
+                      src={
+                        (previewDoc.fileUrl.startsWith('/uploads') || previewDoc.fileUrl.includes(window.location.origin + '/uploads')) 
+                          ? (api.defaults.baseURL?.replace('/api', '') || window.location.origin) + previewDoc.fileUrl.replace(window.location.origin, '')
+                          : previewDoc.fileUrl
+                      }
                       className="w-full h-full border-none"
                       title={previewDoc.title || 'Document Preview'}
                     />

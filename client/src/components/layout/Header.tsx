@@ -288,21 +288,21 @@ export default function Header() {
         </div>
 
         {/* Right: Quick Add Menu, Calendar, Notifications, User Admin Account */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           {/* Mobile Search Button */}
           <button
             onClick={() => setIsSearchOpen(true)}
-            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-indigo-600 md:hidden transition-colors"
+            className="rounded-xl p-1.5 sm:p-2 text-slate-500 hover:bg-slate-100 hover:text-indigo-600 md:hidden transition-colors shrink-0"
             title="Search Platform"
           >
             <Search className="h-5 w-5" />
           </button>
           {/* Quick Add Dropdown */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button 
               id="quick-add-btn"
               onClick={() => setIsQuickAddOpen(!isQuickAddOpen)}
-              className="gap-1.5 rounded-xl bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-500 shadow-sm transition-all cursor-pointer px-3.5 py-2 inline-flex items-center"
+              className="gap-1.5 rounded-xl bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-500 shadow-sm transition-all cursor-pointer p-2 sm:px-3.5 sm:py-2 inline-flex items-center"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Quick Add</span>
@@ -487,7 +487,7 @@ export default function Header() {
           {/* User Admin Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="ml-1 flex items-center gap-2.5 rounded-xl p-1.5 transition-all bg-white border border-slate-200/80 hover:bg-slate-50 hover:border-indigo-200 shadow-2xs cursor-pointer focus:outline-none"
+              className="ml-1 shrink-0 flex items-center gap-2.5 rounded-xl p-1.5 transition-all bg-white border border-slate-200/80 hover:bg-slate-50 hover:border-indigo-200 shadow-2xs cursor-pointer focus:outline-none"
               title="User Profile & Admin Options"
             >
               <Avatar className="h-8 w-8 border border-indigo-200 rounded-lg pointer-events-none">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Search, Plus, ChevronDown, Download, X } from 'lucide-react';
+import { FileText, Search, Plus, ChevronDown, Download, X, Trash2 } from 'lucide-react';
 import api from '@/lib/api';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -91,6 +91,19 @@ export default function InvoicesPage() {
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || 'Failed to create invoice');
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/invoices/${id}`);
+    },
+    onSuccess: () => {
+      toast.success('Invoice deleted successfully');
+      fetchInvoices();
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to delete invoice');
     }
   });
 
@@ -281,6 +294,15 @@ export default function InvoicesPage() {
                         <button onClick={(e) => { e.stopPropagation(); handleDownloadPDF(invoice); }} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors" title="Download PDF">
                           <Download className="w-4 h-4" />
                         </button>
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if(window.confirm('Delete this invoice?')) deleteMutation.mutate(invoice.id); 
+                          }} 
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors" 
+                          title="Delete Invoice">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -320,13 +342,25 @@ export default function InvoicesPage() {
                   <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] uppercase font-bold border ${getStatusColor(invoice.status)}`}>
                     {invoice.status}
                   </span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleDownloadPDF(invoice); }}
-                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                    title="Download PDF"
-                  >
-                    <Download className="w-4 h-4" />
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDownloadPDF(invoice); }}
+                      className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      title="Download PDF"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        if(window.confirm('Delete this invoice?')) deleteMutation.mutate(invoice.id); 
+                      }}
+                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                      title="Delete Invoice"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))

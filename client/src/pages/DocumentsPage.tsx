@@ -131,7 +131,15 @@ export default function DocumentsPage() {
     try {
       const res = await api.get(`/files/${doc.id}/download`);
       if (res.data?.data?.downloadUrl) {
-        window.open(res.data.data.downloadUrl, '_blank');
+        let downloadUrl = res.data.data.downloadUrl;
+        
+        // Fix for local uploads when API is on a different domain
+        if (downloadUrl.startsWith('/uploads') || downloadUrl.includes(window.location.origin + '/uploads')) {
+          const baseUrl = api.defaults.baseURL?.replace('/api', '') || window.location.origin;
+          downloadUrl = baseUrl + downloadUrl.replace(window.location.origin, '');
+        }
+
+        window.open(downloadUrl, '_blank');
       } else {
         toast.error('Could not retrieve document download URL.');
       }

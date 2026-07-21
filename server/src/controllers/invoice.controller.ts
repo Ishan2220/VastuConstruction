@@ -61,6 +61,10 @@ export const getInvoiceById = async (req: Request, res: Response) => {
 export const createInvoice = async (req: Request, res: Response) => {
   const { invoiceNumber, issueDate, dueDate, clientId, projectId, subtotal, taxAmount, totalAmount, status } = req.body;
 
+  const numSubtotal = Number(subtotal) || 0;
+  const numTax = Number(taxAmount) || 0;
+  const numTotal = Number(totalAmount) || numSubtotal;
+
   const newInvoice = await prisma.invoice.create({
     data: {
       invoiceNumber,
@@ -68,9 +72,9 @@ export const createInvoice = async (req: Request, res: Response) => {
       dueDate: dueDate ? new Date(dueDate) : null,
       clientId,
       projectId,
-      subtotal,
-      taxAmount,
-      totalAmount,
+      subtotal: numSubtotal,
+      taxAmount: numTax,
+      totalAmount: numTotal,
       status: status || 'UNPAID'
     },
     include: {
@@ -87,7 +91,7 @@ export const createInvoice = async (req: Request, res: Response) => {
       description: `Invoice ${invoiceNumber} generated for ${newInvoice.client.name}`,
       clientId,
       projectId,
-      amount: totalAmount,
+      amount: numTotal,
       referenceNo: invoiceNumber
     }
   });
@@ -106,11 +110,10 @@ export const updateInvoiceStatus = async (req: Request, res: Response) => {
   res.json(new ApiResponse(200, invoice, 'Invoice status updated successfully'));
 };
 
-export const archiveInvoice = async (req: Request, res: Response) => {
-  await prisma.invoice.update({
-    where: { id: req.params.id as string },
-    data: { isArchived: true }
+export const deleteInvoice = async (req: Request, res: Response) => {
+  await prisma.invoice.delete({
+    where: { id: req.params.id as string }
   });
 
-  res.json(new ApiResponse(200, null, 'Invoice archived successfully'));
+  res.json(new ApiResponse(200, null, 'Invoice deleted successfully'));
 };

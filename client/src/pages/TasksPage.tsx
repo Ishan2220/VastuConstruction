@@ -134,27 +134,27 @@ export default function TasksPage() {
   );
 
   return (
-    <div className="p-4 md:p-8 lg:p-8 space-y-6 bg-slate-50 min-h-full font-sans">
+    <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight font-heading">
             Site Engineering Tasks & Milestones
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             Assign safety audits, RMC pouring schedules, scaffolding checks, and regulatory follow-ups.
           </p>
         </div>
 
         <button
           onClick={() => setIsAddOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-md transition-all"
+          className="clay-btn inline-flex items-center gap-2 px-4 py-2.5 text-white text-sm font-semibold transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Create Engineering Task</span>
         </button>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center clay-card p-4">
         <div className="relative w-full sm:w-80">
           <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
           <input
@@ -162,17 +162,17 @@ export default function TasksPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search tasks or site actions..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="clay-input w-full pl-10 pr-4 py-2 text-sm"
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-2 md:pb-0">
+        <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
           {['ALL', 'TODO', 'IN_PROGRESS', 'COMPLETED'].map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                statusFilter === st ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                statusFilter === st ? 'clay-card-sm text-[#7C6EF0]' : 'text-slate-600 hover:bg-white/40'
               }`}
             >
               {st === 'ALL' ? 'All Tasks' : st.replace('_', ' ')}
@@ -183,38 +183,40 @@ export default function TasksPage() {
 
       {isLoading ? (
         <div className="space-y-3 animate-pulse">
-          {[1, 2, 3].map((i) => <div key={i} className="h-24 bg-slate-200 rounded-2xl" />)}
+          {[1, 2, 3].map((i) => <div key={i} className="h-24 bg-white/40 rounded-2xl" />)}
         </div>
       ) : filteredTasks.length === 0 ? (
-        <div className="bg-white rounded-2xl border p-12 text-center text-slate-400">No site engineering tasks listed.</div>
+        <div className="clay-card p-12 text-center text-slate-400">No site engineering tasks listed.</div>
       ) : (
         <div className="space-y-3">
           {filteredTasks.map((task: any) => (
             <div
               key={task.id}
-              className={`p-5 rounded-2xl bg-white border shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${
-                task.status === 'COMPLETED' ? 'opacity-60 border-slate-200 bg-slate-50/50' : 'border-slate-200/80 hover:border-slate-300'
+              className={`p-5 clay-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${
+                task.status === 'COMPLETED' ? 'opacity-60 bg-white/30' : 'hover:border-[#7C6EF0]/30'
               }`}
             >
               <div className="space-y-1.5 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
+                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
                     task.priority === 'HIGH' || task.priority === 'URGENT'
-                      ? 'bg-rose-50 text-rose-700 border-rose-200'
-                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                      ? 'bg-clay-rose text-[#E5636C]'
+                      : task.priority === 'MEDIUM'
+                      ? 'bg-clay-amber text-[#F2A65A]'
+                      : 'bg-clay-blue text-[#4EA8DE]'
                   }`}>
                     {task.priority}
                   </span>
                   {task.project && (
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-clay-violet text-[#7C6EF0]">
                       {task.project.name}
                     </span>
                   )}
                 </div>
-                <h3 className={`font-bold text-base font-heading ${task.status === 'COMPLETED' ? 'line-through text-slate-500' : 'text-slate-900'}`}>
+                <h3 className={`font-bold text-base font-heading ${task.status === 'COMPLETED' ? 'line-through text-slate-500' : 'text-slate-800'}`}>
                   {task.title}
                 </h3>
-                {task.description && <p className="text-xs text-slate-500 line-clamp-2">{task.description}</p>}
+                {task.description && <p className="text-xs text-slate-600 line-clamp-2">{task.description}</p>}
                 <div className="flex items-center gap-4 text-xs text-slate-400 pt-1">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" /> Due: {task.dueDate ? formatDate(task.dueDate) : 'Soon'}
@@ -227,7 +229,7 @@ export default function TasksPage() {
               <div className="flex items-center gap-2 self-end sm:self-center">
                 <button
                   onClick={() => setEditingTask(task)}
-                  className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
                   title="Edit Task Details"
                 >
                   <Edit3 className="w-4 h-4" />
@@ -238,7 +240,7 @@ export default function TasksPage() {
                       deleteMutation.mutate(task.id);
                     }
                   }}
-                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-[#E5636C]/10 rounded-lg transition-colors cursor-pointer"
                   title="Delete Task"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -246,7 +248,7 @@ export default function TasksPage() {
                 {task.status !== 'COMPLETED' && (
                   <button
                     onClick={() => updateStatusMutation.mutate({ id: task.id, status: 'COMPLETED' })}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition-all"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-clay-green text-[#5CB77E] text-xs font-bold transition-all hover:opacity-80"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Complete</span>
@@ -255,7 +257,7 @@ export default function TasksPage() {
                 <select
                   value={task.status}
                   onChange={(e) => updateStatusMutation.mutate({ id: task.id, status: e.target.value })}
-                  className="text-xs font-bold uppercase px-3 py-1.5 rounded-xl border bg-slate-50 text-slate-700 focus:outline-none"
+                  className="text-xs font-bold uppercase px-3 py-1.5 rounded-xl bg-white/50 border border-violet-100/40 text-slate-700 focus:outline-none"
                 >
                   <option value="TODO">To Do</option>
                   <option value="IN_PROGRESS">In Progress</option>
@@ -268,10 +270,10 @@ export default function TasksPage() {
       )}
 
       {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border shadow-2xl w-full max-w-md p-6 space-y-6">
-            <div className="flex items-center justify-between border-b pb-4">
-              <h3 className="font-bold text-lg font-heading">Create Engineering Task</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="font-bold text-lg font-heading text-slate-800">Create Engineering Task</h3>
               <button onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
             </div>
             <form onSubmit={handleCreate} className="space-y-4">
@@ -281,13 +283,13 @@ export default function TasksPage() {
                 placeholder="Task Title (e.g. Scaffolding inspection floor 8) *"
                 value={newTask.title}
                 onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-bold"
+                className="clay-input w-full px-3 py-2 text-sm font-bold"
               />
 
               <select
                 value={newTask.projectId}
                 onChange={(e) => setNewTask({ ...newTask, projectId: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="clay-input w-full px-3 py-2 text-sm"
               >
                 <option value="">Select Project Site (Optional)</option>
                 {projects.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -306,7 +308,7 @@ export default function TasksPage() {
                   type="date"
                   value={newTask.dueDate}
                   onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-semibold"
+                  className="clay-input w-full px-3 py-2 text-sm font-semibold"
                 />
               </div>
 
@@ -315,12 +317,12 @@ export default function TasksPage() {
                 placeholder="Specific instructions, checklist items, and safety standards..."
                 value={newTask.description}
                 onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="clay-input w-full px-3 py-2 text-sm"
               />
 
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 rounded-xl border text-slate-600 text-sm font-semibold">Cancel</button>
-                <button type="submit" disabled={createMutation.isPending} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow">Assign Task</button>
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
+                <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-white/40">Cancel</button>
+                <button type="submit" disabled={createMutation.isPending} className="clay-btn px-5 py-2 text-white text-sm font-semibold">Assign Task</button>
               </div>
             </form>
           </div>
@@ -329,10 +331,10 @@ export default function TasksPage() {
 
       {/* Edit Modal */}
       {editingTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border shadow-2xl w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-4">
-              <h3 className="font-bold text-lg font-heading">Update Engineering Task</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="font-bold text-lg font-heading text-slate-800">Update Engineering Task</h3>
               <button onClick={() => setEditingTask(null)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
             </div>
             <form onSubmit={handleUpdateTask} className="space-y-4">
@@ -342,7 +344,7 @@ export default function TasksPage() {
                 placeholder="Task Title *"
                 value={editingTask.title || ''}
                 onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-semibold"
+                className="clay-input w-full px-3 py-2 text-sm font-semibold"
               />
               <div className="grid grid-cols-2 gap-4">
                 <CategorySelect
@@ -355,7 +357,7 @@ export default function TasksPage() {
                 <select
                   value={editingTask.status || 'TODO'}
                   onChange={(e) => setEditingTask({ ...editingTask, status: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-semibold"
+                  className="clay-input w-full px-3 py-2 text-sm font-semibold"
                 >
                   <option value="TODO">To Do</option>
                   <option value="IN_PROGRESS">In Progress</option>
@@ -367,11 +369,11 @@ export default function TasksPage() {
                 placeholder="Specific instructions, checklist items, and safety standards..."
                 value={editingTask.description || ''}
                 onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="clay-input w-full px-3 py-2 text-sm"
               />
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setEditingTask(null)} className="px-4 py-2 rounded-xl border text-slate-600 text-sm font-semibold">Cancel</button>
-                <button type="submit" disabled={updateMutation.isPending} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow">Save Updates</button>
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
+                <button type="button" onClick={() => setEditingTask(null)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-white/40">Cancel</button>
+                <button type="submit" disabled={updateMutation.isPending} className="clay-btn px-5 py-2 text-white text-sm font-semibold">Save Updates</button>
               </div>
             </form>
           </div>

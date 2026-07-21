@@ -110,32 +110,32 @@ export default function IncomePage() {
   };
 
   return (
-    <div className="p-4 md:p-8 lg:p-8 space-y-6 bg-slate-50 min-h-full font-sans">
+    <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight font-heading">
             Client Billing & Payment Inflows
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             Log project milestone checks, RTGS/NEFT transfers, advances, and GST collection.
           </p>
         </div>
 
         <button
           onClick={() => setIsAddOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-md transition-all"
+          className="clay-btn inline-flex items-center gap-2 px-4 py-2.5 text-white text-sm font-semibold transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Record Inflow Payment</span>
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+      <div className="clay-card overflow-hidden">
         {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto scrollbar-hide">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase text-slate-500">
+              <tr className="border-b border-violet-100/30 text-xs font-bold uppercase text-slate-400">
                 <th className="p-4">Invoice / Ref</th>
                 <th className="p-4">Client</th>
                 <th className="p-4">Project Contract</th>
@@ -145,20 +145,20 @@ export default function IncomePage() {
                 <th className="p-4 text-center">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-sm">
+            <tbody className="divide-y divide-violet-100/30 text-sm">
               {incomes.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-slate-400">No income receipts logged yet.</td>
                 </tr>
               ) : (
                 incomes.map((inc: any) => (
-                  <tr key={inc.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="p-4 font-mono font-bold text-indigo-600">{inc.invoiceNo || inc.reference || 'INV-001'}</td>
-                    <td className="p-4 font-bold text-slate-900">{inc.client?.name || 'Corporate Client'}</td>
-                    <td className="p-4 font-semibold text-slate-700">{inc.project?.name || 'Main Site'}</td>
+                  <tr key={inc.id} className="hover:bg-violet-50/50 transition-colors">
+                    <td className="p-4 font-mono font-bold text-[#7C6EF0]">{inc.invoiceNo || inc.reference || 'INV-001'}</td>
+                    <td className="p-4 font-bold text-slate-800">{inc.client?.name || 'Corporate Client'}</td>
+                    <td className="p-4 font-semibold text-slate-600">{inc.project?.name || 'Main Site'}</td>
                     <td className="p-4 text-slate-500">{formatDate(inc.paymentDate)}</td>
-                    <td className="p-4 font-mono text-xs uppercase bg-slate-100 px-2 py-0.5 rounded w-fit">{inc.paymentMethod}</td>
-                    <td className="p-4 font-mono font-extrabold text-emerald-600">{formatCurrency(Number(inc.amount))}</td>
+                    <td className="p-4 font-mono text-xs uppercase bg-[#7C6EF0]/10 text-[#7C6EF0] px-2 py-0.5 rounded-md w-fit">{inc.paymentMethod}</td>
+                    <td className="p-4 font-mono font-extrabold text-[#5CB77E]">{formatCurrency(Number(inc.amount))}</td>
                     <td className="p-4 text-center">
                       <button
                         onClick={() => {
@@ -166,7 +166,7 @@ export default function IncomePage() {
                             deleteMutation.mutate(inc.id);
                           }
                         }}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                        className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                         title="Delete Income Record"
                       >
                         <Trash2 className="w-4 h-4 mx-auto" />
@@ -180,31 +180,31 @@ export default function IncomePage() {
         </div>
 
         {/* Mobile Card View */}
-        <div className="md:hidden flex flex-col divide-y divide-slate-100">
+        <div className="md:hidden flex flex-col divide-y divide-violet-100/30">
           {incomes.length === 0 ? (
             <div className="p-8 text-center text-slate-400">No income receipts logged yet.</div>
           ) : (
             incomes.map((inc: any) => (
-              <div key={inc.id} className="p-4 flex flex-col gap-3 hover:bg-slate-50/50 transition-colors">
+              <div key={inc.id} className="p-4 flex flex-col gap-3 hover:bg-violet-50/50 transition-colors">
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="font-mono font-bold text-indigo-600">{inc.invoiceNo || inc.reference || 'INV-001'}</div>
-                    <div className="font-bold text-slate-900 mt-1">{inc.client?.name || 'Corporate Client'}</div>
+                    <div className="font-mono font-bold text-[#7C6EF0]">{inc.invoiceNo || inc.reference || 'INV-001'}</div>
+                    <div className="font-bold text-slate-800 mt-1">{inc.client?.name || 'Corporate Client'}</div>
                   </div>
-                  <div className="font-mono font-extrabold text-emerald-600 text-lg">
+                  <div className="font-mono font-extrabold text-[#5CB77E] text-lg">
                     {formatCurrency(Number(inc.amount))}
                   </div>
                 </div>
                 
                 <div className="flex flex-col gap-1 text-xs text-slate-500">
                   <div className="flex justify-between">
-                    <span className="font-semibold text-slate-700">{inc.project?.name || 'Main Site'}</span>
+                    <span className="font-semibold text-slate-600">{inc.project?.name || 'Main Site'}</span>
                     <span>{formatDate(inc.paymentDate)}</span>
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center mt-2 pt-3 border-t border-slate-100">
-                  <span className="font-mono text-[10px] uppercase bg-slate-100 text-slate-600 px-2 py-1 rounded">
+                <div className="flex justify-between items-center mt-2 pt-3 border-t border-violet-100/30">
+                  <span className="font-mono text-[10px] uppercase bg-[#7C6EF0]/10 text-[#7C6EF0] px-2 py-1 rounded-md">
                     {inc.paymentMethod}
                   </span>
                   <button
@@ -213,7 +213,7 @@ export default function IncomePage() {
                         deleteMutation.mutate(inc.id);
                       }
                     }}
-                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                    className="p-2 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -225,10 +225,10 @@ export default function IncomePage() {
       </div>
 
       {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border shadow-2xl w-full max-w-md p-6 space-y-6">
-            <div className="flex items-center justify-between border-b pb-4">
-              <h3 className="font-bold text-lg font-heading">Record Client Inflow</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="font-bold text-lg font-heading text-slate-800">Record Client Inflow</h3>
               <button onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
             </div>
             <form onSubmit={handleCreate} className="space-y-4">
@@ -236,7 +236,7 @@ export default function IncomePage() {
                 required
                 value={newIncome.clientId}
                 onChange={(e) => setNewIncome({ ...newIncome, clientId: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="clay-input w-full text-sm"
               >
                 <option value="">Select Client *</option>
                 {clients.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -245,7 +245,7 @@ export default function IncomePage() {
               <select
                 value={newIncome.projectId}
                 onChange={(e) => setNewIncome({ ...newIncome, projectId: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="clay-input w-full text-sm"
               >
                 <option value="">Select Project Site</option>
                 {projects.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -258,7 +258,7 @@ export default function IncomePage() {
                   placeholder="Amount (₹) *"
                   value={newIncome.amount}
                   onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono"
+                  className="clay-input w-full text-sm font-mono"
                 />
               </div>
 
@@ -267,7 +267,7 @@ export default function IncomePage() {
                 placeholder="Invoice Number / UTR Reference"
                 value={newIncome.invoiceNo}
                 onChange={(e) => setNewIncome({ ...newIncome, invoiceNo: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono"
+                className="clay-input w-full text-sm font-mono"
               />
 
               <CategorySelect
@@ -283,7 +283,7 @@ export default function IncomePage() {
                   required
                   value={newIncome.accountId}
                   onChange={(e) => setNewIncome({ ...newIncome, accountId: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                  className="clay-input w-full text-sm"
                 >
                   <option value="">Select Bank Account *</option>
                   {accounts.map((acc: any) => (
@@ -292,9 +292,9 @@ export default function IncomePage() {
                 </select>
               )}
 
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 rounded-xl border text-slate-600 text-sm font-semibold">Cancel</button>
-                <button type="submit" disabled={createMutation.isPending} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow">Log Payment</button>
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
+                <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-violet-50 transition-colors">Cancel</button>
+                <button type="submit" disabled={createMutation.isPending} className="clay-btn px-5 py-2 text-white text-sm font-semibold">Log Payment</button>
               </div>
             </form>
           </div>

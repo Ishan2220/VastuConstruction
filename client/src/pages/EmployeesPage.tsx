@@ -124,27 +124,27 @@ export default function EmployeesPage() {
   });
 
   return (
-    <div className="p-4 md:p-8 lg:p-8 space-y-6 bg-slate-50 min-h-full font-sans">
+    <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight font-heading">
             Executive Staff & Department Roles
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             Manage engineers, project managers, finance officers, RBAC privileges, and department allocation.
           </p>
         </div>
 
         <button
           onClick={() => setIsAddOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-md transition-all"
+          className="clay-btn inline-flex items-center gap-2 px-4 py-2.5 text-white text-sm font-semibold transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Onboard Employee</span>
         </button>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+      <div className="clay-card p-4 flex items-center gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
           <input
@@ -152,13 +152,13 @@ export default function EmployeesPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search staff by name, department, or role designation..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="clay-input w-full pl-10 pr-4 py-2 text-sm"
           />
         </div>
       </div>
 
       {filteredEmp.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400 font-medium">
+        <div className="clay-card p-12 text-center text-slate-400 font-medium">
           No executive employees or site staff registered yet. Click "+ Onboard New Staff" above to add staff profiles and configure ERP role access.
         </div>
       ) : (
@@ -170,25 +170,37 @@ export default function EmployeesPage() {
             const roleStr = (emp.designation || emp.role || emp.user?.role || 'ENGINEER').replace(/_/g, ' ');
             const deptStr = emp.department || 'Site Operations';
             const statusStr = emp.user?.isActive === false || emp.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE';
+            
+            // Get initials
+            const initials = nameStr.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'E';
+
             return (
-              <div key={emp.id} onClick={() => setSelectedEmpAttendance(emp)} className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group">
-                <div className="space-y-3">
+              <div key={emp.id} onClick={() => setSelectedEmpAttendance(emp)} className="p-6 clay-card-sm space-y-4 flex flex-col justify-between hover:border-[#7C6EF0]/30 transition-all cursor-pointer group">
+                <div className="space-y-4">
                   <div className="flex justify-between items-start">
-                    <span className="text-xs font-mono font-bold uppercase px-2.5 py-1 rounded bg-indigo-50 text-indigo-700">
+                    <span className="text-xs font-mono font-bold uppercase px-2.5 py-1 rounded-full bg-clay-violet text-[#7C6EF0]">
                       {roleStr}
                     </span>
                     <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                      statusStr === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600'
+                      statusStr === 'ACTIVE' ? 'bg-clay-green text-[#5CB77E]' : 'bg-white/50 text-slate-400'
                     }`}>
                       {statusStr}
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-slate-900 font-heading">{nameStr}</h3>
-                  <div className="text-xs text-slate-500 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" /> <span className="truncate">{deptStr}</span>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold bg-gradient-to-br from-[#7C6EF0] to-[#A78BFA] shadow-md shadow-[#7C6EF0]/30">
+                      {initials}
                     </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-800 font-heading">{nameStr}</h3>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <Building2 className="w-3.5 h-3.5 flex-shrink-0" /> <span className="truncate">{deptStr}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-xs text-slate-600 space-y-1.5 pt-1">
                     <div className="flex items-center gap-2">
                       <Mail className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" /> <span className="truncate">{emailStr}</span>
                     </div>
@@ -198,17 +210,17 @@ export default function EmployeesPage() {
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
+                <div className="pt-3 border-t border-violet-100/30 flex justify-between items-center text-xs">
                   <span className="text-slate-400 flex items-center gap-1">
-                    <Shield className="w-3.5 h-3.5 text-indigo-500" /> ERP Access
+                    <Shield className="w-3.5 h-3.5 text-[#7C6EF0]" /> ERP Access
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100 mr-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-clay-green text-[#5CB77E] mr-2">
                       PAYMENTS UP TO DATE
                     </span>
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditingEmp(emp); }}
-                      className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
                       title="Edit Employee Role & Details"
                     >
                       <Edit3 className="w-4 h-4" />
@@ -220,7 +232,7 @@ export default function EmployeesPage() {
                           deleteMutation.mutate(emp.id);
                         }
                       }}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-[#E5636C]/10 rounded-lg transition-colors cursor-pointer"
                       title="Delete Employee Record"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -234,10 +246,10 @@ export default function EmployeesPage() {
       )}
 
       {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border shadow-2xl w-full max-w-md p-6 space-y-6">
-            <div className="flex items-center justify-between border-b pb-4">
-              <h3 className="font-bold text-lg font-heading">Onboard Staff Member</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="font-bold text-lg font-heading text-slate-800">Onboard Staff Member</h3>
               <button onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
             </div>
             <form onSubmit={handleAdd} className="space-y-4">
@@ -247,7 +259,7 @@ export default function EmployeesPage() {
                 placeholder="Full Name *"
                 value={newEmp.name}
                 onChange={(e) => setNewEmp({ ...newEmp, name: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="clay-input w-full px-3 py-2 text-sm"
               />
               <input
                 type="email"
@@ -255,20 +267,20 @@ export default function EmployeesPage() {
                 placeholder="Work Email Address *"
                 value={newEmp.email}
                 onChange={(e) => setNewEmp({ ...newEmp, email: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="clay-input w-full px-3 py-2 text-sm"
               />
               <input
                 type="text"
                 placeholder="Phone Number"
                 value={newEmp.phone}
                 onChange={(e) => setNewEmp({ ...newEmp, phone: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono"
+                className="clay-input w-full px-3 py-2 text-sm font-mono"
               />
               <div className="grid grid-cols-2 gap-4">
                 <select
                   value={newEmp.role}
                   onChange={(e) => setNewEmp({ ...newEmp, role: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                  className="clay-input w-full px-3 py-2 text-sm"
                 >
                   <option value="CHIEF_ENGINEER">Chief Engineer</option>
                   <option value="PROJECT_MANAGER">Project Manager</option>
@@ -279,7 +291,7 @@ export default function EmployeesPage() {
                 <select
                   value={newEmp.department}
                   onChange={(e) => setNewEmp({ ...newEmp, department: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                  className="clay-input w-full px-3 py-2 text-sm"
                 >
                   <option value="Civil Engineering">Civil Engineering</option>
                   <option value="Site Operations">Site Operations</option>
@@ -287,9 +299,9 @@ export default function EmployeesPage() {
                   <option value="Vendor & Supply Chain">Supply Chain</option>
                 </select>
               </div>
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 rounded-xl border text-slate-600 text-sm font-semibold">Cancel</button>
-                <button type="submit" className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow">Onboard</button>
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
+                <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-white/40">Cancel</button>
+                <button type="submit" className="clay-btn px-5 py-2 text-white text-sm font-semibold">Onboard</button>
               </div>
             </form>
           </div>
@@ -298,10 +310,10 @@ export default function EmployeesPage() {
 
       {/* Edit Modal */}
       {editingEmp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border shadow-2xl w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-4">
-              <h3 className="font-bold text-lg font-heading">Update Employee Profile</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="font-bold text-lg font-heading text-slate-800">Update Employee Profile</h3>
               <button onClick={() => setEditingEmp(null)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
             </div>
             <form onSubmit={handleUpdate} className="space-y-4">
@@ -311,7 +323,7 @@ export default function EmployeesPage() {
                 placeholder="Staff Member Name *"
                 value={editingEmp.name || editingEmp.user?.name || ''}
                 onChange={(e) => setEditingEmp({ ...editingEmp, name: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-semibold"
+                className="clay-input w-full px-3 py-2 text-sm font-semibold"
               />
               <input
                 type="email"
@@ -319,20 +331,20 @@ export default function EmployeesPage() {
                 placeholder="Official Email *"
                 value={editingEmp.email || editingEmp.user?.email || ''}
                 onChange={(e) => setEditingEmp({ ...editingEmp, email: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="clay-input w-full px-3 py-2 text-sm"
               />
               <input
                 type="text"
                 placeholder="Phone Number"
                 value={editingEmp.phone || ''}
                 onChange={(e) => setEditingEmp({ ...editingEmp, phone: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono"
+                className="clay-input w-full px-3 py-2 text-sm font-mono"
               />
               <div className="grid grid-cols-2 gap-4">
                 <select
                   value={editingEmp.designation || editingEmp.role || 'SITE_SUPERVISOR'}
                   onChange={(e) => setEditingEmp({ ...editingEmp, designation: e.target.value, role: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-semibold"
+                  className="clay-input w-full px-3 py-2 text-sm font-semibold"
                 >
                   <option value="PROJECT_MANAGER">Project Manager</option>
                   <option value="SITE_ENGINEER">Site Engineer</option>
@@ -343,7 +355,7 @@ export default function EmployeesPage() {
                 <select
                   value={editingEmp.department || 'Site Operations'}
                   onChange={(e) => setEditingEmp({ ...editingEmp, department: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                  className="clay-input w-full px-3 py-2 text-sm"
                 >
                   <option value="Civil Engineering">Civil Engineering</option>
                   <option value="Site Operations">Site Operations</option>
@@ -351,9 +363,9 @@ export default function EmployeesPage() {
                   <option value="Vendor & Supply Chain">Supply Chain</option>
                 </select>
               </div>
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setEditingEmp(null)} className="px-4 py-2 rounded-xl border text-slate-600 text-sm font-semibold">Cancel</button>
-                <button type="submit" disabled={updateMutation.isPending} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow">Save Updates</button>
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
+                <button type="button" onClick={() => setEditingEmp(null)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-white/40">Cancel</button>
+                <button type="submit" disabled={updateMutation.isPending} className="clay-btn px-5 py-2 text-white text-sm font-semibold">Save Updates</button>
               </div>
             </form>
           </div>
@@ -362,22 +374,22 @@ export default function EmployeesPage() {
 
       {/* Attendance Modal */}
       {selectedEmpAttendance && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border shadow-2xl w-full max-w-lg p-6 space-y-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-4">
-              <h3 className="font-bold text-lg font-heading">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-lg p-6 space-y-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="font-bold text-lg font-heading text-slate-800">
                 Attendance: {selectedEmpAttendance.name || selectedEmpAttendance.user?.name}
               </h3>
               <button onClick={() => setSelectedEmpAttendance(null)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
             </div>
             
-            <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <div className="flex justify-between items-center bg-white/40 p-4 rounded-xl border border-violet-100/30">
               <span className="text-sm font-semibold text-slate-700">Select Month</span>
               <input 
                 type="month"
                 value={attendanceMonth}
                 onChange={(e) => setAttendanceMonth(e.target.value)}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500"
+                className="clay-input px-3 py-1.5 text-sm"
               />
             </div>
 
@@ -396,18 +408,18 @@ export default function EmployeesPage() {
                     const dateStr = `${attendanceMonth}-${String(date).padStart(2, '0')}`;
                     const record = attendanceData.find((a: any) => a.date.startsWith(dateStr));
                     
-                    let bgClass = 'bg-slate-50 border-slate-100 text-slate-600';
+                    let bgClass = 'bg-white/50 border-violet-100/30 text-slate-600';
                     if (record) {
                       switch (record.status) {
-                        case 'PRESENT': bgClass = 'bg-emerald-100 border-emerald-200 text-emerald-700'; break;
-                        case 'ABSENT': bgClass = 'bg-rose-100 border-rose-200 text-rose-700'; break;
-                        case 'HALF_DAY': bgClass = 'bg-amber-100 border-amber-200 text-amber-700'; break;
-                        case 'LEAVE': bgClass = 'bg-blue-100 border-blue-200 text-blue-700'; break;
+                        case 'PRESENT': bgClass = 'bg-clay-green text-[#5CB77E]'; break;
+                        case 'ABSENT': bgClass = 'bg-clay-rose text-[#E5636C]'; break;
+                        case 'HALF_DAY': bgClass = 'bg-clay-amber text-[#F2A65A]'; break;
+                        case 'LEAVE': bgClass = 'bg-clay-blue text-[#4EA8DE]'; break;
                       }
                     }
 
                     return (
-                      <div key={date} className={`aspect-square rounded-lg border flex items-center justify-center text-xs font-bold ${bgClass}`}>
+                      <div key={date} className={`aspect-square rounded-lg border-none flex items-center justify-center text-xs font-bold ${bgClass} shadow-sm`}>
                         {date}
                       </div>
                     );
@@ -416,10 +428,10 @@ export default function EmployeesPage() {
               )}
             </div>
             
-            <div className="pt-4 border-t flex justify-end">
+            <div className="pt-4 border-t border-violet-100/30 flex justify-end">
               <button 
                 onClick={() => navigate(`/employees/${selectedEmpAttendance.id}`)}
-                className="text-indigo-600 text-sm font-semibold hover:underline"
+                className="text-[#7C6EF0] text-sm font-semibold hover:underline"
               >
                 View Full Profile
               </button>

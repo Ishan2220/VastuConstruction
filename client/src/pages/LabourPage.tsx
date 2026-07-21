@@ -174,14 +174,14 @@ export default function LabourPage() {
   );
 
   return (
-    <div className="p-4 md:p-8 lg:p-8 space-y-6 bg-slate-50 min-h-full font-sans">
+    <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight font-heading">
             Site Force & Labour Management
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             Maintain worker registry, track muster roll attendance, and manage daily wage payouts.
           </p>
         </div>
@@ -189,14 +189,14 @@ export default function LabourPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsAttendOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-sm font-semibold shadow-sm transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/60 border border-violet-100/30 text-[#7C6EF0] hover:bg-violet-50 text-sm font-bold shadow-sm transition-all"
           >
-            <UserCheck className="w-4 h-4 text-indigo-600" />
+            <UserCheck className="w-4 h-4" />
             <span>Mark Attendance</span>
           </button>
           <button
             onClick={() => setIsCreateOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-md shadow-indigo-600/20 transition-all"
+            className="clay-btn inline-flex items-center gap-2 px-4 py-2.5 text-white text-sm font-semibold transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>Register Worker</span>
@@ -205,7 +205,7 @@ export default function LabourPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-violet-100/30 pb-2 overflow-x-auto scrollbar-hide">
         {[
           { id: 'DIRECTORY', label: 'Worker Registry ({count})'.replace('{count}', String(laboursList.length)) },
           { id: 'ATTENDANCE', label: 'Daily Muster Roll' },
@@ -215,8 +215,8 @@ export default function LabourPage() {
             onClick={() => setActiveTab(tab.id as any)}
             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
               activeTab === tab.id
-                ? 'bg-slate-900 text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'bg-[#7C6EF0] text-white shadow-md'
+                : 'text-slate-600 hover:bg-violet-50/50'
             }`}
           >
             {tab.label}
@@ -226,7 +226,7 @@ export default function LabourPage() {
 
       {/* Search Bar */}
       {activeTab === 'DIRECTORY' && (
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-center clay-card !p-4">
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
             <input
@@ -234,7 +234,7 @@ export default function LabourPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by worker name, skill, or phone..."
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+              className="clay-input w-full pl-10 pr-4 py-2 text-sm"
             />
           </div>
         </div>
@@ -248,12 +248,12 @@ export default function LabourPage() {
               key={labour.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between space-y-4"
+              className="clay-card p-6 flex flex-col justify-between space-y-4"
             >
               <div className="space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-amber-50/80 text-[#F2A65A] border border-amber-200/50 shadow-sm">
                       {labour.skill || 'HELPER'}
                     </span>
                     <span className="text-xs text-slate-400 font-mono">{labour.idProofNo || 'Verified'}</span>
@@ -261,7 +261,7 @@ export default function LabourPage() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => setEditingLabour(labour)}
-                      className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer"
                       title="Edit Worker Profile"
                     >
                       <Edit3 className="w-4 h-4" />
@@ -272,7 +272,7 @@ export default function LabourPage() {
                           deleteLabourMutation.mutate(labour.id);
                         }
                       }}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                       title="Delete Worker Record"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -280,21 +280,21 @@ export default function LabourPage() {
                   </div>
                 </div>
 
-                <h3 className="text-lg font-bold text-slate-900 font-heading">{labour.name}</h3>
-                <div className="text-xs text-slate-500">{labour.phone || '+91 98000 00000'}</div>
+                <h3 className="text-lg font-bold text-slate-800 font-heading">{labour.name}</h3>
+                <div className="text-xs text-slate-600">{labour.phone || '+91 98000 00000'}</div>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+              <div className="pt-3 border-t border-violet-100/30 flex items-center justify-between">
                 <div>
                   <div className="text-[11px] text-slate-400 uppercase font-semibold">Daily Wage</div>
-                  <div className="text-base font-extrabold text-slate-900 font-mono">₹{labour.dailyWage}/day</div>
+                  <div className="text-base font-extrabold text-slate-800 font-mono">₹{labour.dailyWage}/day</div>
                 </div>
                 <button
                   onClick={() => {
                     setAttendData({ ...attendData, labourId: labour.id });
                     setIsAttendOpen(true);
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-all"
+                  className="px-3 py-1.5 rounded-lg bg-white/60 border border-violet-100/30 hover:bg-violet-50 text-[#7C6EF0] text-xs font-bold transition-all shadow-sm"
                 >
                   Mark Present
                 </button>
@@ -306,24 +306,24 @@ export default function LabourPage() {
 
       {/* Attendance Tab */}
       {activeTab === 'ATTENDANCE' && (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm p-6 space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="clay-card overflow-hidden p-6 space-y-6">
+          <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
             <div>
-              <h3 className="text-base font-bold text-slate-900 font-heading">Daily Attendance Log</h3>
+              <h3 className="text-base font-bold text-slate-800 font-heading">Daily Attendance Log</h3>
               <p className="text-xs text-slate-500">Muster roll records for selected date</p>
             </div>
             <input
               type="date"
               value={attendData.date}
               onChange={(e) => setAttendData({ ...attendData, date: e.target.value })}
-              className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="clay-input px-3 py-1.5 text-sm font-semibold"
             />
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto scrollbar-hide">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase text-slate-500">
+                <tr className="border-b border-violet-100/30 text-xs font-bold uppercase text-slate-400">
                   <th className="p-4">Worker Name</th>
                   <th className="p-4">Skill / Trade</th>
                   <th className="p-4">Status</th>
@@ -331,7 +331,7 @@ export default function LabourPage() {
                   <th className="p-4">Daily Wage</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
+              <tbody className="divide-y divide-violet-100/30 text-sm">
                 {attendanceList.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="p-8 text-center text-slate-400">
@@ -340,16 +340,16 @@ export default function LabourPage() {
                   </tr>
                 ) : (
                   attendanceList.map((a: any) => (
-                    <tr key={a.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="p-4 font-bold text-slate-900">{a.labour?.name || 'Worker'}</td>
+                    <tr key={a.id} className="hover:bg-violet-50/30 transition-colors">
+                      <td className="p-4 font-bold text-slate-800">{a.labour?.name || 'Worker'}</td>
                       <td className="p-4 font-semibold text-slate-600">{a.labour?.skill || 'HELPER'}</td>
                       <td className="p-4">
                         {a.present ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-[#5CB77E] border border-emerald-200/50 shadow-sm">
                             <CheckCircle2 className="w-3 h-3" /> {a.halfDay ? 'Half Day' : 'Present'}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-md bg-rose-50 text-[#E5636C] border border-rose-200/50 shadow-sm">
                             <XCircle className="w-3 h-3" /> Absent
                           </span>
                         )}
@@ -367,10 +367,10 @@ export default function LabourPage() {
 
       {/* Register Worker Modal */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md p-6 space-y-6 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h3 className="text-lg font-bold text-slate-900 font-heading">Register New Site Worker</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md p-6 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="text-lg font-bold text-slate-800 font-heading">Register New Site Worker</h3>
               <button onClick={() => setIsCreateOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">
                 Close ✕
               </button>
@@ -385,7 +385,7 @@ export default function LabourPage() {
                   placeholder="e.g. Ramdas Shinde"
                   value={newLabour.name}
                   onChange={(e) => setNewLabour({ ...newLabour, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="clay-input w-full text-sm"
                 />
               </div>
 
@@ -408,7 +408,7 @@ export default function LabourPage() {
                     placeholder="e.g. 950"
                     value={newLabour.dailyWage}
                     onChange={(e) => setNewLabour({ ...newLabour, dailyWage: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="clay-input w-full text-sm font-mono"
                   />
                 </div>
               </div>
@@ -420,22 +420,22 @@ export default function LabourPage() {
                   placeholder="+91 88990 11223"
                   value={newLabour.phone}
                   onChange={(e) => setNewLabour({ ...newLabour, phone: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="clay-input w-full text-sm"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold"
+                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-violet-50 transition-colors text-sm font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createLabourMutation.isPending}
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-md disabled:opacity-50"
+                  className="clay-btn px-5 py-2 text-white text-sm font-semibold disabled:opacity-50"
                 >
                   {createLabourMutation.isPending ? 'Registering...' : 'Register Worker'}
                 </button>
@@ -447,10 +447,10 @@ export default function LabourPage() {
 
       {/* Record Attendance Modal */}
       {isAttendOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md p-6 space-y-6 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h3 className="text-lg font-bold text-slate-900 font-heading">Mark Muster Attendance</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md p-6 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="text-lg font-bold text-slate-800 font-heading">Mark Muster Attendance</h3>
               <button onClick={() => setIsAttendOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">
                 Close ✕
               </button>
@@ -463,7 +463,7 @@ export default function LabourPage() {
                   required
                   value={attendData.labourId}
                   onChange={(e) => setAttendData({ ...attendData, labourId: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="clay-input w-full text-sm"
                 >
                   <option value="">Choose Worker</option>
                   {laboursList.map((l: any) => (
@@ -480,7 +480,7 @@ export default function LabourPage() {
                     required
                     value={attendData.date}
                     onChange={(e) => setAttendData({ ...attendData, date: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold"
+                    className="clay-input w-full text-sm font-semibold"
                   />
                 </div>
                 <div className="space-y-1">
@@ -489,33 +489,33 @@ export default function LabourPage() {
                     type="number"
                     value={attendData.overtime}
                     onChange={(e) => setAttendData({ ...attendData, overtime: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm font-mono"
+                    className="clay-input w-full text-sm font-mono"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/40 border border-violet-100/30 shadow-[inset_0_0_10px_rgba(124,110,240,0.02)]">
                 <span className="text-xs font-semibold text-slate-700">Present Full Day</span>
                 <input
                   type="checkbox"
                   checked={attendData.present}
                   onChange={(e) => setAttendData({ ...attendData, present: e.target.checked })}
-                  className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
+                  className="w-4 h-4 rounded text-[#7C6EF0] focus:ring-[#7C6EF0]"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
                 <button
                   type="button"
                   onClick={() => setIsAttendOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold"
+                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-violet-50 transition-colors text-sm font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={recordAttendanceMutation.isPending}
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-md disabled:opacity-50"
+                  className="clay-btn px-5 py-2 text-white text-sm font-semibold disabled:opacity-50"
                 >
                   {recordAttendanceMutation.isPending ? 'Saving...' : 'Record Attendance'}
                 </button>
@@ -527,10 +527,10 @@ export default function LabourPage() {
 
       {/* Edit Modal */}
       {editingLabour && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border shadow-2xl w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-4">
-              <h3 className="font-bold text-lg font-heading">Update Worker Profile</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="font-bold text-lg font-heading text-slate-800">Update Worker Profile</h3>
               <button onClick={() => setEditingLabour(null)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
             </div>
             <form onSubmit={handleUpdateLabour} className="space-y-4">
@@ -540,7 +540,7 @@ export default function LabourPage() {
                 placeholder="Worker Full Name *"
                 value={editingLabour.name || ''}
                 onChange={(e) => setEditingLabour({ ...editingLabour, name: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-semibold"
+                className="clay-input w-full text-sm font-semibold"
               />
               <div className="grid grid-cols-2 gap-4">
                 <input
@@ -549,7 +549,7 @@ export default function LabourPage() {
                   placeholder="Primary Phone *"
                   value={editingLabour.phone || ''}
                   onChange={(e) => setEditingLabour({ ...editingLabour, phone: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono"
+                  className="clay-input w-full text-sm font-mono"
                 />
                 <CategorySelect
                   module="labour"
@@ -566,12 +566,12 @@ export default function LabourPage() {
                   placeholder="Daily Wage (₹) *"
                   value={editingLabour.dailyWage || ''}
                   onChange={(e) => setEditingLabour({ ...editingLabour, dailyWage: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono font-bold text-emerald-600"
+                  className="clay-input w-full text-sm font-mono font-bold text-[#5CB77E]"
                 />
                 <select
                   value={editingLabour.idProofType || 'AADHAAR'}
                   onChange={(e) => setEditingLabour({ ...editingLabour, idProofType: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                  className="clay-input w-full text-sm"
                 >
                   <option value="AADHAAR">Aadhaar Card</option>
                   <option value="VOTER_ID">Voter ID</option>
@@ -584,11 +584,11 @@ export default function LabourPage() {
                 placeholder="ID Proof Number *"
                 value={editingLabour.idProofNo || ''}
                 onChange={(e) => setEditingLabour({ ...editingLabour, idProofNo: e.target.value.toUpperCase() })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono uppercase"
+                className="clay-input w-full text-sm font-mono uppercase"
               />
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setEditingLabour(null)} className="px-4 py-2 rounded-xl border text-slate-600 text-sm font-semibold">Cancel</button>
-                <button type="submit" disabled={updateLabourMutation.isPending} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow">Save Updates</button>
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
+                <button type="button" onClick={() => setEditingLabour(null)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-violet-50 transition-colors">Cancel</button>
+                <button type="submit" disabled={updateLabourMutation.isPending} className="clay-btn px-5 py-2 text-white text-sm font-semibold">Save Updates</button>
               </div>
             </form>
           </div>

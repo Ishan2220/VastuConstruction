@@ -124,10 +124,10 @@ export default function VendorsPage() {
   );
 
   return (
-    <div className="p-4 md:p-8 lg:p-8 space-y-6 bg-slate-50 min-h-full font-sans">
+    <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight font-heading">
             Authorized Vendors & Material Suppliers
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -137,14 +137,14 @@ export default function VendorsPage() {
 
         <button
           onClick={() => setIsAddOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-md transition-all"
+          className="clay-btn inline-flex items-center gap-2 px-4 py-2.5"
         >
           <Plus className="w-4 h-4" />
           <span>Onboard New Vendor</span>
         </button>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+      <div className="clay-card p-4 flex items-center gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
           <input
@@ -152,7 +152,7 @@ export default function VendorsPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search suppliers by agency name, category, or phone..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-10 pr-4 py-2 clay-input text-sm"
           />
         </div>
       </div>
@@ -162,15 +162,15 @@ export default function VendorsPage() {
           {[1, 2, 3].map((i) => <div key={i} className="h-48 bg-slate-200 rounded-2xl" />)}
         </div>
       ) : filteredVendors.length === 0 ? (
-        <div className="bg-white rounded-2xl border p-12 text-center text-slate-400">No vendor agencies found.</div>
+        <div className="clay-card p-12 text-center text-slate-400">No vendor agencies found.</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredVendors.map((vendor: any) => (
-            <div key={vendor.id} onClick={() => navigate(`/vendors/${vendor.id}`)} className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group">
+            <div key={vendor.id} onClick={() => navigate(`/vendors/${vendor.id}`)} className="clay-card p-6 space-y-4 flex flex-col justify-between hover:border-[#7C6EF0]/30 transition-all cursor-pointer group">
               <div className="space-y-3">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-[#7C6EF0]/10 text-[#7C6EF0] border border-[#7C6EF0]/20">
                       {vendor.category}
                     </span>
                     <span className="text-[11px] font-mono text-slate-400">{vendor.gst || vendor.gstin || 'GST Unregistered'}</span>
@@ -178,7 +178,7 @@ export default function VendorsPage() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditingVendor(vendor); }}
-                      className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
                       title="Edit Vendor Details"
                     >
                       <Edit3 className="w-4 h-4" />
@@ -198,7 +198,7 @@ export default function VendorsPage() {
                   </div>
                 </div>
 
-                <h3 className="text-lg font-bold text-slate-900 font-heading">{vendor.name}</h3>
+                <h3 className="text-lg font-bold text-slate-800 font-heading">{vendor.name}</h3>
                 <div className="text-xs text-slate-500 space-y-1">
                   <div>Contact: <strong className="text-slate-700">{vendor.contactPerson}</strong></div>
                   <div className="flex items-center gap-1.5 pt-1">
@@ -220,15 +220,15 @@ export default function VendorsPage() {
                   <span className="text-slate-500 font-medium">Paid</span>
                   <span className="font-bold text-emerald-600">₹{(vendor.totalPaid || 0).toLocaleString()}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm font-bold pt-2 border-t border-slate-50">
-                  <span className="text-slate-900">Outstanding</span>
+                <div className="flex items-center justify-between text-sm font-bold pt-2 border-t border-violet-100/30">
+                  <span className="text-slate-800">Outstanding</span>
                   <span className={(vendor.outstanding || 0) > 0 ? 'text-rose-600' : 'text-slate-500'}>
                     ₹{(vendor.outstanding || 0).toLocaleString()}
                   </span>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <div className="pt-3 border-t border-violet-100/30 flex items-center justify-between text-xs text-slate-500">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5 text-slate-400" /> {vendor.city || 'Mumbai'}
                 </span>
@@ -242,10 +242,10 @@ export default function VendorsPage() {
       )}
 
       {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border shadow-2xl w-full max-w-md p-6 space-y-6">
-            <div className="flex items-center justify-between border-b pb-4">
-              <h3 className="font-bold text-lg font-heading">Onboard Vendor Agency</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="font-bold text-lg font-heading text-slate-800">Onboard Vendor Agency</h3>
               <button onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
             </div>
             <form onSubmit={handleCreate} className="space-y-4">
@@ -255,7 +255,7 @@ export default function VendorsPage() {
                 placeholder="Agency Name *"
                 value={newVendor.name}
                 onChange={(e) => setNewVendor({ ...newVendor, name: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="w-full clay-input text-sm"
               />
               <input
                 type="text"
@@ -263,7 +263,7 @@ export default function VendorsPage() {
                 placeholder="Contact Person *"
                 value={newVendor.contactPerson}
                 onChange={(e) => setNewVendor({ ...newVendor, contactPerson: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="w-full clay-input text-sm"
               />
               <div className="grid grid-cols-2 gap-4">
                 <CategorySelect
@@ -278,7 +278,7 @@ export default function VendorsPage() {
                   placeholder="City"
                   value={newVendor.city}
                   onChange={(e) => setNewVendor({ ...newVendor, city: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                  className="w-full clay-input text-sm"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -287,14 +287,14 @@ export default function VendorsPage() {
                   placeholder="State"
                   value={newVendor.state || ''}
                   onChange={(e) => setNewVendor({ ...newVendor, state: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                  className="w-full clay-input text-sm"
                 />
                 <input
                   type="number"
                   placeholder="Opening Balance"
                   value={newVendor.openingBalance}
                   onChange={(e) => setNewVendor({ ...newVendor, openingBalance: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                  className="w-full clay-input text-sm"
                 />
               </div>
               <input
@@ -302,18 +302,18 @@ export default function VendorsPage() {
                 placeholder="Phone Number *"
                 value={newVendor.phone}
                 onChange={(e) => setNewVendor({ ...newVendor, phone: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono"
+                className="w-full clay-input text-sm font-mono"
               />
               <input
                 type="text"
                 placeholder="GSTIN Number (15 digits)"
                 value={newVendor.gstin}
                 onChange={(e) => setNewVendor({ ...newVendor, gstin: e.target.value.toUpperCase() })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono"
+                className="w-full clay-input text-sm font-mono"
               />
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 rounded-xl border text-slate-600 text-sm font-semibold">Cancel</button>
-                <button type="submit" disabled={createMutation.isPending} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow">Onboard</button>
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
+                <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-slate-100">Cancel</button>
+                <button type="submit" disabled={createMutation.isPending} className="clay-btn px-5 py-2">Onboard</button>
               </div>
             </form>
           </div>
@@ -322,10 +322,10 @@ export default function VendorsPage() {
 
       {/* Edit Modal */}
       {editingVendor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border shadow-2xl w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-4">
-              <h3 className="font-bold text-lg font-heading">Update Vendor Agency</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="font-bold text-lg font-heading text-slate-800">Update Vendor Agency</h3>
               <button onClick={() => setEditingVendor(null)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
             </div>
             <form onSubmit={handleUpdate} className="space-y-4">
@@ -335,7 +335,7 @@ export default function VendorsPage() {
                 placeholder="Agency Name *"
                 value={editingVendor.name || ''}
                 onChange={(e) => setEditingVendor({ ...editingVendor, name: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-semibold"
+                className="w-full clay-input text-sm font-semibold"
               />
               <input
                 type="text"
@@ -343,7 +343,7 @@ export default function VendorsPage() {
                 placeholder="Primary Contact Person *"
                 value={editingVendor.contactPerson || ''}
                 onChange={(e) => setEditingVendor({ ...editingVendor, contactPerson: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="w-full clay-input text-sm"
               />
               <div className="grid grid-cols-2 gap-4">
                 <CategorySelect
@@ -358,7 +358,7 @@ export default function VendorsPage() {
                   placeholder="City"
                   value={editingVendor.city || ''}
                   onChange={(e) => setEditingVendor({ ...editingVendor, city: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                  className="w-full clay-input text-sm"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -367,14 +367,14 @@ export default function VendorsPage() {
                   placeholder="State"
                   value={editingVendor.state || ''}
                   onChange={(e) => setEditingVendor({ ...editingVendor, state: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                  className="w-full clay-input text-sm"
                 />
                 <input
                   type="number"
                   placeholder="Opening Balance"
                   value={editingVendor.openingBalance || ''}
                   onChange={(e) => setEditingVendor({ ...editingVendor, openingBalance: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                  className="w-full clay-input text-sm"
                 />
               </div>
               <input
@@ -382,18 +382,18 @@ export default function VendorsPage() {
                 placeholder="Phone Number *"
                 value={editingVendor.phone || ''}
                 onChange={(e) => setEditingVendor({ ...editingVendor, phone: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono"
+                className="w-full clay-input text-sm font-mono"
               />
               <input
                 type="text"
                 placeholder="GSTIN Number"
                 value={editingVendor.gst || editingVendor.gstin || ''}
                 onChange={(e) => setEditingVendor({ ...editingVendor, gst: e.target.value.toUpperCase() })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono uppercase"
+                className="w-full clay-input text-sm font-mono uppercase"
               />
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setEditingVendor(null)} className="px-4 py-2 rounded-xl border text-slate-600 text-sm font-semibold">Cancel</button>
-                <button type="submit" disabled={updateMutation.isPending} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow">Save Updates</button>
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
+                <button type="button" onClick={() => setEditingVendor(null)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-slate-100">Cancel</button>
+                <button type="submit" disabled={updateMutation.isPending} className="clay-btn px-5 py-2">Save Updates</button>
               </div>
             </form>
           </div>

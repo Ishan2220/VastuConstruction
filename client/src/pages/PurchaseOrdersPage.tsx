@@ -38,14 +38,14 @@ export default function PurchaseOrdersPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'DRAFT': return 'bg-slate-500/10 text-slate-400';
-      case 'SUBMITTED': return 'bg-blue-500/10 text-blue-400';
-      case 'APPROVED': return 'bg-amber-500/10 text-amber-400';
-      case 'ORDERED': return 'bg-indigo-500/10 text-indigo-400';
-      case 'PARTIAL': return 'bg-purple-500/10 text-purple-400';
-      case 'RECEIVED': return 'bg-emerald-500/10 text-emerald-400';
-      case 'CANCELLED': return 'bg-red-500/10 text-red-400';
-      default: return 'bg-slate-500/10 text-slate-400';
+      case 'DRAFT': return 'bg-white text-slate-600 border border-violet-100/30';
+      case 'SUBMITTED': return 'bg-clay-blue/10 text-[#4EA8DE] border border-[#4EA8DE]/30';
+      case 'APPROVED': return 'bg-clay-amber/10 text-[#F2A65A] border border-[#F2A65A]/30';
+      case 'ORDERED': return 'bg-clay-violet/10 text-[#7C6EF0] border border-[#7C6EF0]/30';
+      case 'PARTIAL': return 'bg-purple-100 text-purple-600 border border-purple-300';
+      case 'RECEIVED': return 'bg-clay-green/10 text-[#5CB77E] border border-[#5CB77E]/30';
+      case 'CANCELLED': return 'bg-clay-rose/10 text-[#E5636C] border border-[#E5636C]/30';
+      default: return 'bg-white text-slate-500 border border-violet-100/30';
     }
   };
 
@@ -55,84 +55,84 @@ export default function PurchaseOrdersPage() {
   );
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <Package className="w-6 h-6 text-amber-500" />
+          <h1 className="text-2xl font-bold tracking-tight text-slate-800 flex items-center gap-3 font-heading">
+            <Package className="w-6 h-6 text-[#F2A65A]" />
             Purchase Orders
           </h1>
-          <p className="text-sm text-slate-400">Manage procurement and material orders</p>
+          <p className="text-sm text-slate-500 mt-1 font-medium">Manage procurement and material orders</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors shadow-lg shadow-amber-500/20">
+        <button className="clay-btn flex items-center gap-2 px-4 py-2 text-sm font-bold shadow-md">
           <Plus className="w-4 h-4" />
           Create PO
         </button>
       </div>
 
-      <div className="bg-[#1e293b] rounded-xl border border-white/10 overflow-hidden">
-        <div className="p-4 border-b border-white/10 flex items-center gap-4">
+      <div className="clay-card overflow-hidden">
+        <div className="p-4 border-b border-violet-100/40 flex items-center gap-4 bg-white/50">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search PO number or vendor..."
-              className="w-full pl-9 pr-4 py-2 bg-slate-900/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-400 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 transition-all"
+              className="clay-input pl-10 bg-white"
             />
           </div>
-          <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm font-medium transition-colors border border-white/5 flex items-center gap-2">
+          <button className="px-4 py-2 bg-white/50 hover:bg-white text-slate-600 rounded-xl text-sm font-bold transition-colors border border-violet-100/40 flex items-center gap-2 shadow-sm">
             Filter <ChevronDown className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scrollbar-hide">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/5 bg-slate-900/50">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">PO Number</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Vendor</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Project</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Date</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Amount</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</th>
+              <tr className="border-b border-violet-100/40 bg-white/50">
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">PO Number</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Vendor</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Project</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-violet-100/40">
               {isLoading ? (
-                <tr><td colSpan={7} className="p-8 text-center text-slate-400">Loading purchase orders...</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-slate-500 font-medium">Loading purchase orders...</td></tr>
               ) : filteredPOs.length === 0 ? (
-                <tr><td colSpan={7} className="p-8 text-center text-slate-400">No purchase orders found.</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-slate-500 font-medium">No purchase orders found.</td></tr>
               ) : (
                 filteredPOs.map((po) => (
-                  <tr key={po.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-4 py-3 whitespace-nowrap">
+                  <tr key={po.id} className="hover:bg-white/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-slate-400" />
-                        <span className="text-sm font-medium text-white">{po.poNumber}</span>
+                        <FileText className="w-4 h-4 text-[#7C6EF0]" />
+                        <span className="text-sm font-bold text-slate-800 font-heading">{po.poNumber}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-300">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">
                       {po.vendor?.name}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-300">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">
                       {po.project?.name || '-'}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-400">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 font-medium">
                       {format(new Date(po.issueDate), 'dd MMM yyyy')}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-white text-right">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-[#7C6EF0] text-right font-mono">
                       ₹{Number(po.totalAmount).toLocaleString('en-IN')}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-center">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(po.status)}`}>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(po.status)}`}>
                         {po.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
-                      <button className="text-amber-500 hover:text-amber-400 font-medium">View</button>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <button className="text-[#F2A65A] hover:text-[#d98b42] font-bold px-3 py-1.5 rounded-lg bg-clay-amber/10 hover:bg-clay-amber/20 transition-colors">View</button>
                     </td>
                   </tr>
                 ))

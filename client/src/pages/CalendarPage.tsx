@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar as CalendarIcon, Clock, CheckCircle2, AlertTriangle, Plus, MapPin, ChevronLeft, ChevronRight, HardHat, CheckSquare, Square, Building2, CalendarDays, RefreshCw, Edit3, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, CheckCircle2, AlertTriangle, Plus, MapPin, ChevronLeft, ChevronRight, HardHat, CheckSquare, Square, Building2, CalendarDays, RefreshCw, Edit3, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 
@@ -282,25 +282,25 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 lg:p-8 space-y-6 bg-slate-50 min-h-full font-sans">
+    <div className="p-4 sm:p-6 space-y-5 min-h-full font-sans">
       {/* Top Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-violet-100/30 pb-5">
         <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 mb-2 border border-indigo-100">
-            <CalendarDays className="w-3.5 h-3.5" /> Live Master Schedule & Site Deadlines
+          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-clay-violet text-[#7C6EF0] mb-2">
+            <CalendarDays className="w-3.5 h-3.5" /> Live Master Schedule
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
-            Construction Calendar & Task Matrix
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight font-heading">
+            Calendar & Tasks
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Interactive grid for RCC slab pours, structural inspections, material deliveries, and daily muster checklists.
+          <p className="text-sm text-slate-400 mt-1">
+            Pours, inspections, deliveries & daily checklists.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={handleGoToToday}
-            className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-sm font-semibold transition-all shadow-sm"
+            className="clay-card-sm px-4 py-2.5 text-slate-700 text-sm font-semibold transition-all"
           >
             Today ({new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })})
           </button>
@@ -310,24 +310,25 @@ export default function CalendarPage() {
               setNewEvent((prev) => ({ ...prev, dateStr: selectedDateStr }));
               setIsScheduleOpen(true);
             }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-md transition-all"
+            className="clay-btn inline-flex items-center gap-2 px-4 py-2.5 text-sm"
           >
             <Plus className="w-4 h-4" />
-            <span>Schedule Site Task / Milestone</span>
+            <span className="hidden sm:inline">Schedule Task</span>
+            <span className="sm:hidden">Add</span>
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Side: Interactive Monthly Grid Calendar (7 Cols) */}
-        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6 flex flex-col">
+        <div className="lg:col-span-7 clay-card p-4 sm:p-6 space-y-5 flex flex-col">
           {/* Calendar Month Selector & Header */}
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
             <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-extrabold text-slate-900 font-heading">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 font-heading">
                 {monthNames[month]} {year}
               </h2>
-              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+              <span className="text-xs font-heading font-bold px-2 py-0.5 rounded-lg bg-clay-violet text-[#7C6EF0]">
                 {daysInMonth} Days
               </span>
             </div>
@@ -335,14 +336,14 @@ export default function CalendarPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={handlePrevMonth}
-                className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition-all"
+                className="p-2 rounded-xl border border-violet-100/40 hover:bg-violet-50/50 text-slate-500 transition-all"
                 title="Previous Month"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={handleNextMonth}
-                className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition-all"
+                className="p-2 rounded-xl border border-violet-100/40 hover:bg-violet-50/50 text-slate-500 transition-all"
                 title="Next Month"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -351,12 +352,12 @@ export default function CalendarPage() {
           </div>
 
           {/* Day Headers (Sun - Sat) */}
-          <div className="grid grid-cols-7 gap-2 text-center">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((dayName, idx) => (
               <div
                 key={dayName}
-                className={`py-2 text-xs font-extrabold uppercase tracking-wider rounded-lg ${
-                  idx === 0 || idx === 6 ? 'text-rose-500 bg-rose-50/50' : 'text-slate-500 bg-slate-50'
+                className={`py-1.5 sm:py-2 text-[10px] sm:text-xs font-extrabold uppercase tracking-wider rounded-lg ${
+                  idx === 0 || idx === 6 ? 'text-[#E5636C] bg-clay-rose' : 'text-slate-400 bg-white/40'
                 }`}
               >
                 {dayName}
@@ -368,7 +369,7 @@ export default function CalendarPage() {
           <div className="grid grid-cols-7 gap-1 sm:gap-2 flex-1">
             {calendarDays.map((cell, idx) => {
               if (!cell.dayNumber || !cell.dateStr) {
-                return <div key={`pad-${idx}`} className="min-h-[60px] sm:min-h-[96px] bg-slate-50/40 rounded-xl border border-slate-100/50" />;
+                return <div key={`pad-${idx}`} className="min-h-[56px] sm:min-h-[90px] bg-white/20 rounded-xl border border-violet-100/20" />;
               }
 
               const isSelected = cell.dateStr === selectedDateStr;
@@ -379,46 +380,46 @@ export default function CalendarPage() {
                 <div
                   key={cell.dateStr}
                   onClick={() => setSelectedDateStr(cell.dateStr!)}
-                  className={`min-h-[60px] sm:min-h-[96px] p-1 sm:p-2 rounded-xl border transition-all cursor-pointer flex flex-col overflow-hidden relative group ${
+                  className={`min-h-[56px] sm:min-h-[90px] p-1 sm:p-2 rounded-xl border transition-all cursor-pointer flex flex-col overflow-hidden relative group ${
                     isSelected
-                      ? 'border-indigo-600 ring-2 ring-indigo-500/30 bg-indigo-50/30 shadow-md'
+                      ? 'border-[#7C6EF0] ring-2 ring-[#7C6EF0]/20 bg-violet-50/40 shadow-md'
                       : isToday
-                      ? 'border-amber-400 bg-amber-50/30 ring-2 ring-amber-400/40'
-                      : 'border-slate-200 bg-white hover:border-indigo-300 hover:bg-slate-50/60'
+                      ? 'border-[#F2A65A] bg-amber-50/30 ring-2 ring-[#F2A65A]/30'
+                      : 'border-violet-100/30 bg-white/60 hover:border-[#7C6EF0]/30 hover:bg-violet-50/20'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span
-                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center font-bold text-[10px] sm:text-xs font-mono transition-colors ${
+                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center font-bold text-[10px] sm:text-xs font-heading transition-colors ${
                         isSelected
-                          ? 'bg-indigo-600 text-white'
+                          ? 'bg-[#7C6EF0] text-white'
                           : isToday
-                          ? 'bg-amber-500 text-white'
-                          : 'text-slate-700 group-hover:bg-slate-200'
+                          ? 'bg-[#F2A65A] text-white'
+                          : 'text-slate-600 group-hover:bg-violet-100/50'
                       }`}
                     >
                       {cell.dayNumber}
                     </span>
                     {isToday && (
-                      <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
-                        Today
+                      <span className="text-[8px] font-extrabold uppercase px-1 py-0.5 rounded-md bg-clay-amber text-[#F2A65A] hidden sm:inline">
+                        T
                       </span>
                     )}
                   </div>
 
                   {/* Events preview inside cell */}
-                  <div className="space-y-1 mt-1 overflow-hidden">
+                  <div className="space-y-0.5 mt-1 overflow-hidden">
                     {cellEvents.slice(0, 2).map((ev) => (
                       <div
                         key={ev.id}
-                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded truncate ${
+                        className={`text-[9px] sm:text-[10px] font-bold px-1 py-0.5 rounded-md truncate ${
                           ev.type === 'POUR'
-                            ? 'bg-indigo-100 text-indigo-800'
+                            ? 'bg-clay-violet text-[#7C6EF0]'
                             : ev.type === 'DELIVERY'
-                            ? 'bg-emerald-100 text-emerald-800'
+                            ? 'bg-clay-green text-[#5CB77E]'
                             : ev.type === 'AUDIT'
-                            ? 'bg-rose-100 text-rose-800'
-                            : 'bg-slate-100 text-slate-700'
+                            ? 'bg-clay-rose text-[#E5636C]'
+                            : 'bg-white/60 text-slate-500'
                         }`}
                         title={ev.title}
                       >
@@ -436,79 +437,78 @@ export default function CalendarPage() {
             })}
           </div>
 
-          <div className="flex flex-wrap items-center justify-between pt-4 border-t border-slate-100 text-xs text-slate-500 gap-4">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-indigo-500" /> Selected Date</span>
-              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-500" /> Live Today</span>
-              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-500" /> Material Delivery</span>
-              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-rose-500" /> Structural Audit</span>
+          <div className="flex flex-wrap items-center justify-between pt-3 border-t border-violet-100/30 text-[11px] text-slate-400 gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#7C6EF0]" /> Selected</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#F2A65A]" /> Today</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#5CB77E]" /> Delivery</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#E5636C]" /> Audit</span>
             </div>
-            <span>Click any date cell to view schedule & check off tasks</span>
           </div>
         </div>
 
         {/* Right Side Panel: Today's Tasks & Schedule (5 Cols) */}
-        <div className="lg:col-span-5 space-y-6 flex flex-col justify-between">
+        <div className="lg:col-span-5 space-y-5 flex flex-col justify-between">
           {/* Section 1: Tasks for Selected Date / Today */}
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="clay-card p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#7C6EF0] bg-clay-violet px-2.5 py-1 rounded-lg">
                   {selectedDateStr === todayStr ? "Today's Schedule" : 'Date Inspection'}
                 </span>
-                <h3 className="text-xl font-bold text-slate-900 mt-2 font-heading">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-800 mt-2 font-heading">
                   {new Date(selectedDateStr).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                 </h3>
               </div>
-              <span className="text-xs font-mono font-extrabold bg-slate-900 text-white px-3 py-1.5 rounded-xl">
-                {tasksForSelectedDate.length} Tasks
+              <span className="text-xs font-heading font-bold bg-[#7C6EF0] text-white px-3 py-1.5 rounded-xl">
+                {tasksForSelectedDate.length}
               </span>
             </div>
 
             {tasksForSelectedDate.length === 0 ? (
-              <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 space-y-2">
-                <CheckCircle2 className="w-8 h-8 text-slate-300 mx-auto" />
-                <div className="text-sm font-bold text-slate-700">No tasks or pours scheduled for this date.</div>
+              <div className="py-8 text-center bg-white/40 rounded-xl border border-dashed border-violet-200/40 space-y-2">
+                <CheckCircle2 className="w-8 h-8 text-violet-200 mx-auto" />
+                <div className="text-sm font-bold text-slate-500">No tasks scheduled.</div>
                 <button
                   onClick={() => {
                     setNewEvent((prev) => ({ ...prev, dateStr: selectedDateStr }));
                     setIsScheduleOpen(true);
                   }}
-                  className="text-xs font-bold text-indigo-600 hover:underline"
+                  className="text-xs font-bold text-[#7C6EF0] hover:underline"
                 >
-                  + Schedule Task / Milestone for {selectedDateStr}
+                  + Schedule Task for {selectedDateStr}
                 </button>
               </div>
             ) : (
-              <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+              <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1 scrollbar-hide">
                 {tasksForSelectedDate.map((ev) => (
                   <div
                     key={ev.id}
-                    className={`p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
+                    className={`p-3.5 rounded-xl border transition-all flex items-start gap-3 ${
                       ev.completed
-                        ? 'bg-emerald-50/50 border-emerald-200/80 opacity-75'
-                        : 'bg-white border-slate-200 shadow-sm hover:border-indigo-300'
+                        ? 'bg-green-50/30 border-green-200/40 opacity-75'
+                        : 'bg-white/60 border-violet-100/30 hover:border-[#7C6EF0]/30'
                     }`}
                   >
                     <button
                       onClick={() => toggleComplete(ev.id)}
-                      className="mt-0.5 text-indigo-600 hover:text-indigo-700 transition-colors flex-shrink-0"
+                      className="mt-0.5 text-[#7C6EF0] hover:text-[#6558D3] transition-colors flex-shrink-0"
                       title={ev.completed ? 'Mark incomplete' : 'Mark complete'}
                     >
                       {ev.completed ? (
-                        <CheckSquare className="w-5 h-5 text-emerald-600" />
+                        <CheckSquare className="w-5 h-5 text-[#5CB77E]" />
                       ) : (
-                        <Square className="w-5 h-5 text-slate-400 hover:text-indigo-600" />
+                        <Square className="w-5 h-5 text-slate-300 hover:text-[#7C6EF0]" />
                       )}
                     </button>
 
                     <div className="space-y-1 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className={`text-[10px] font-mono font-extrabold uppercase px-2 py-0.5 rounded border ${
-                          ev.type === 'POUR' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                          ev.type === 'DELIVERY' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          ev.type === 'AUDIT' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                          'bg-slate-100 text-slate-700 border-slate-200'
+                        <span className={`text-[10px] font-heading font-bold uppercase px-2 py-0.5 rounded-lg ${
+                          ev.type === 'POUR' ? 'bg-clay-violet text-[#7C6EF0]' :
+                          ev.type === 'DELIVERY' ? 'bg-clay-green text-[#5CB77E]' :
+                          ev.type === 'AUDIT' ? 'bg-clay-rose text-[#E5636C]' :
+                          'bg-white/60 text-slate-500'
                         }`}>
                           {ev.type}
                         </span>
@@ -518,14 +518,14 @@ export default function CalendarPage() {
                           </span>
                           <button
                             onClick={() => setEditingEvent(ev)}
-                            className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+                            className="p-1 text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer"
                             title="Edit Event"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={(e) => handleDeleteEvent(ev.id, e)}
-                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                            className="p-1 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                             title="Delete Event"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -533,12 +533,12 @@ export default function CalendarPage() {
                         </div>
                       </div>
 
-                      <h4 className={`text-sm font-bold font-heading ${ev.completed ? 'line-through text-slate-500' : 'text-slate-900'}`}>
+                      <h4 className={`text-sm font-bold font-heading ${ev.completed ? 'line-through text-slate-400' : 'text-slate-800'}`}>
                         {ev.title}
                       </h4>
 
-                      <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
-                        <span className="flex items-center gap-1 font-semibold text-indigo-600">
+                      <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
+                        <span className="flex items-center gap-1 font-semibold text-[#7C6EF0]">
                           <MapPin className="w-3.5 h-3.5" /> {ev.site}
                         </span>
                         <span>Assignee: <strong className="text-slate-700">{ev.assignee || 'Engineer'}</strong></span>
@@ -551,43 +551,43 @@ export default function CalendarPage() {
           </div>
 
           {/* Section 2: Upcoming Future Tasks & Deadlines */}
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-bold text-slate-900 font-heading">Upcoming Future Deadlines</h3>
+          <div className="clay-card p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-3">
+              <h3 className="text-base font-bold text-slate-800 font-heading">Upcoming Deadlines</h3>
               <span className="text-xs text-slate-400 font-semibold">Next 14 Days</span>
             </div>
 
-            <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1 scrollbar-hide">
               {futureTasks.slice(0, 4).map((ft) => (
                 <div
                   key={ft.id}
                   onClick={() => setSelectedDateStr(ft.dateStr)}
-                  className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-indigo-50/40 transition-all cursor-pointer flex items-center justify-between gap-3 group"
+                  className="p-3 rounded-xl bg-white/60 border border-violet-100/30 hover:border-[#7C6EF0]/30 transition-all cursor-pointer flex items-center justify-between gap-3 group"
                 >
                   <div className="space-y-0.5">
-                    <div className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors font-heading">
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-[#7C6EF0] transition-colors font-heading">
                       {ft.title}
                     </div>
-                    <div className="text-[11px] text-slate-500 flex items-center gap-2">
-                      <span className="font-semibold text-indigo-600">{ft.site}</span>
+                    <div className="text-[11px] text-slate-400 flex items-center gap-2">
+                      <span className="font-semibold text-[#7C6EF0]">{ft.site}</span>
                       <span>•</span>
                       <span>{ft.assignee}</span>
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0 flex items-center gap-2">
-                    <div className="text-xs font-mono font-extrabold text-slate-800 bg-white px-2 py-1 rounded border border-slate-200">
+                    <div className="text-xs font-heading font-bold text-slate-700 bg-clay-violet px-2 py-1 rounded-lg">
                       {ft.dateStr.split('-')[2]} {monthNames[Number(ft.dateStr.split('-')[1]) - 1].slice(0, 3)}
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditingEvent(ft); }}
-                      className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+                      className="p-1 text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer"
                       title="Edit Event"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={(e) => handleDeleteEvent(ft.id, e)}
-                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                      className="p-1 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                       title="Delete Event"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -602,15 +602,15 @@ export default function CalendarPage() {
 
       {/* Schedule New Milestone Modal */}
       {isScheduleOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg p-6 space-y-6 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h3 className="text-lg font-bold text-slate-900 font-heading">Schedule Site Task / Milestone</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-lg p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="text-lg font-bold text-slate-800 font-heading">Schedule Task</h3>
               <button
                 onClick={() => setIsScheduleOpen(false)}
-                className="text-slate-400 hover:text-slate-600 text-sm font-semibold"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
               >
-                Close ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -623,7 +623,7 @@ export default function CalendarPage() {
                   placeholder="e.g. Skyline Tower A - 10th Floor Column Shuttering Inspection"
                   value={newEvent.title}
                   onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="clay-input w-full px-3 py-2 text-sm"
                 />
               </div>
 
@@ -657,7 +657,7 @@ export default function CalendarPage() {
                   <select
                     value={newEvent.type}
                     onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as any })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="clay-input w-full px-3 py-2 text-sm"
                   >
                     <option value="MILESTONE">Site Milestone</option>
                     <option value="POUR">RCC / Slab Pouring</option>
@@ -672,7 +672,7 @@ export default function CalendarPage() {
                   <select
                     value={newEvent.site}
                     onChange={(e) => setNewEvent({ ...newEvent, site: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="clay-input w-full px-3 py-2 text-sm"
                   >
                     <option value="Skyline Residency">Skyline Residency</option>
                     <option value="Bandra Commercial">Bandra Commercial</option>
@@ -690,23 +690,23 @@ export default function CalendarPage() {
                   placeholder="e.g. Vikas Patil (Senior Engineer)"
                   value={newEvent.assignee}
                   onChange={(e) => setNewEvent({ ...newEvent, assignee: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="clay-input w-full px-3 py-2 text-sm"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
                 <button
                   type="button"
                   onClick={() => setIsScheduleOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold"
+                  className="px-4 py-2 rounded-xl border border-violet-100/40 text-slate-600 hover:bg-violet-50/30 text-sm font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-md"
+                  className="clay-btn px-5 py-2 text-sm"
                 >
-                  Schedule onto Master Calendar
+                  Schedule
                 </button>
               </div>
             </form>
@@ -716,15 +716,15 @@ export default function CalendarPage() {
 
       {/* Edit Event Modal */}
       {editingEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg p-6 space-y-6 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h3 className="text-lg font-bold text-slate-900 font-heading">Edit Calendar Event / Task</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-lg p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="text-lg font-bold text-slate-800 font-heading">Edit Event</h3>
               <button
                 onClick={() => setEditingEvent(null)}
-                className="text-slate-400 hover:text-slate-600 text-sm font-semibold"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
               >
-                Close ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -736,7 +736,7 @@ export default function CalendarPage() {
                   required
                   value={editingEvent.title || ''}
                   onChange={(e) => setEditingEvent({ ...editingEvent, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-semibold text-slate-900"
+                  className="clay-input w-full px-3 py-2 text-sm font-semibold text-slate-800"
                 />
               </div>
 
@@ -748,7 +748,7 @@ export default function CalendarPage() {
                     required
                     value={editingEvent.dateStr || ''}
                     onChange={(e) => setEditingEvent({ ...editingEvent, dateStr: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-semibold text-slate-900"
+                    className="clay-input w-full px-3 py-2 text-sm font-semibold text-slate-800"
                   />
                 </div>
 
@@ -757,7 +757,7 @@ export default function CalendarPage() {
                   <select
                     value={editingEvent.type || 'MILESTONE'}
                     onChange={(e) => setEditingEvent({ ...editingEvent, type: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-semibold text-slate-900"
+                    className="clay-input w-full px-3 py-2 text-sm font-semibold text-slate-800"
                   >
                     <option value="MILESTONE">Milestone</option>
                     <option value="POUR">Pour</option>
@@ -774,21 +774,21 @@ export default function CalendarPage() {
                   type="text"
                   value={editingEvent.site || ''}
                   onChange={(e) => setEditingEvent({ ...editingEvent, site: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-semibold text-slate-900"
+                  className="clay-input w-full px-3 py-2 text-sm font-semibold text-slate-800"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
                 <button
                   type="button"
                   onClick={() => setEditingEvent(null)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold"
+                  className="px-4 py-2 rounded-xl border border-violet-100/40 text-slate-600 hover:bg-violet-50/30 text-sm font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-md"
+                  className="clay-btn px-5 py-2 text-sm"
                 >
                   Save Changes
                 </button>

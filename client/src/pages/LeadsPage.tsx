@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp, clayCardHover } from '@/animations';
 import {
   UserPlus,
   Plus,
@@ -133,7 +134,7 @@ export default function LeadsPage() {
   );
 
   return (
-    <div className="p-4 md:p-8 lg:p-8 space-y-6 bg-slate-50 min-h-full font-sans">
+    <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
@@ -146,14 +147,14 @@ export default function LeadsPage() {
 
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-md shadow-indigo-600/20 transition-all"
+          className="inline-flex items-center gap-2 px-4 py-2.5 clay-btn text-white text-sm font-semibold transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Add Lead Inquiry</span>
         </button>
       </div>
 
-      <div className="sticky top-16 z-20 bg-white/90 backdrop-blur-md p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center gap-3">
+      <div className="sticky top-16 z-20 clay-card p-3 md:p-4 flex flex-col md:flex-row md:items-center gap-3">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
           <input
@@ -161,7 +162,7 @@ export default function LeadsPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search leads by client name, phone, or email..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow shadow-inner"
+            className="w-full pl-10 pr-4 py-2.5 clay-input text-sm focus:outline-none"
           />
         </div>
       </div>
@@ -173,22 +174,22 @@ export default function LeadsPage() {
           ))}
         </div>
       ) : filteredLeads.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
-          <UserPlus className="w-10 h-10 text-indigo-500 mx-auto" />
+        <div className="clay-card p-12 text-center space-y-3">
+          <UserPlus className="w-10 h-10 text-[#7C6EF0] mx-auto" />
           <h3 className="font-bold text-slate-800 text-lg">No lead inquiries found</h3>
           <p className="text-sm text-slate-500">Log new construction or interior project inquiries above.</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredLeads.map((lead: any) => (
-            <div key={lead.id} className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+            <div key={lead.id} className="clay-card p-4 space-y-4 flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="flex flex-wrap items-start justify-between pb-3 border-b border-slate-100 gap-2">
+                <div className="flex flex-wrap items-start justify-between pb-3 border-b border-violet-100/30 gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">{lead.source}</span>
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-clay-violet text-[#7C6EF0]">{lead.source}</span>
                     <button
                       onClick={() => setEditingLead(lead)}
-                      className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                      className="p-1 text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer"
                       title="Edit Lead Details"
                     >
                       <Edit3 className="w-4 h-4" />
@@ -199,7 +200,7 @@ export default function LeadsPage() {
                           deleteMutation.mutate(lead.id);
                         }
                       }}
-                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                      className="p-1 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                       title="Delete Lead Inquiry"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -208,7 +209,7 @@ export default function LeadsPage() {
                   <select
                     value={lead.status}
                     onChange={(e) => updateStatusMutation.mutate({ id: lead.id, status: e.target.value })}
-                    className="text-xs font-bold uppercase px-2 py-1 rounded bg-slate-100 border border-slate-200 text-slate-700 focus:outline-none"
+                    className="text-xs font-bold uppercase px-2 py-1 clay-input text-slate-700 focus:outline-none"
                   >
                     <option value="NEW">New</option>
                     <option value="CONTACTED">Contacted</option>
@@ -230,14 +231,14 @@ export default function LeadsPage() {
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-slate-600 line-clamp-2 pt-1 border-t border-slate-100">
+                <p className="text-xs text-slate-600 line-clamp-2 pt-1 border-t border-violet-100/30">
                   Requirement: <strong>{lead.requirement || lead.requiredService || 'Construction'}</strong>
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
+              <div className="pt-3 border-t border-violet-100/30 flex justify-between items-center text-xs">
                 <span className="text-slate-400">Budget:</span>
-                <span className="font-mono font-extrabold text-slate-900">{formatCurrency(Number(lead.budget || 0))}</span>
+                <span className="font-heading font-extrabold text-slate-900">{formatCurrency(Number(lead.budget || 0))}</span>
               </div>
             </div>
           ))}
@@ -245,8 +246,8 @@ export default function LeadsPage() {
       )}
 
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md p-6 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md p-6 space-y-6">
             <div className="flex items-center justify-between border-b pb-4">
               <h3 className="font-bold text-lg font-heading">New Lead Inquiry</h3>
               <button onClick={() => setIsCreateOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
@@ -258,7 +259,7 @@ export default function LeadsPage() {
                 placeholder="Client / Prospect Name *"
                 value={newLead.name}
                 onChange={(e) => setNewLead({ ...newLead, name: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="w-full clay-input text-sm"
               />
               <input
                 type="text"
@@ -266,34 +267,34 @@ export default function LeadsPage() {
                 placeholder="Phone Number (+91...) *"
                 value={newLead.phone}
                 onChange={(e) => setNewLead({ ...newLead, phone: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono"
+                className="w-full clay-input text-sm font-heading"
               />
               <input
                 type="email"
                 placeholder="Email Address"
                 value={newLead.email}
                 onChange={(e) => setNewLead({ ...newLead, email: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="w-full clay-input text-sm"
               />
               <input
                 type="number"
                 placeholder="Estimated Budget (₹)"
                 value={newLead.budget}
                 onChange={(e) => setNewLead({ ...newLead, budget: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono"
+                className="w-full clay-input text-sm font-heading"
               />
               <input
                 type="text"
                 placeholder="Required Scope / Plot Size"
                 value={newLead.plotSize}
                 onChange={(e) => setNewLead({ ...newLead, plotSize: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="w-full clay-input text-sm"
               />
               <textarea
                 placeholder="Detailed Requirement / Description"
                 value={newLead.requirement}
                 onChange={(e) => setNewLead({ ...newLead, requirement: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm min-h-[80px]"
+                className="w-full clay-input text-sm min-h-[80px]"
               />
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-700">Lead Source</label>
@@ -305,9 +306,9 @@ export default function LeadsPage() {
                   placeholder="Select Lead Source..."
                 />
               </div>
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 rounded-xl border text-slate-600 text-sm font-semibold">Cancel</button>
-                <button type="submit" disabled={createMutation.isPending} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow">Add Lead</button>
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
+                <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 rounded-xl border border-violet-100/40 hover:bg-violet-50 text-slate-600 text-sm font-semibold">Cancel</button>
+                <button type="submit" disabled={createMutation.isPending} className="px-5 py-2 clay-btn text-white text-sm font-semibold">Add Lead</button>
               </div>
             </form>
           </div>
@@ -316,8 +317,8 @@ export default function LeadsPage() {
 
       {/* Edit Modal */}
       {editingLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
             <div className="flex items-center justify-between border-b pb-4">
               <h3 className="font-bold text-lg font-heading">Update Lead Inquiry</h3>
               <button onClick={() => setEditingLead(null)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
@@ -329,7 +330,7 @@ export default function LeadsPage() {
                 placeholder="Client / Lead Name *"
                 value={editingLead.name || ''}
                 onChange={(e) => setEditingLead({ ...editingLead, name: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-semibold"
+                className="w-full clay-input text-sm font-semibold"
               />
               <div className="grid grid-cols-2 gap-4">
                 <input
@@ -338,14 +339,14 @@ export default function LeadsPage() {
                   placeholder="Contact Number *"
                   value={editingLead.phone || ''}
                   onChange={(e) => setEditingLead({ ...editingLead, phone: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono"
+                  className="w-full clay-input text-sm font-heading"
                 />
                 <input
                   type="email"
                   placeholder="Email Address"
                   value={editingLead.email || ''}
                   onChange={(e) => setEditingLead({ ...editingLead, email: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                  className="w-full clay-input text-sm"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -361,7 +362,7 @@ export default function LeadsPage() {
                   placeholder="Expected Budget (₹)"
                   value={editingLead.budget || ''}
                   onChange={(e) => setEditingLead({ ...editingLead, budget: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono"
+                  className="w-full clay-input text-sm font-heading"
                 />
               </div>
               <input
@@ -369,17 +370,17 @@ export default function LeadsPage() {
                 placeholder="Required Scope / Plot Size"
                 value={editingLead.requiredService || editingLead.plotSize || ''}
                 onChange={(e) => setEditingLead({ ...editingLead, requiredService: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="w-full clay-input text-sm"
               />
               <textarea
                 placeholder="Detailed Requirement / Description"
                 value={editingLead.requirement || ''}
                 onChange={(e) => setEditingLead({ ...editingLead, requirement: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm min-h-[80px]"
+                className="w-full clay-input text-sm min-h-[80px]"
               />
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setEditingLead(null)} className="px-4 py-2 rounded-xl border text-slate-600 text-sm font-semibold">Cancel</button>
-                <button type="submit" disabled={updateMutation.isPending} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow">Save Updates</button>
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
+                <button type="button" onClick={() => setEditingLead(null)} className="px-4 py-2 rounded-xl border border-violet-100/40 hover:bg-violet-50 text-slate-600 text-sm font-semibold">Cancel</button>
+                <button type="submit" disabled={updateMutation.isPending} className="px-5 py-2 clay-btn text-white text-sm font-semibold">Save Updates</button>
               </div>
             </form>
           </div>

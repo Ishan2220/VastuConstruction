@@ -18,15 +18,15 @@ export default function EmployeeDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full bg-slate-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+      <div className="flex items-center justify-center h-full">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#7C6EF0] border-t-transparent" />
       </div>
     );
   }
 
   if (!employee) {
     return (
-      <div className="p-8 text-center text-slate-500">
+      <div className="p-8 text-center text-slate-500 font-medium">
         Employee not found.
       </div>
     );
@@ -40,66 +40,66 @@ export default function EmployeeDetailsPage() {
   const statusStr = employee.user?.isActive === false || employee.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE';
 
   return (
-    <div className="p-4 md:p-8 lg:p-8 space-y-6 bg-slate-50 min-h-full font-sans pb-24">
+    <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans pb-24">
       {/* Header */}
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/employees')}
-          className="p-2 -ml-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"
+          className="p-2 -ml-2 text-slate-400 hover:text-slate-700 hover:bg-white/50 rounded-xl transition-colors shadow-sm bg-white"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight font-heading flex items-center gap-3">
+          <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight font-heading flex items-center gap-3">
             {nameStr}
-            <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase ${statusStr === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+            <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase border ${statusStr === 'ACTIVE' ? 'bg-clay-green/10 text-[#5CB77E] border-[#5CB77E]/30' : 'bg-slate-200 text-slate-600 border-slate-300'}`}>
               {statusStr}
             </span>
           </h1>
-          <p className="text-sm text-slate-500 mt-1">{roleStr} • {deptStr}</p>
+          <p className="text-sm text-slate-500 mt-1 font-medium">{roleStr} • {deptStr}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Card */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-            <h3 className="font-bold text-slate-900 border-b pb-2">Profile Overview</h3>
-            <div className="space-y-3 text-sm">
+          <div className="clay-card p-6 space-y-4">
+            <h3 className="font-bold text-slate-800 border-b border-violet-100/40 pb-3 font-heading">Profile Overview</h3>
+            <div className="space-y-4 text-sm mt-2">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+                <div className="p-2 rounded-xl bg-clay-violet/10 text-[#7C6EF0]">
                   <User className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-400 font-semibold">Full Name</div>
-                  <div className="font-bold text-slate-700">{nameStr}</div>
+                  <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Full Name</div>
+                  <div className="font-bold text-slate-800">{nameStr}</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+                <div className="p-2 rounded-xl bg-clay-violet/10 text-[#7C6EF0]">
                   <Mail className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-400 font-semibold">Email Address</div>
-                  <div className="font-medium text-slate-700">{emailStr}</div>
+                  <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Email Address</div>
+                  <div className="font-bold text-slate-800">{emailStr}</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+                <div className="p-2 rounded-xl bg-clay-violet/10 text-[#7C6EF0]">
                   <Phone className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-400 font-semibold">Contact Number</div>
-                  <div className="font-medium text-slate-700">{phoneStr}</div>
+                  <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Contact Number</div>
+                  <div className="font-bold text-slate-800">{phoneStr}</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+                <div className="p-2 rounded-xl bg-clay-violet/10 text-[#7C6EF0]">
                   <Shield className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-400 font-semibold">ERP Privileges</div>
-                  <div className="font-medium text-slate-700">{employee.user?.role || 'None'}</div>
+                  <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">ERP Privileges</div>
+                  <div className="font-bold text-slate-800">{employee.user?.role || 'None'}</div>
                 </div>
               </div>
             </div>
@@ -110,42 +110,42 @@ export default function EmployeeDetailsPage() {
         <div className="lg:col-span-2 space-y-6">
           
           {/* Attendance Section */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <h3 className="font-bold text-slate-900 border-b pb-3 mb-4 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-indigo-500" />
+          <div className="clay-card p-6">
+            <h3 className="font-bold text-slate-800 border-b border-violet-100/40 pb-3 mb-4 flex items-center gap-2 font-heading">
+              <Calendar className="w-5 h-5 text-[#7C6EF0]" />
               Recent Attendance
             </h3>
             
             {(!employee.attendance || employee.attendance.length === 0) ? (
-              <div className="text-center p-6 text-slate-500 bg-slate-50 rounded-xl border border-dashed">
+              <div className="text-center p-6 text-slate-500 bg-white/50 rounded-xl border border-violet-100/40 border-dashed shadow-inner font-medium">
                 No recent attendance records.
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto scrollbar-hide">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="bg-slate-50 text-slate-500 border-b">
-                      <th className="p-3 font-semibold">Date</th>
-                      <th className="p-3 font-semibold">Status</th>
-                      <th className="p-3 font-semibold">Check In</th>
-                      <th className="p-3 font-semibold">Check Out</th>
+                    <tr className="bg-white text-slate-500 border-b border-violet-100/40">
+                      <th className="p-3 font-bold uppercase tracking-wider text-xs">Date</th>
+                      <th className="p-3 font-bold uppercase tracking-wider text-xs">Status</th>
+                      <th className="p-3 font-bold uppercase tracking-wider text-xs">Check In</th>
+                      <th className="p-3 font-bold uppercase tracking-wider text-xs">Check Out</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-violet-100/40">
                     {employee.attendance.slice(0, 10).map((att: any) => (
-                      <tr key={att.id} className="hover:bg-slate-50/50">
-                        <td className="p-3 font-mono text-slate-700">{formatDate(att.date)}</td>
+                      <tr key={att.id} className="hover:bg-white/50 transition-colors">
+                        <td className="p-3 font-mono font-bold text-slate-700">{formatDate(att.date)}</td>
                         <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
-                            att.status === 'PRESENT' ? 'bg-emerald-100 text-emerald-700' :
-                            att.status === 'ABSENT' ? 'bg-rose-100 text-rose-700' :
-                            'bg-amber-100 text-amber-700'
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                            att.status === 'PRESENT' ? 'bg-clay-green/10 text-[#5CB77E] border-[#5CB77E]/30' :
+                            att.status === 'ABSENT' ? 'bg-clay-rose/10 text-[#E5636C] border-[#E5636C]/30' :
+                            'bg-clay-amber/10 text-[#F2A65A] border-[#F2A65A]/30'
                           }`}>
                             {att.status}
                           </span>
                         </td>
-                        <td className="p-3 text-slate-600">{att.checkIn ? new Date(att.checkIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-'}</td>
-                        <td className="p-3 text-slate-600">{att.checkOut ? new Date(att.checkOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-'}</td>
+                        <td className="p-3 text-slate-600 font-medium">{att.checkIn ? new Date(att.checkIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-'}</td>
+                        <td className="p-3 text-slate-600 font-medium">{att.checkOut ? new Date(att.checkOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -155,39 +155,39 @@ export default function EmployeeDetailsPage() {
           </div>
 
           {/* Payment Section */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <h3 className="font-bold text-slate-900 border-b pb-3 mb-4 flex items-center gap-2">
-              <Banknote className="w-5 h-5 text-emerald-500" />
+          <div className="clay-card p-6">
+            <h3 className="font-bold text-slate-800 border-b border-violet-100/40 pb-3 mb-4 flex items-center gap-2 font-heading">
+              <Banknote className="w-5 h-5 text-[#5CB77E]" />
               Salary Payment History
             </h3>
             
             {(!employee.salaryPayments || employee.salaryPayments.length === 0) ? (
-              <div className="text-center p-6 text-slate-500 bg-slate-50 rounded-xl border border-dashed">
+              <div className="text-center p-6 text-slate-500 bg-white/50 rounded-xl border border-violet-100/40 border-dashed shadow-inner font-medium">
                 No salary payment records found.
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto scrollbar-hide">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="bg-slate-50 text-slate-500 border-b">
-                      <th className="p-3 font-semibold">Month/Year</th>
-                      <th className="p-3 font-semibold">Date Paid</th>
-                      <th className="p-3 font-semibold text-right">Amount</th>
-                      <th className="p-3 font-semibold">Status</th>
+                    <tr className="bg-white text-slate-500 border-b border-violet-100/40">
+                      <th className="p-3 font-bold uppercase tracking-wider text-xs">Month/Year</th>
+                      <th className="p-3 font-bold uppercase tracking-wider text-xs">Date Paid</th>
+                      <th className="p-3 font-bold uppercase tracking-wider text-xs text-right">Amount</th>
+                      <th className="p-3 font-bold uppercase tracking-wider text-xs">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-violet-100/40">
                     {employee.salaryPayments.map((pay: any) => (
-                      <tr key={pay.id} className="hover:bg-slate-50/50">
-                        <td className="p-3 font-medium text-slate-700">
+                      <tr key={pay.id} className="hover:bg-white/50 transition-colors">
+                        <td className="p-3 font-bold text-slate-800">
                           {new Date(pay.paymentYear, pay.paymentMonth - 1).toLocaleString('default', { month: 'short' })} {pay.paymentYear}
                         </td>
-                        <td className="p-3 text-slate-600">{formatDate(pay.paymentDate)}</td>
-                        <td className="p-3 text-right font-mono font-bold text-slate-800">
+                        <td className="p-3 text-slate-600 font-medium">{formatDate(pay.paymentDate)}</td>
+                        <td className="p-3 text-right font-mono font-bold text-[#7C6EF0]">
                           {formatCurrency(Number(pay.amount))}
                         </td>
                         <td className="p-3">
-                          <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
+                          <div className="flex items-center gap-1.5 text-[#5CB77E] text-xs font-bold bg-clay-green/10 px-2.5 py-1 rounded-full w-fit border border-[#5CB77E]/30">
                             <CheckCircle2 className="w-3.5 h-3.5" /> {pay.status}
                           </div>
                         </td>

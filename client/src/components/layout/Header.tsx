@@ -226,12 +226,12 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-md md:px-6 shadow-xs">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-violet-100/30 bg-white/70 px-4 backdrop-blur-xl md:px-6">
         {/* Left: Mobile menu + Back button + Page title */}
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => setSidebarMobileOpen(true)}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 lg:hidden transition-colors shrink-0"
+            className="rounded-lg p-2 text-slate-400 hover:bg-violet-50 hover:text-[#7C6EF0] lg:hidden transition-colors shrink-0"
             title="Open Menu"
           >
             <Menu className="h-5 w-5" />
@@ -241,26 +241,26 @@ export default function Header() {
           {!isDashboard && (
             <button
               onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-bold text-xs transition-all border border-slate-200 shadow-xs hover:shadow-sm shrink-0"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-50/50 hover:bg-violet-100/50 text-slate-600 font-bold text-xs transition-all border border-violet-100/40 shrink-0"
               title="Go back to previous screen or dashboard"
             >
-              <ArrowLeft className="w-3.5 h-3.5 text-indigo-600" />
+              <ArrowLeft className="w-3.5 h-3.5 text-[#7C6EF0]" />
               <span className="hidden sm:inline">Back</span>
             </button>
           )}
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight font-heading truncate">{pageTitle}</h1>
+              <h1 className="text-base sm:text-lg font-bold text-slate-800 tracking-tight font-heading truncate">{pageTitle}</h1>
               {!isDashboard && (
-                <span className="hidden sm:inline-flex shrink-0 items-center text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-wider">
-                  Live Module
+                <span className="hidden sm:inline-flex shrink-0 items-center text-[10px] font-bold px-2 py-0.5 rounded-lg bg-clay-violet text-[#7C6EF0] uppercase tracking-wider">
+                  Live
                 </span>
               )}
             </div>
             {isDashboard && (
-              <p className="text-xs text-slate-500 hidden sm:block truncate">
-                Welcome back, <strong className="text-slate-700">{user?.name || 'Sandeep Jadhav'}</strong> • Authorized Executive Access
+              <p className="text-xs text-slate-400 hidden sm:block truncate">
+                Welcome back, <strong className="text-slate-600">{user?.name || 'Sandeep Jadhav'}</strong>
               </p>
             )}
           </div>
@@ -272,15 +272,15 @@ export default function Header() {
             onClick={() => setIsSearchOpen(true)}
             className="relative cursor-pointer group"
           >
-            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-hover:text-[#7C6EF0] transition-colors" />
             <div
               className={cn(
-                "flex items-center justify-between h-10 w-full rounded-xl border border-slate-200 bg-slate-50/80 pl-10 pr-3 text-sm text-slate-500",
-                "group-hover:border-indigo-300 group-hover:bg-white group-hover:shadow-xs transition-all duration-200"
+                "flex items-center justify-between h-10 w-full rounded-xl border border-violet-100/40 bg-white/50 pl-10 pr-3 text-sm text-slate-400",
+                "group-hover:border-[#7C6EF0]/30 group-hover:bg-white group-hover:shadow-xs transition-all duration-200"
               )}
             >
               <span>Search projects, materials, labour, or logs...</span>
-              <kbd className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-mono font-bold text-slate-400 shadow-2xs group-hover:text-indigo-600 group-hover:border-indigo-200">
+              <kbd className="rounded-md border border-violet-100/40 bg-white/80 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-400 group-hover:text-[#7C6EF0] group-hover:border-[#7C6EF0]/20">
                 Ctrl+K
               </kbd>
             </div>
@@ -292,7 +292,7 @@ export default function Header() {
           {/* Mobile Search Button */}
           <button
             onClick={() => setIsSearchOpen(true)}
-            className="rounded-xl p-1.5 sm:p-2 text-slate-500 hover:bg-slate-100 hover:text-indigo-600 md:hidden transition-colors shrink-0"
+            className="rounded-xl p-1.5 sm:p-2 text-slate-400 hover:bg-violet-50 hover:text-[#7C6EF0] md:hidden transition-colors shrink-0"
             title="Search Platform"
           >
             <Search className="h-5 w-5" />
@@ -302,24 +302,24 @@ export default function Header() {
             <button 
               id="quick-add-btn"
               onClick={() => setIsQuickAddOpen(!isQuickAddOpen)}
-              className="gap-1.5 rounded-xl bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-500 shadow-sm transition-all cursor-pointer p-2 sm:px-3.5 sm:py-2 inline-flex items-center"
+              className="sm:gap-1.5 rounded-xl bg-gradient-to-r from-[#7C6EF0] to-[#6558D3] text-xs font-bold text-white hover:opacity-90 shadow-sm transition-all cursor-pointer p-2 sm:px-3.5 sm:py-2 inline-flex items-center justify-center shrink-0"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Quick Add</span>
             </button>
             {isQuickAddOpen && (
-              <div id="quick-add-dropdown" className="absolute right-0 top-full mt-2 w-64 p-2 rounded-2xl shadow-xl border border-slate-200 bg-white z-50 flex flex-col gap-0.5">
+              <div id="quick-add-dropdown" className="absolute right-0 top-full mt-2 w-64 max-w-[85vw] p-2 clay-card z-50 flex flex-col gap-0.5">
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-3 py-2">
                   Create New Entry
                 </div>
-                <div className="h-px bg-slate-100 my-1" />
+                <div className="h-px bg-violet-100/30 my-1" />
                 <button
                   onClick={() => {
                     setIsQuickAddOpen(false);
                     navigate('/projects', { state: { action: 'create' } });
                     setTimeout(() => window.dispatchEvent(new CustomEvent('quick-add-create', { detail: 'project' })), 100);
                   }}
-                  className="w-full flex items-center rounded-xl p-2.5 font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-sm text-left"
+                  className="w-full flex items-center rounded-xl p-2.5 font-semibold text-slate-600 hover:bg-violet-50 hover:text-[#7C6EF0] transition-colors text-sm text-left"
                 >
                   <Building2 className="mr-2.5 h-4 w-4 text-indigo-500 shrink-0" />
                   <span>+ Add Site Project</span>
@@ -400,8 +400,8 @@ export default function Header() {
             className={cn(
               "rounded-xl p-2.5 transition-all border shadow-2xs",
               location.pathname === '/calendar'
-                ? "bg-indigo-50 text-indigo-600 border-indigo-200 font-bold"
-                : "bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-200"
+                ? "bg-clay-violet text-[#7C6EF0] border-[#7C6EF0]/20 font-bold"
+                : "bg-white/60 text-slate-500 border-violet-100/40 hover:bg-violet-50 hover:text-[#7C6EF0]"
             )}
             title="Open Master Schedule & Milestones"
           >
@@ -411,7 +411,7 @@ export default function Header() {
           {/* Notifications Bell Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="relative rounded-xl p-2.5 bg-white border border-slate-200/80 text-slate-600 transition-all hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-200 shadow-2xs cursor-pointer focus:outline-none inline-flex items-center justify-center"
+              className="relative rounded-xl p-2.5 bg-white/60 border border-violet-100/40 text-slate-500 transition-all hover:bg-violet-50 hover:text-[#7C6EF0] cursor-pointer focus:outline-none inline-flex items-center justify-center"
               title="View Notifications & Alerts"
             >
               <Bell className="h-4 w-4 pointer-events-none" />
@@ -421,15 +421,15 @@ export default function Header() {
                 </span>
               )}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 p-3 rounded-2xl shadow-xl border border-slate-200 space-y-3">
+            <DropdownMenuContent align="end" className="w-80 p-3 clay-card space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <Bell className="w-3.5 h-3.5 text-indigo-600" /> Site Notifications
+                  <Bell className="w-3.5 h-3.5 text-[#7C6EF0]" /> Notifications
                 </span>
                 {unreadNotifications > 0 && (
                   <button
                     onClick={() => markAllReadMutation.mutate()}
-                    className="text-[11px] font-bold text-indigo-600 hover:underline flex items-center gap-1"
+                    className="text-[11px] font-bold text-[#7C6EF0] hover:underline flex items-center gap-1"
                   >
                     <Check className="w-3 h-3" /> Mark all read
                   </button>
@@ -452,13 +452,13 @@ export default function Header() {
                       className={cn(
                         "p-2.5 rounded-xl border transition-all cursor-pointer space-y-1",
                         n.isRead
-                          ? "bg-slate-50/60 border-slate-100 opacity-75"
-                          : "bg-indigo-50/60 border-indigo-100 hover:bg-indigo-100/70 shadow-2xs"
+                          ? "bg-slate-50/60 border-violet-100/20 opacity-75"
+                          : "bg-violet-50/40 border-violet-100/30 hover:bg-violet-50/60"
                       )}
                     >
                       <div className="flex items-center justify-between text-xs font-bold text-slate-900">
                         <span className="flex items-center gap-1.5 truncate">
-                          <AlertCircle className={cn("w-3.5 h-3.5 shrink-0", n.isRead ? "text-slate-400" : "text-indigo-600")} />
+                          <AlertCircle className={cn("w-3.5 h-3.5 shrink-0", n.isRead ? "text-slate-400" : "text-[#7C6EF0]")} />
                           {n.title || 'System Notification'}
                         </span>
                         <span className="text-[10px] text-slate-400 shrink-0">
@@ -476,7 +476,7 @@ export default function Header() {
               <div className="border-t border-slate-100 pt-2 text-center">
                 <button
                   onClick={() => navigate('/audit-logs')}
-                  className="text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors inline-flex items-center gap-1"
+                  className="text-xs font-bold text-slate-400 hover:text-[#7C6EF0] transition-colors inline-flex items-center gap-1"
                 >
                   View All System Logs <ChevronRight className="w-3 h-3" />
                 </button>
@@ -490,24 +490,24 @@ export default function Header() {
               className="ml-1 shrink-0 flex items-center gap-2.5 rounded-xl p-1.5 transition-all bg-white border border-slate-200/80 hover:bg-slate-50 hover:border-indigo-200 shadow-2xs cursor-pointer focus:outline-none"
               title="User Profile & Admin Options"
             >
-              <Avatar className="h-8 w-8 border border-indigo-200 rounded-lg pointer-events-none">
-                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-violet-600 text-xs font-bold text-white rounded-lg pointer-events-none">
+              <Avatar className="h-8 w-8 border border-violet-200/40 rounded-lg pointer-events-none">
+                <AvatarFallback className="bg-gradient-to-br from-[#7C6EF0] to-[#A78BFA] text-xs font-bold text-white rounded-lg pointer-events-none">
                   {getInitials(user?.name || 'Sandeep Jadhav')}
                 </AvatarFallback>
               </Avatar>
               <div className="hidden text-left md:block pr-1">
                 <p className="text-xs font-bold text-slate-800 leading-tight">{user?.name || 'Sandeep Jadhav'}</p>
-                <p className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider">
+                <p className="text-[10px] font-semibold text-[#7C6EF0] uppercase tracking-wider">
                   {user?.role ?? 'ADMIN'}
                 </p>
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-60 p-2 rounded-2xl shadow-xl border border-slate-200">
+            <DropdownMenuContent align="end" className="w-60 p-2 clay-card">
               <div className="px-3 py-2 border-b border-slate-100 mb-1">
                 <p className="text-xs font-bold text-slate-900">{user?.name || 'Sandeep Jadhav'}</p>
                 <p className="text-[11px] text-slate-500 truncate">{user?.email || 'admin@vastuconstruction.in'}</p>
-                <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  <Sparkles className="w-3 h-3 text-indigo-600" /> Full Admin Control
+                <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-clay-violet text-[#7C6EF0]">
+                  <Sparkles className="w-3 h-3 text-[#7C6EF0]" /> Admin
                 </div>
               </div>
 
@@ -554,11 +554,11 @@ export default function Header() {
 
       {/* Global Interactive Search Command Modal (`Ctrl+K`) */}
       {isSearchOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-2xl overflow-hidden">
             {/* Search Input Header */}
-            <div className="flex items-center px-4 py-3.5 border-b border-slate-200/80 bg-slate-50/50">
-              <Search className="w-5 h-5 text-indigo-600 mr-3 shrink-0" />
+            <div className="flex items-center px-4 py-3.5 border-b border-violet-100/30 bg-white/60">
+              <Search className="w-5 h-5 text-[#7C6EF0] mr-3 shrink-0" />
               <input
                 type="text"
                 autoFocus
@@ -606,22 +606,22 @@ export default function Header() {
                         }}
                         className={cn(
                           "p-3 rounded-xl transition-all flex items-center justify-between cursor-pointer group",
-                          isSelected ? "bg-indigo-50 border border-indigo-200/80 shadow-2xs" : "hover:bg-indigo-50/70"
+                          isSelected ? "bg-violet-50 border border-[#7C6EF0]/20" : "hover:bg-violet-50/50"
                         )}
                       >
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             "w-9 h-9 rounded-xl flex items-center justify-center transition-colors",
-                            isSelected ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white"
+                            isSelected ? "bg-[#7C6EF0] text-white" : "bg-clay-violet text-[#7C6EF0] group-hover:bg-[#7C6EF0] group-hover:text-white"
                           )}>
                             <Icon className="w-4 h-4" />
                           </div>
                           <div>
-                            <div className={cn("text-sm font-bold transition-colors", isSelected ? "text-indigo-600" : "text-slate-800 group-hover:text-indigo-600")}>{item.title}</div>
+                            <div className={cn("text-sm font-bold transition-colors", isSelected ? "text-[#7C6EF0]" : "text-slate-700 group-hover:text-[#7C6EF0]")}>{item.title}</div>
                             <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{item.category}</div>
                           </div>
                         </div>
-                        <ChevronRight className={cn("w-4 h-4 transition-all", isSelected ? "text-indigo-600 translate-x-1" : "text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1")} />
+                        <ChevronRight className={cn("w-4 h-4 transition-all", isSelected ? "text-[#7C6EF0] translate-x-1" : "text-slate-300 group-hover:text-[#7C6EF0] group-hover:translate-x-1")} />
                       </div>
                     );
                   })}
@@ -632,7 +632,7 @@ export default function Header() {
             {/* Footer */}
             <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-500 font-medium">
               <span>Use <kbd className="px-1.5 py-0.5 rounded bg-white border border-slate-200 font-mono">↑</kbd> <kbd className="px-1.5 py-0.5 rounded bg-white border border-slate-200 font-mono">↓</kbd> to navigate or click to open</span>
-              <span className="text-indigo-600 font-bold">VastuConstruction Search Engine</span>
+              <span className="text-[#7C6EF0] font-bold">VastuConstruction</span>
             </div>
           </div>
         </div>

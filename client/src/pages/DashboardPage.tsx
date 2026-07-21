@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
@@ -10,25 +10,17 @@ import {
   IndianRupee,
   Calendar as CalendarIcon,
   Clock,
-  ArrowUpRight,
   ChevronRight,
-  PlusCircle,
   Plus,
-  BarChart3,
   Users,
-  Pencil,
-  Trash2,
-  Activity,
+  X,
   Wallet,
-  Bell,
   CheckSquare,
   Square,
-  Edit3,
-  X,
-  Landmark,
   AlertCircle,
   PackageCheck,
-  FileText,
+  Landmark,
+  Activity,
 } from 'lucide-react';
 import { CacheManager } from '@/lib/CacheManager';
 import { formatCurrency } from '@/lib/utils';
@@ -37,6 +29,7 @@ import { useAuthStore } from '@/store/authStore';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useQuickAddListener } from '@/hooks/useQuickAddListener';
+import { staggerContainer, fadeInUp, clayCardHover } from '@/animations';
 
 // --------------- Types ---------------
 interface KpiState {
@@ -120,11 +113,9 @@ const defaultKpis: KpiState = {
   vendorPayable: 0,
 };
 
-const defaultSites: SiteItem[] = [];
-
-const EXPENSE_COLORS = ['bg-indigo-600', 'bg-amber-500', 'bg-emerald-500', 'bg-rose-500', 'bg-violet-600', 'bg-blue-600', 'bg-cyan-500', 'bg-pink-500'];
-const PM_COLORS = ['bg-indigo-600', 'bg-emerald-500', 'bg-amber-500', 'bg-violet-600', 'bg-blue-600', 'bg-cyan-500'];
-const PM_TEXT_COLORS = ['text-indigo-600', 'text-emerald-600', 'text-amber-600', 'text-violet-600', 'text-blue-600', 'text-cyan-600'];
+const EXPENSE_COLORS = ['#7C6EF0', '#F2A65A', '#5CB77E', '#E5636C', '#4EA8DE', '#A78BFA', '#FB923C', '#34D399'];
+const PM_COLORS = ['#7C6EF0', '#5CB77E', '#F2A65A', '#A78BFA', '#4EA8DE', '#FB923C'];
+const PM_TEXT_COLORS = ['text-[#7C6EF0]', 'text-[#5CB77E]', 'text-[#F2A65A]', 'text-violet-500', 'text-blue-500', 'text-orange-500'];
 const BADGE_OPTIONS = [
   'bg-violet-50 text-violet-700 border-violet-200',
   'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -132,8 +123,6 @@ const BADGE_OPTIONS = [
   'bg-blue-50 text-blue-700 border-blue-200',
   'bg-rose-50 text-rose-700 border-rose-200',
 ];
-
-
 
 // --------------- KPI Label Map ---------------
 type KpiField = keyof Omit<KpiState, 'overallProfit'>;
@@ -150,6 +139,25 @@ const KPI_LABELS: Record<KpiField, string> = {
 };
 
 const MONEY_KPIS: KpiField[] = ['monthlyIncome', 'monthlyExpenses', 'cashInHand', 'bankBalance', 'clientReceivable', 'vendorPayable'];
+
+// ============================================
+// KPI Card Config
+// ============================================
+const kpiCardConfig = [
+  { key: 'totalLeads', label: 'Total Leads', icon: Users, gradient: 'bg-clay-violet', iconColor: 'text-[#7C6EF0]', route: '/leads' },
+  { key: 'activeProjects', label: 'Active Projects', icon: Building2, gradient: 'bg-clay-green', iconColor: 'text-[#5CB77E]', route: '/projects' },
+  { key: 'activeSites', label: 'Active Sites', icon: HardHat, gradient: 'bg-clay-amber', iconColor: 'text-[#F2A65A]', route: '/sites' },
+  { key: 'monthlyIncome', label: 'Income (This Month)', icon: IndianRupee, gradient: 'bg-clay-green', iconColor: 'text-[#5CB77E]', route: '/reports', isMoney: true },
+  { key: 'monthlyExpenses', label: 'Expenses (This Month)', icon: TrendingDown, gradient: 'bg-clay-rose', iconColor: 'text-[#E5636C]', route: '/reports', isMoney: true },
+] as const;
+
+const finCardConfig = [
+  { key: 'cashInHand', label: 'Cash in Hand', icon: Wallet, iconBg: 'bg-clay-green', iconColor: 'text-[#5CB77E]', route: '/accounts' },
+  { key: 'bankBalance', label: 'Bank Balance', icon: Landmark, iconBg: 'bg-clay-violet', iconColor: 'text-[#7C6EF0]', route: '/accounts' },
+  { key: 'clientReceivable', label: 'Client Receivable', icon: Users, iconBg: 'bg-clay-blue', iconColor: 'text-[#4EA8DE]', route: '/clients' },
+  { key: 'vendorPayable', label: 'Vendor Payable', icon: Building2, iconBg: 'bg-clay-amber', iconColor: 'text-[#F2A65A]', route: '/vendors' },
+] as const;
+
 
 // ============================================
 // COMPONENT
@@ -183,11 +191,9 @@ export default function DashboardPage() {
     };
   }, [serverDashboard]);
 
-  const openKpiEdit = () => {};
   const overallProfit = kpis.monthlyIncome - kpis.monthlyExpenses;
 
-  
-  // ---- Dashboard Data Mappings (No Mock States) ----
+  // ---- Dashboard Data Mappings ----
   const sites = useMemo(() => {
     if (!serverDashboard?.activeSites) return [];
     const plMap = new Map();
@@ -196,7 +202,6 @@ export default function DashboardPage() {
         plMap.set(pl.id, pl);
       });
     }
-
     return serverDashboard.activeSites.map((s: any) => {
       const pl = plMap.get(s.id);
       return {
@@ -337,27 +342,21 @@ export default function DashboardPage() {
   // ============================================
   // RENDER
   // ============================================
-  const cardBase = 'bg-white rounded-2xl border border-slate-200/80 shadow-sm';
-  const modalOverlay = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm';
-  const modalInner = 'bg-white rounded-2xl border shadow-2xl w-full max-w-md p-6 space-y-6';
-  const inputCls = 'w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500';
-  const btnCancel = 'px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold';
-  const btnSave = 'px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-md disabled:opacity-50';
-
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6 animate-pulse">
-        <div className="h-10 bg-slate-200 rounded w-1/4"></div>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className="h-28 bg-slate-200 rounded-2xl"></div>
-          <div className="h-28 bg-slate-200 rounded-2xl"></div>
-          <div className="h-28 bg-slate-200 rounded-2xl"></div>
-          <div className="h-28 bg-slate-200 rounded-2xl"></div>
-          <div className="h-28 bg-slate-200 rounded-2xl"></div>
+      <div className="p-4 sm:p-6 space-y-6 min-h-full">
+        <div className="h-8 bg-white/50 rounded-2xl w-48 animate-pulse" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="clay-card p-5 h-28 animate-pulse">
+              <div className="h-4 bg-violet-100/50 rounded w-20 mb-3" />
+              <div className="h-6 bg-violet-100/30 rounded w-16" />
+            </div>
+          ))}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-           <div className="h-80 bg-slate-200 rounded-2xl col-span-2"></div>
-           <div className="h-80 bg-slate-200 rounded-2xl"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 clay-card h-64 animate-pulse" />
+          <div className="clay-card h-64 animate-pulse" />
         </div>
       </div>
     );
@@ -365,9 +364,12 @@ export default function DashboardPage() {
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center justify-center h-[70vh] text-slate-500">
-        <p className="mb-4 text-sm font-semibold">Failed to synchronize dashboard data.</p>
-        <button onClick={() => refetch()} className="px-5 py-2 bg-indigo-600 font-bold text-white rounded-xl shadow-sm hover:bg-indigo-700 transition">
+      <div className="flex flex-col items-center justify-center h-[70vh] gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-clay-rose flex items-center justify-center">
+          <AlertCircle className="w-8 h-8 text-[#E5636C]" />
+        </div>
+        <p className="text-sm font-semibold text-slate-500">Failed to synchronize dashboard data.</p>
+        <button onClick={() => refetch()} className="clay-btn px-6 py-2.5 text-sm">
           Retry Connection
         </button>
       </div>
@@ -375,352 +377,239 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-6 bg-slate-50 min-h-full font-sans">
+    <div className="p-4 sm:p-6 space-y-5 min-h-full font-sans">
 
       {/* =========================================== */}
-      {/* ROW 1: Five KPI Cards */}
+      {/* ROW 1: Five KPI Cards — Mobile Grid */}
       {/* =========================================== */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-        {/* Total Leads */}
-        <motion.div whileHover={{ y: -3 }} onClick={() => navigate('/leads')}
-          className={`${cardBase} p-3.5 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group flex flex-col justify-between`}>
-          <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
-              <Users className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Leads</span>
-            <span className="text-xl font-extrabold text-slate-900 font-heading group-hover:text-indigo-600 transition-colors">
-              {kpis.totalLeads}
-            </span>
-          </div>
-        </motion.div>
-
-        {/* Active Projects */}
-        <motion.div whileHover={{ y: -3 }} onClick={() => navigate('/projects')}
-          className={`${cardBase} p-5 hover:shadow-md hover:border-emerald-300 transition-all cursor-pointer group flex flex-col justify-between`}>
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-              <Building2 className="w-5 h-5" />
-            </div>
-            <div className="flex items-center gap-1">
-              <button onClick={(e: any) => { e.stopPropagation(); setIsCreateProjectOpen(true); }}
-                className="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-all" title="Add New Project">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Active Projects</span>
-            <span className="text-2xl font-extrabold text-slate-900 font-heading group-hover:text-emerald-600 transition-colors">
-              {kpis.activeProjects}
-            </span>
-          </div>
-        </motion.div>
-
-        {/* Active Sites */}
-        <motion.div whileHover={{ y: -3 }} onClick={() => navigate('/sites')}
-          className={`${cardBase} p-3.5 hover:shadow-md hover:border-amber-300 transition-all cursor-pointer group flex flex-col justify-between`}>
-          <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
-              <HardHat className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Active Sites</span>
-            <span className="text-xl font-extrabold text-slate-900 font-heading group-hover:text-amber-600 transition-colors">
-              {kpis.activeSites}
-            </span>
-          </div>
-        </motion.div>
-
-        {/* Total Income */}
-        <motion.div whileHover={{ y: -3 }} onClick={() => navigate('/reports')}
-          className={`${cardBase} p-3.5 hover:shadow-md hover:border-emerald-400 transition-all cursor-pointer group flex flex-col justify-between`}>
-          <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-              <IndianRupee className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Income (This Month)</span>
-            <span className="text-xl font-extrabold text-slate-900 font-mono group-hover:text-emerald-600 transition-colors">
-              {formatCurrency(kpis.monthlyIncome)}
-            </span>
-          </div>
-        </motion.div>
-
-        {/* Total Expenses */}
-        <motion.div whileHover={{ y: -3 }} onClick={() => navigate('/reports')}
-          className={`${cardBase} p-3.5 hover:shadow-md hover:border-rose-400 transition-all cursor-pointer group flex flex-col justify-between`}>
-          <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
-              <TrendingDown className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Expenses (This Month)</span>
-            <span className="text-xl font-extrabold text-slate-900 font-mono group-hover:text-rose-600 transition-colors">
-              {formatCurrency(kpis.monthlyExpenses)}
-            </span>
-          </div>
-        </motion.div>
-      </div>
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
+      >
+        {kpiCardConfig.map((cfg) => {
+          const Icon = cfg.icon;
+          const value = kpis[cfg.key as keyof KpiState];
+          return (
+            <motion.div
+              key={cfg.key}
+              variants={fadeInUp}
+              {...clayCardHover}
+              onClick={() => navigate(cfg.route)}
+              className={`clay-card p-4 cursor-pointer group flex flex-col justify-between min-h-[110px] ${cfg.key === 'monthlyExpenses' ? 'col-span-2 sm:col-span-1' : ''}`}
+            >
+              <div className={`w-10 h-10 rounded-xl ${cfg.gradient} flex items-center justify-center ${cfg.iconColor} mb-2`}>
+                <Icon className="w-5 h-5" />
+              </div>
+              <div className="mt-1">
+                <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block leading-tight">{cfg.label}</span>
+                <span className="text-lg sm:text-xl font-extrabold text-slate-900 font-heading group-hover:text-[#7C6EF0] transition-colors mt-0.5 block truncate">
+                  {cfg.isMoney ? formatCurrency(value) : value}
+                </span>
+              </div>
+            </motion.div>
+          );
+        })}
+      </motion.div>
 
       {/* =========================================== */}
-      {/* ROW 2: Five Financial Cards */}
+      {/* ROW 2: Financial Cards + Overall Profit */}
       {/* =========================================== */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-        {/* Cash in Hand */}
-        <div onClick={() => navigate('/accounts')}
-          className={`${cardBase} p-4 hover:border-emerald-300 transition-all cursor-pointer flex items-center justify-between gap-3 group`}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-              <Wallet className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-500">Cash in Hand</div>
-              <div className="text-lg font-extrabold text-slate-900 font-mono group-hover:text-emerald-600 transition-colors">
-                {formatCurrency(kpis.cashInHand)}
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
+      >
+        {finCardConfig.map((cfg) => {
+          const Icon = cfg.icon;
+          const value = kpis[cfg.key as keyof KpiState];
+          return (
+            <motion.div
+              key={cfg.key}
+              variants={fadeInUp}
+              onClick={() => navigate(cfg.route)}
+              className="clay-card-sm p-3 sm:p-4 cursor-pointer group flex flex-col justify-between min-h-[90px]"
+            >
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl ${cfg.iconBg} flex items-center justify-center ${cfg.iconColor} mb-2 shrink-0`}>
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bank Balance */}
-        <div onClick={() => navigate('/accounts')}
-          className={`${cardBase} p-4 hover:border-indigo-300 transition-all cursor-pointer flex items-center justify-between gap-3 group`}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
-              <Landmark className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-500">Bank Balance</div>
-              <div className="text-lg font-extrabold text-slate-900 font-mono group-hover:text-indigo-600 transition-colors">
-                {formatCurrency(kpis.bankBalance)}
+              <div className="min-w-0">
+                <div className="text-[10px] sm:text-[11px] font-semibold text-slate-400 leading-tight">{cfg.label}</div>
+                <div className="text-sm sm:text-base font-extrabold text-slate-900 font-heading group-hover:text-[#7C6EF0] transition-colors truncate mt-0.5">
+                  {formatCurrency(value)}
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          );
+        })}
 
-        {/* Client Receivable */}
-        <div onClick={() => navigate('/clients')}
-          className={`${cardBase} p-4 hover:border-blue-300 transition-all cursor-pointer flex items-center justify-between gap-3 group`}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-500">Client Receivable</div>
-              <div className="text-lg font-extrabold text-slate-900 font-mono group-hover:text-blue-600 transition-colors">
-                {formatCurrency(kpis.clientReceivable)}
-              </div>
-            </div>
+        {/* Overall Profit */}
+        <motion.div
+          variants={fadeInUp}
+          onClick={() => navigate('/reports')}
+          className="clay-card-sm p-3 sm:p-4 cursor-pointer group flex flex-col justify-between col-span-2 sm:col-span-1 min-h-[90px]"
+        >
+          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center ${overallProfit >= 0 ? 'bg-clay-green text-[#5CB77E]' : 'bg-clay-rose text-[#E5636C]'} mb-2 shrink-0`}>
+            {overallProfit >= 0 ? <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5" />}
           </div>
-        </div>
-
-        {/* Vendor Payable */}
-        <div onClick={() => navigate('/vendors')}
-          className={`${cardBase} p-4 hover:border-violet-300 transition-all cursor-pointer flex items-center justify-between gap-3 group`}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center text-violet-600 shrink-0">
-              <Building2 className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-500">Vendor Payable</div>
-              <div className="text-lg font-extrabold text-slate-900 font-mono group-hover:text-violet-600 transition-colors">
-                {formatCurrency(kpis.vendorPayable)}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Overall Profit (Auto-calculated) */}
-        <div onClick={() => navigate('/reports')}
-          className={`${cardBase} p-4 hover:border-emerald-300 transition-all cursor-pointer flex items-center justify-between gap-3 group`}>
-          <div>
-            <div className="text-xs font-semibold text-slate-500">Overall Profit (All Time)</div>
-            <div className={`text-lg font-extrabold font-mono ${overallProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+          <div className="min-w-0">
+            <div className="text-[10px] sm:text-[11px] font-semibold text-slate-400 leading-tight">Overall Profit</div>
+            <div className={`text-sm sm:text-lg font-extrabold font-heading ${overallProfit >= 0 ? 'text-[#5CB77E]' : 'text-[#E5636C]'} truncate mt-0.5`}>
               {formatCurrency(overallProfit)}
             </div>
           </div>
-          <div className={`w-12 h-8 flex items-center justify-center ${overallProfit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-            {overallProfit >= 0 ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
-          </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* =========================================== */}
-      {/* MIDDLE ROW: Active Sites Progress + Reminders */}
+      {/* MIDDLE ROW: Active Sites + Reminders */}
       {/* =========================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Active Sites Progress (2 cols) */}
-        <div className={`lg:col-span-2 ${cardBase} p-6`}>
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-            <h3 className="text-base font-bold text-slate-900 font-heading">Active Sites</h3>
-            <Link to="/sites" className="text-xs font-bold text-indigo-600 hover:underline">View All</Link>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Active Sites Progress */}
+        <motion.div variants={fadeInUp} initial="hidden" animate="show" className="lg:col-span-2 clay-card p-5">
+          <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
+            <h3 className="text-base font-bold text-slate-800 font-heading">Active Sites</h3>
+            <Link to="/sites" className="text-xs font-bold text-[#7C6EF0] hover:underline">View All</Link>
           </div>
-
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {sites.length === 0 ? (
-              <div className="py-10 text-center text-slate-400 text-sm">No sites added yet. Click below to add one.</div>
+              <div className="py-10 text-center text-slate-400 text-sm">No sites added yet.</div>
             ) : (
               sites.map((site: any) => (
                 <div key={site.id} onClick={() => navigate('/site-profit-loss')}
-                  className="p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-indigo-300 transition-all cursor-pointer flex items-center justify-between gap-3 group">
+                  className="p-3 rounded-xl bg-white/60 border border-violet-100/40 hover:border-[#7C6EF0]/30 transition-all cursor-pointer flex items-center justify-between gap-3 group">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-indigo-600 shrink-0 shadow-sm">
-                      <HardHat className="w-5 h-5" />
+                    <div className="w-9 h-9 rounded-xl bg-clay-violet flex items-center justify-center text-[#7C6EF0] shrink-0">
+                      <HardHat className="w-4 h-4" />
                     </div>
-                    <div>
-                      <div className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors font-heading">{site.name}</div>
-                      <div className="text-xs text-slate-500">{site.location}</div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-bold text-slate-800 group-hover:text-[#7C6EF0] transition-colors font-heading truncate">{site.name}</div>
+                      <div className="text-[11px] text-slate-400">{site.location}</div>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="text-right min-w-[100px] space-y-1">
-                      <div className="flex justify-between text-xs font-bold text-slate-600">
-                        <span>Progress</span>
-                        <span className="text-indigo-600 font-mono">{site.progress}%</span>
-                      </div>
-                      <div className="h-2 w-24 bg-slate-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${site.progress}%` }} />
-                      </div>
+                  <div className="text-right min-w-[100px] space-y-1">
+                    <div className="flex justify-between text-[11px] font-bold text-slate-500">
+                      <span>Progress</span>
+                      <span className="text-[#7C6EF0] font-heading">{site.progress}%</span>
                     </div>
-                    <div className="flex items-center gap-0.5 shrink-0">
-
+                    <div className="h-2 w-full bg-violet-100/50 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-[#7C6EF0] to-[#A78BFA] rounded-full transition-all" style={{ width: `${site.progress}%` }} />
                     </div>
                   </div>
                 </div>
               ))
             )}
           </div>
-
           <button onClick={() => navigate('/sites')}
-            className="w-full mt-4 py-2.5 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+            className="w-full mt-4 py-2.5 rounded-xl border border-dashed border-[#7C6EF0]/30 bg-clay-violet hover:bg-violet-100/50 text-[#7C6EF0] text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer">
             <Plus className="w-4 h-4" /> Go to Sites
           </button>
-        </div>
+        </motion.div>
 
-        {/* Right: Upcoming Reminders */}
-        <div className={`${cardBase} p-6 flex flex-col justify-between`}>
+        {/* Upcoming Reminders */}
+        <motion.div variants={fadeInUp} initial="hidden" animate="show" className="clay-card p-5 flex flex-col justify-between">
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center justify-between border-b border-slate-100/60 pb-3">
               <div>
-                <h3 className="text-base font-bold text-slate-900 font-heading">Upcoming Reminders</h3>
-                <p className="text-[11px] text-slate-400">Scheduled meetings and site checks</p>
+                <h3 className="text-base font-bold text-slate-800 font-heading">Upcoming Reminders</h3>
+                <p className="text-[11px] text-slate-400">Scheduled meetings & site checks</p>
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={() => navigate('/calendar')}
-                  className="p-1 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 cursor-pointer" title="Go to Calendar">
+                  className="p-1.5 rounded-lg bg-clay-violet text-[#7C6EF0] hover:bg-violet-100 cursor-pointer" title="Go to Calendar">
                   <Plus className="w-4 h-4" />
                 </button>
-                <Link to="/calendar" className="text-xs font-bold text-indigo-600 hover:underline">View All</Link>
               </div>
             </div>
 
-            <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1 scrollbar-hide">
               {remindersList.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 text-xs">No upcoming reminders. Click "+" above to add.</div>
+                <div className="py-8 text-center text-slate-400 text-xs">No upcoming reminders.</div>
               ) : (
                 remindersList.map((rem: any) => (
                   <div key={rem.id} onClick={() => navigate('/calendar')}
-                    className="p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-indigo-300 transition-all cursor-pointer flex items-center justify-between gap-3 group">
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-indigo-100/70 text-indigo-700 flex items-center justify-center shrink-0 mt-0.5">
-                        <CalendarIcon className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors font-heading">{rem.title}</div>
-                        <div className="text-[11px] text-slate-500 font-medium mt-0.5">{rem.dateStr}</div>
-                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded mt-1 inline-block">{rem.tag}</span>
-                      </div>
+                    className="p-3 rounded-xl bg-white/60 border border-violet-100/40 hover:border-[#7C6EF0]/30 transition-all cursor-pointer flex items-start gap-2.5 group">
+                    <div className="w-8 h-8 rounded-lg bg-clay-violet text-[#7C6EF0] flex items-center justify-center shrink-0 mt-0.5">
+                      <CalendarIcon className="w-4 h-4" />
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-
+                    <div>
+                      <div className="text-xs font-bold text-slate-800 group-hover:text-[#7C6EF0] transition-colors font-heading">{rem.title}</div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">{rem.dateStr}</div>
+                      <span className="text-[10px] font-bold text-[#7C6EF0] bg-clay-violet px-1.5 py-0.5 rounded mt-1 inline-block">{rem.tag}</span>
                     </div>
                   </div>
                 ))
               )}
             </div>
           </div>
-
-          <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-            <Link to="/calendar" className="text-xs font-bold text-indigo-600 hover:underline flex items-center justify-center gap-1">
+          <div className="mt-4 pt-3 border-t border-slate-100/60 text-center">
+            <Link to="/calendar" className="text-xs font-bold text-[#7C6EF0] hover:underline flex items-center justify-center gap-1">
               Open Calendar <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* =========================================== */}
-      {/* FOURTH ROW: Analytics */}
+      {/* ANALYTICS ROW: Alerts + Outstanding */}
       {/* =========================================== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        {/* Alerts Column */}
-        <div className={`xl:col-span-3 ${cardBase} p-6 border-l-4 border-rose-500`}>
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-            <h3 className="text-base font-bold text-slate-900 font-heading flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-rose-500" /> Critical System Alerts
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {/* Critical Alerts */}
+        <div className="xl:col-span-3 clay-card p-5 border-l-4 border-l-[#E5636C]">
+          <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
+            <h3 className="text-base font-bold text-slate-800 font-heading flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-[#E5636C]" /> Critical Alerts
             </h3>
-            <div className="flex items-center gap-2">
-              <Link to="/reports" className="text-xs font-bold text-rose-600 hover:underline">View All</Link>
-            </div>
+            <Link to="/reports" className="text-xs font-bold text-[#E5636C] hover:underline">View All</Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {/* Alert 1 */}
-            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3">
-              <PackageCheck className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="p-4 rounded-xl bg-clay-amber border border-amber-200/40 flex items-start gap-3">
+              <PackageCheck className="w-5 h-5 text-[#F2A65A] mt-0.5 shrink-0" />
               <div>
-                <h4 className="text-sm font-bold text-amber-900">Material Shortage Detected</h4>
-                <p className="text-xs text-amber-700 mt-1">Cement stock is critically low at 'Skyline Tower' site.</p>
-                <button className="mt-2 text-[10px] font-bold px-2 py-1 bg-amber-200 text-amber-800 rounded hover:bg-amber-300">REVIEW INVENTORY</button>
+                <h4 className="text-sm font-bold text-amber-900">Material Shortage</h4>
+                <p className="text-xs text-amber-700 mt-1">Cement stock is critically low.</p>
+                <button className="mt-2 text-[10px] font-bold px-2 py-1 bg-amber-200/60 text-amber-800 rounded-lg hover:bg-amber-200">REVIEW</button>
               </div>
             </div>
-            {/* Alert 2 */}
-            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-3">
-              <IndianRupee className="w-5 h-5 text-rose-600 mt-0.5 shrink-0" />
+            <div className="p-4 rounded-xl bg-clay-rose border border-rose-200/40 flex items-start gap-3">
+              <IndianRupee className="w-5 h-5 text-[#E5636C] mt-0.5 shrink-0" />
               <div>
-                <h4 className="text-sm font-bold text-rose-900">Client Payment Dues</h4>
-                <p className="text-xs text-rose-700 mt-1">₹5,00,000 pending from 'Mahindra Dev' since 15 days.</p>
-                <button className="mt-2 text-[10px] font-bold px-2 py-1 bg-rose-200 text-rose-800 rounded hover:bg-rose-300">SEND REMINDER</button>
+                <h4 className="text-sm font-bold text-rose-900">Payment Dues</h4>
+                <p className="text-xs text-rose-700 mt-1">₹5,00,000 pending since 15 days.</p>
+                <button className="mt-2 text-[10px] font-bold px-2 py-1 bg-rose-200/60 text-rose-800 rounded-lg hover:bg-rose-200">REMIND</button>
               </div>
             </div>
-            {/* Alert 3 */}
-            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-3">
-              <Users className="w-5 h-5 text-rose-600 mt-0.5 shrink-0" />
+            <div className="p-4 rounded-xl bg-clay-rose border border-rose-200/40 flex items-start gap-3">
+              <Users className="w-5 h-5 text-[#E5636C] mt-0.5 shrink-0" />
               <div>
-                <h4 className="text-sm font-bold text-rose-900">Labour Payment Dues</h4>
-                <p className="text-xs text-rose-700 mt-1">Weekly payout pending for 45 workers at 'Riverside Villa'.</p>
-                <button className="mt-2 text-[10px] font-bold px-2 py-1 bg-rose-200 text-rose-800 rounded hover:bg-rose-300">PROCESS PAYMENTS</button>
+                <h4 className="text-sm font-bold text-rose-900">Labour Payments</h4>
+                <p className="text-xs text-rose-700 mt-1">Weekly payout pending for 45 workers.</p>
+                <button className="mt-2 text-[10px] font-bold px-2 py-1 bg-rose-200/60 text-rose-800 rounded-lg hover:bg-rose-200">PROCESS</button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Top Outstanding Accounts Column */}
-        <div className={`xl:col-span-1 ${cardBase} p-6 border-l-4 border-indigo-500 flex flex-col`}>
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 font-heading">Outstanding Ledgers</h3>
-            </div>
-            <Link to="/clients" className="text-xs font-bold text-indigo-600 hover:underline">All Clients</Link>
+        {/* Outstanding Ledgers */}
+        <div className="xl:col-span-1 clay-card p-5 border-l-4 border-l-[#7C6EF0] flex flex-col">
+          <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
+            <h3 className="text-base font-bold text-slate-800 font-heading">Outstanding</h3>
+            <Link to="/clients" className="text-xs font-bold text-[#7C6EF0] hover:underline">All</Link>
           </div>
-          
-          <div className="space-y-3 flex-1 overflow-y-auto pr-1">
+          <div className="space-y-2.5 flex-1 overflow-y-auto pr-1 scrollbar-hide">
             {topOutstandingClients.length === 0 ? (
               <div className="py-8 text-center text-slate-400 text-xs">No outstanding balances.</div>
             ) : (
               topOutstandingClients.map((client: any) => (
-                <div key={client.id} className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-2">
+                <div key={client.id} className="p-3 rounded-xl bg-white/60 border border-violet-100/40 flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="text-sm font-bold text-slate-900 truncate font-heading">{client.name}</div>
-                    <div className="text-[10px] text-slate-500 truncate">{client.companyName || 'Private Client'}</div>
+                    <div className="text-sm font-bold text-slate-800 truncate font-heading">{client.name}</div>
+                    <div className="text-[10px] text-slate-400 truncate">{client.companyName || 'Private Client'}</div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-xs font-bold text-rose-600">
+                    <div className="text-xs font-bold text-[#E5636C] font-heading">
                       ₹{(client.outstanding || 0).toLocaleString()}
                     </div>
                   </div>
@@ -732,141 +621,117 @@ export default function DashboardPage() {
       </div>
 
       {/* =========================================== */}
-      {/* ROW 3: Expense Categories + Payment Modes + Site P/L */}
+      {/* CHARTS ROW: Expenses + Payment Mode + Site P/L */}
       {/* =========================================== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Card 1: Expense by Category */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Expense by Category */}
         {user?.role !== 'ENGINEER' && (
-        <div className={`${cardBase} p-6 flex flex-col justify-between`}>
+        <div className="clay-card p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-              <h3 className="text-base font-bold text-slate-900 font-heading">Expense by Category</h3>
+            <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
+              <h3 className="text-base font-bold text-slate-800 font-heading">Expenses by Category</h3>
               <button onClick={() => navigate('/expenses')}
-                className="px-2.5 py-1 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 text-xs font-bold flex items-center gap-1 cursor-pointer">
+                className="clay-btn px-3 py-1.5 text-xs flex items-center gap-1">
                 View
               </button>
             </div>
-
-            {/* Donut ring */}
             <div className="flex items-center justify-center py-3">
               <div className="w-36 h-36 relative flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie
-                      data={expenseCategories}
-                      dataKey="amount"
-                      innerRadius={50}
-                      outerRadius={70}
-                      paddingAngle={expenseCategories.length === 1 ? 0 : 5}
-                      stroke="none"
-                    >
+                    <Pie data={expenseCategories} dataKey="amount" innerRadius={50} outerRadius={70}
+                      paddingAngle={expenseCategories.length === 1 ? 0 : 5} stroke="none">
                       {expenseCategories.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.color.replace('bg-', '').includes('indigo') ? '#4f46e5' : entry.color.replace('bg-', '').includes('amber') ? '#f59e0b' : entry.color.replace('bg-', '').includes('emerald') ? '#10b981' : entry.color.replace('bg-', '').includes('rose') ? '#f43f5e' : entry.color.replace('bg-', '').includes('cyan') ? '#06b6d4' : '#6366f1'} />
+                        <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-xs text-slate-400 font-semibold">Total</span>
-                  <span className="text-sm font-extrabold text-slate-900 font-mono">{formatCurrency(totalExpCatAmount)}</span>
+                  <span className="text-[11px] text-slate-400 font-semibold">Total</span>
+                  <span className="text-sm font-extrabold text-slate-800 font-heading">{formatCurrency(totalExpCatAmount)}</span>
                 </div>
               </div>
             </div>
-
-            <div className="space-y-2 pt-2 max-h-[200px] overflow-y-auto pr-1">
+            <div className="space-y-2 pt-2 max-h-[200px] overflow-y-auto pr-1 scrollbar-hide">
               {expenseCategories.length === 0 ? (
-                <div className="py-4 text-center text-slate-400 text-xs">No expense categories added yet.</div>
+                <div className="py-4 text-center text-slate-400 text-xs">No expense categories yet.</div>
               ) : (
                 expenseCategories.map((cat: any) => {
                   const pct = totalExpCatAmount > 0 ? Math.round((cat.amount / totalExpCatAmount) * 100) : 0;
                   return (
-                    <div key={cat.id} className="flex items-center justify-between text-xs font-bold p-2 rounded-xl bg-slate-50 border border-slate-100 hover:border-indigo-200">
-                      <span className="flex items-center gap-2 text-slate-700">
-                        <span className={`w-3 h-3 rounded-full ${cat.color}`} /> {cat.name} ({pct}%)
+                    <div key={cat.id} className="flex items-center justify-between text-xs font-semibold p-2.5 rounded-xl bg-white/60 border border-violet-100/30">
+                      <span className="flex items-center gap-2 text-slate-600">
+                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} /> {cat.name} ({pct}%)
                       </span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-slate-900">{formatCurrency(cat.amount)}</span>
-
-                      </div>
+                      <span className="font-heading font-bold text-slate-800">{formatCurrency(cat.amount)}</span>
                     </div>
                   );
                 })
               )}
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-            <Link to="/expenses" className="text-xs font-bold text-indigo-600 hover:underline">View Expense Ledger</Link>
+          <div className="mt-4 pt-3 border-t border-slate-100/60 text-center">
+            <Link to="/expenses" className="text-xs font-bold text-[#7C6EF0] hover:underline">View Expense Ledger</Link>
           </div>
         </div>
         )}
 
-        {/* Card 2: Payment Mode Summary */}
+        {/* Payment Mode Summary */}
         {user?.role !== 'ENGINEER' && (
-        <div className={`${cardBase} p-6 flex flex-col justify-between`}>
+        <div className="clay-card p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-              <h3 className="text-base font-bold text-slate-900 font-heading">Payment Mode Summary</h3>
+            <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
+              <h3 className="text-base font-bold text-slate-800 font-heading">Payment Modes</h3>
             </div>
-
             <div className="flex items-center justify-center py-3">
               <div className="w-36 h-36 relative flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie
-                      data={paymentModes}
-                      dataKey="amount"
-                      innerRadius={50}
-                      outerRadius={70}
-                      paddingAngle={paymentModes.length === 1 ? 0 : 5}
-                      stroke="none"
-                    >
+                    <Pie data={paymentModes} dataKey="amount" innerRadius={50} outerRadius={70}
+                      paddingAngle={paymentModes.length === 1 ? 0 : 5} stroke="none">
                       {paymentModes.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.color.replace('bg-', '').includes('indigo') ? '#4f46e5' : entry.color.replace('bg-', '').includes('emerald') ? '#10b981' : entry.color.replace('bg-', '').includes('amber') ? '#f59e0b' : entry.color.replace('bg-', '').includes('violet') ? '#8b5cf6' : '#6366f1'} />
+                        <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-xs text-slate-400 font-semibold">Total</span>
-                  <span className="text-sm font-extrabold text-slate-900 font-mono">{formatCurrency(totalPaymentModeAmount)}</span>
+                  <span className="text-[11px] text-slate-400 font-semibold">Total</span>
+                  <span className="text-sm font-extrabold text-slate-800 font-heading">{formatCurrency(totalPaymentModeAmount)}</span>
                 </div>
               </div>
             </div>
-
-            <div className="space-y-2 pt-2 max-h-[200px] overflow-y-auto pr-1">
+            <div className="space-y-2 pt-2 max-h-[200px] overflow-y-auto pr-1 scrollbar-hide">
               {paymentModes.length === 0 ? (
-                <div className="py-4 text-center text-slate-400 text-xs">No payment modes added yet.</div>
+                <div className="py-4 text-center text-slate-400 text-xs">No payment modes yet.</div>
               ) : (
                 paymentModes.map((pm: any) => (
-                  <div key={pm.id} className="flex items-center justify-between text-xs font-bold p-2 rounded-xl bg-slate-50 border border-slate-100 hover:border-indigo-200">
+                  <div key={pm.id} className="flex items-center justify-between text-xs font-semibold p-2.5 rounded-xl bg-white/60 border border-violet-100/30">
                     <div className="flex items-center gap-2">
-                      <span className={`w-3 h-3 rounded-full ${pm.color}`} />
-                      <span className="text-slate-800">{pm.mode} ({pm.pct}%)</span>
+                      <span className="w-3 h-3 rounded-full" style={{ backgroundColor: pm.color }} />
+                      <span className="text-slate-600">{pm.mode} ({pm.pct}%)</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-slate-900 font-extrabold">{formatCurrency(pm.amount)}</span>
-
-                    </div>
+                    <span className="font-heading font-bold text-slate-800">{formatCurrency(pm.amount)}</span>
                   </div>
                 ))
               )}
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-            <span className="text-[11px] text-slate-400 font-medium">Add or update payment mode totals</span>
+          <div className="mt-4 pt-3 border-t border-slate-100/60 text-center">
+            <span className="text-[11px] text-slate-400">Payment mode totals (this month)</span>
           </div>
         </div>
         )}
 
-        {/* Card 3: Site-wise Profit / Loss */}
-        <div className={`${cardBase} p-6 flex flex-col justify-between`}>
+        {/* Site-wise Profit/Loss */}
+        <div className="clay-card p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-              <h3 className="text-base font-bold text-slate-900 font-heading">Site-wise Profit / Loss</h3>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-violet-50 text-violet-700">This Month</span>
+            <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
+              <h3 className="text-base font-bold text-slate-800 font-heading">Site P&L</h3>
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-clay-violet text-[#7C6EF0]">This Month</span>
             </div>
-
-            <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-1 scrollbar-hide">
               {sites.length === 0 ? (
                 <div className="py-8 text-center text-slate-400 text-xs">No sites added yet.</div>
               ) : (
@@ -874,20 +739,20 @@ export default function DashboardPage() {
                   const profit = site.income - site.expense;
                   return (
                     <div key={site.id} onClick={() => navigate('/site-profit-loss')}
-                      className="p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-indigo-300 transition-all cursor-pointer">
-                      <div className="text-sm font-bold text-slate-900 font-heading mb-2">{site.name}</div>
+                      className="p-3 rounded-xl bg-white/60 border border-violet-100/30 hover:border-[#7C6EF0]/30 transition-all cursor-pointer">
+                      <div className="text-sm font-bold text-slate-800 font-heading mb-2">{site.name}</div>
                       <div className="grid grid-cols-3 gap-2 text-xs">
                         <div>
                           <div className="text-slate-400 font-medium">Income</div>
-                          <div className="font-bold font-mono text-emerald-600">{formatCurrency(site.income)}</div>
+                          <div className="font-bold font-heading text-[#5CB77E]">{formatCurrency(site.income)}</div>
                         </div>
                         <div>
                           <div className="text-slate-400 font-medium">Expense</div>
-                          <div className="font-bold font-mono text-rose-600">{formatCurrency(site.expense)}</div>
+                          <div className="font-bold font-heading text-[#E5636C]">{formatCurrency(site.expense)}</div>
                         </div>
                         <div>
                           <div className="text-slate-400 font-medium">Profit</div>
-                          <div className={`font-bold font-mono ${profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          <div className={`font-bold font-heading ${profit >= 0 ? 'text-[#5CB77E]' : 'text-[#E5636C]'}`}>
                             {formatCurrency(profit)}
                           </div>
                         </div>
@@ -898,122 +763,110 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-            <Link to="/site-profit-loss" className="text-xs font-bold text-indigo-600 hover:underline">View Detailed Analysis</Link>
+          <div className="mt-4 pt-3 border-t border-slate-100/60 text-center">
+            <Link to="/site-profit-loss" className="text-xs font-bold text-[#7C6EF0] hover:underline">Detailed Analysis</Link>
           </div>
         </div>
       </div>
 
       {/* =========================================== */}
-      {/* ROW 4: Recent Activities + Today's Tasks + Recent Leads */}
+      {/* ROW 4: Today's Tasks + Recent Leads */}
       {/* =========================================== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Card 2: Today's Tasks */}
-        <div className={`${cardBase} p-6 h-full flex flex-col justify-between`}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Today's Tasks */}
+        <div className="clay-card p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-              <h3 className="text-base font-bold text-slate-900 font-heading">Today's Tasks</h3>
+            <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
+              <h3 className="text-base font-bold text-slate-800 font-heading">Today's Tasks</h3>
               <div className="flex items-center gap-2">
                 <button onClick={() => navigate('/tasks')}
-                  className="p-1 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 cursor-pointer" title="Go to Tasks">
+                  className="p-1.5 rounded-lg bg-clay-violet text-[#7C6EF0] hover:bg-violet-100 cursor-pointer" title="Go to Tasks">
                   <Plus className="w-4 h-4" />
                 </button>
-                <Link to="/tasks" className="text-xs font-bold text-indigo-600 hover:underline">View All</Link>
+                <Link to="/tasks" className="text-xs font-bold text-[#7C6EF0] hover:underline">All</Link>
               </div>
             </div>
-
-            <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1 scrollbar-hide">
               {todayTasks.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 text-xs">No tasks for today. Click "+" to schedule one.</div>
+                <div className="py-8 text-center text-slate-400 text-xs">No tasks for today.</div>
               ) : (
                 todayTasks.map((t: any) => (
                   <div key={t.id}
                     className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-3 cursor-pointer ${
-                      t.completed ? 'bg-emerald-50/50 border-emerald-200 opacity-75' : 'bg-slate-50 border-slate-100 hover:border-indigo-300'
+                      t.completed ? 'bg-green-50/40 border-green-200/40 opacity-75' : 'bg-white/60 border-violet-100/30 hover:border-[#7C6EF0]/30'
                     }`}>
                     <div className="flex items-center gap-3">
                       <button onClick={(e: any) => toggleTaskComplete(t.id, e)} className="flex-shrink-0 cursor-pointer">
-                        {t.completed ? <CheckSquare className="w-4 h-4 text-emerald-600" /> : <Square className="w-4 h-4 text-slate-400" />}
+                        {t.completed ? <CheckSquare className="w-4 h-4 text-[#5CB77E]" /> : <Square className="w-4 h-4 text-slate-300" />}
                       </button>
                       <div>
-                        <div className={`text-xs font-bold font-heading ${t.completed ? 'line-through text-slate-500' : 'text-slate-900'}`}>
+                        <div className={`text-xs font-bold font-heading ${t.completed ? 'line-through text-slate-400' : 'text-slate-800'}`}>
                           {t.title}
                         </div>
-                        <div className="text-[11px] text-slate-500 flex items-center gap-1">
+                        <div className="text-[11px] text-slate-400 flex items-center gap-1">
                           <Clock className="w-3 h-3" /> {t.time || '12:00 PM'}
                         </div>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
-                        t.priority === 'High' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                        t.priority === 'Low' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                        'bg-amber-50 text-amber-700 border-amber-200'
-                      }`}>{t.priority}</span>
-
-                    </div>
+                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-lg ${
+                      t.priority === 'High' ? 'bg-clay-rose text-[#E5636C]' :
+                      t.priority === 'Low' ? 'bg-clay-blue text-[#4EA8DE]' :
+                      'bg-clay-amber text-[#F2A65A]'
+                    }`}>{t.priority}</span>
                   </div>
                 ))
               )}
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-            <Link to="/tasks" className="text-xs font-bold text-indigo-600 hover:underline">Open Task Directory</Link>
+          <div className="mt-4 pt-3 border-t border-slate-100/60 text-center">
+            <Link to="/tasks" className="text-xs font-bold text-[#7C6EF0] hover:underline">Open Task Directory</Link>
           </div>
         </div>
 
-        {/* Card 3: Recent Leads */}
-        <div className={`${cardBase} p-6 flex flex-col justify-between`}>
+        {/* Recent Leads */}
+        <div className="clay-card p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-              <h3 className="text-base font-bold text-slate-900 font-heading">Recent Leads</h3>
+            <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
+              <h3 className="text-base font-bold text-slate-800 font-heading">Recent Leads</h3>
               <div className="flex items-center gap-2">
                 <button onClick={() => navigate('/leads')}
-                  className="p-1 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 cursor-pointer" title="Go to Leads">
+                  className="p-1.5 rounded-lg bg-clay-violet text-[#7C6EF0] hover:bg-violet-100 cursor-pointer" title="Go to Leads">
                   <Plus className="w-4 h-4" />
                 </button>
-                <Link to="/leads" className="text-xs font-bold text-indigo-600 hover:underline">View All</Link>
+                <Link to="/leads" className="text-xs font-bold text-[#7C6EF0] hover:underline">All</Link>
               </div>
             </div>
-
-            <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1 scrollbar-hide">
               {leads.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 text-xs">No leads added yet. Click "+" to add one.</div>
+                <div className="py-8 text-center text-slate-400 text-xs">No leads added yet.</div>
               ) : (
                 leads.map((lead: any) => (
                   <div key={lead.id} onClick={() => navigate('/leads')}
-                    className="py-2.5 flex items-center justify-between hover:bg-slate-50/80 px-2 rounded-xl transition-all cursor-pointer group">
+                    className="py-2.5 px-3 rounded-xl bg-white/60 border border-violet-100/30 hover:border-[#7C6EF0]/30 flex items-center justify-between transition-all cursor-pointer group">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#7C6EF0] to-[#A78BFA] text-white font-bold flex items-center justify-center text-xs shrink-0 font-heading">
                         {lead.name[0]?.toUpperCase() || '?'}
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-slate-900 font-heading">{lead.name}</div>
-                        <div className="text-[11px] text-slate-500">{lead.city}</div>
+                        <div className="text-xs font-bold text-slate-800 font-heading">{lead.name}</div>
+                        <div className="text-[11px] text-slate-400">{lead.city}</div>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="text-right space-y-1">
-                        {lead.stage && (
-                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border uppercase ${lead.badge}`}>
-                            {lead.stage}
-                          </span>
-                        )}
-                        <div className="text-[10px] text-slate-400 font-mono">{lead.date}</div>
-                      </div>
-                      <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-
-                      </div>
+                    <div className="text-right space-y-1">
+                      {lead.stage && (
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border uppercase ${lead.badge}`}>
+                          {lead.stage}
+                        </span>
+                      )}
+                      <div className="text-[10px] text-slate-400">{lead.date}</div>
                     </div>
                   </div>
                 ))
               )}
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-            <Link to="/leads" className="text-xs font-bold text-indigo-600 hover:underline">Open CRM Leads Hub</Link>
+          <div className="mt-4 pt-3 border-t border-slate-100/60 text-center">
+            <Link to="/leads" className="text-xs font-bold text-[#7C6EF0] hover:underline">Open CRM Leads Hub</Link>
           </div>
         </div>
       </div>
@@ -1022,28 +875,33 @@ export default function DashboardPage() {
       {/* MODALS                                       */}
       {/* ============================================ */}
 
-      {/* Create Project Modal (API) */}
+      {/* Create Project Modal */}
       {isCreateProjectOpen && (
-        <div className={modalOverlay}>
-          <div className="bg-white rounded-2xl border shadow-2xl w-full max-w-lg p-6 space-y-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h3 className="text-lg font-bold text-slate-900 font-heading">Register New Site Project</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className="clay-card w-full max-w-lg p-6 space-y-6 max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100/60 pb-4">
+              <h3 className="text-lg font-bold text-slate-800 font-heading">Register New Project</h3>
               <button onClick={() => setIsCreateProjectOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer"><X className="w-5 h-5" /></button>
             </div>
 
             <form onSubmit={handleCreateSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Project Code *</label>
+                  <label className="text-xs font-semibold text-slate-600">Project Code *</label>
                   <input type="text" required placeholder="e.g. PROJ-MUM-05" value={newProject.code}
                     onChange={(e: any) => setNewProject({ ...newProject, code: e.target.value.toUpperCase() })}
-                    className={`${inputCls} font-mono`} />
+                    className="clay-input w-full px-3 py-2 text-sm font-semibold" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Client Contract *</label>
+                  <label className="text-xs font-semibold text-slate-600">Client *</label>
                   <select required value={newProject.clientId}
                     onChange={(e: any) => setNewProject({ ...newProject, clientId: e.target.value })}
-                    className={inputCls}>
+                    className="clay-input w-full px-3 py-2 text-sm font-semibold">
                     <option value="">Select Client</option>
                     {(clients as any[]).map((c: any) => (
                       <option key={c.id} value={c.id}>{c.name} ({c.companyName || 'Corporate'})</option>
@@ -1053,33 +911,35 @@ export default function DashboardPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Project Name *</label>
+                <label className="text-xs font-semibold text-slate-600">Project Name *</label>
                 <input type="text" required placeholder="e.g. Skyline Residency Tower A" value={newProject.name}
                   onChange={(e: any) => setNewProject({ ...newProject, name: e.target.value })}
-                  className={inputCls} />
+                  className="clay-input w-full px-3 py-2 text-sm font-semibold" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Contract Value (INR)</label>
+                  <label className="text-xs font-semibold text-slate-600">Contract Value (INR)</label>
                   <input type="number" placeholder="150000000" value={newProject.contractValue}
                     onChange={(e: any) => setNewProject({ ...newProject, contractValue: e.target.value })}
-                    className={`${inputCls} font-mono`} />
+                    className="clay-input w-full px-3 py-2 text-sm font-semibold font-heading" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Estimated Budget (INR)</label>
+                  <label className="text-xs font-semibold text-slate-600">Budget (INR)</label>
                   <input type="number" placeholder="120000000" value={newProject.budget}
                     onChange={(e: any) => setNewProject({ ...newProject, budget: e.target.value })}
-                    className={`${inputCls} font-mono`} />
+                    className="clay-input w-full px-3 py-2 text-sm font-semibold font-heading" />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                <button type="button" onClick={() => setIsCreateProjectOpen(false)} className={btnCancel}>Cancel</button>
-                <button type="submit" disabled={createMutation.isPending} className={btnSave}>Register Project</button>
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100/60">
+                <button type="button" onClick={() => setIsCreateProjectOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold">Cancel</button>
+                <button type="submit" disabled={createMutation.isPending}
+                  className="clay-btn px-5 py-2 text-sm disabled:opacity-50">Register Project</button>
               </div>
             </form>
-          </div>
+          </motion.div>
         </div>
       )}
 

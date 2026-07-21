@@ -99,56 +99,56 @@ export default function AccountsPage() {
   const totalBalance = accounts.reduce((acc: number, curr: any) => acc + Number(curr.balance || 0), 0);
 
   return (
-    <div className="p-4 md:p-8 lg:p-8 space-y-6 bg-slate-50 min-h-full font-sans">
+    <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight font-heading">
             Corporate Bank Accounts & Reserves
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             Current accounts, Escrow deposits, cash reserves, and IFSC reconciliation.
           </p>
         </div>
 
         <button
           onClick={() => setIsAddOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-md transition-all"
+          className="clay-btn inline-flex items-center gap-2 px-4 py-2.5 text-white text-sm font-semibold transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Link Bank Account</span>
         </button>
       </div>
 
-      <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950 text-white shadow-lg flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+      <div className="rounded-[1.25rem] bg-gradient-to-br from-[#7C6EF0] to-[#6558D3] border-none p-6 text-white flex flex-col sm:flex-row justify-between sm:items-center gap-4 shadow-[0_8px_30px_rgb(124,110,240,0.3)]">
         <div className="space-y-1">
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Liquid Reserves across Accounts</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-white/80">Total Liquid Reserves across Accounts</div>
           <div className="text-3xl font-extrabold font-mono text-white">{formatCurrency(totalBalance)}</div>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-xs font-semibold text-indigo-300">
+        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/20 text-xs font-semibold text-white backdrop-blur-md border border-white/20">
           <Landmark className="w-4 h-4" /> {accounts.length} Active Corporate Ledgers
         </div>
       </div>
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
-          {[1, 2].map((i) => <div key={i} className="h-48 bg-slate-200 rounded-2xl" />)}
+          {[1, 2].map((i) => <div key={i} className="h-48 bg-violet-100/50 rounded-3xl" />)}
         </div>
       ) : accounts.length === 0 ? (
-        <div className="bg-white rounded-2xl border p-12 text-center text-slate-400">No bank accounts linked yet.</div>
+        <div className="clay-card p-12 text-center text-slate-400">No bank accounts linked yet.</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {accounts.map((acc: any) => (
-            <div key={acc.id} className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+            <div key={acc.id} className="clay-card p-6 space-y-4 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="flex justify-between items-start gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold px-2.5 py-1 rounded bg-indigo-50 text-indigo-700 uppercase">
+                    <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-[#7C6EF0]/10 text-[#7C6EF0] uppercase">
                       {acc.accountType} ACCOUNT
                     </span>
                     {user?.role === 'ADMIN' && (
                       <button
                         onClick={() => setEditingAcc(acc)}
-                        className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                        className="p-1 text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer"
                         title="Edit Bank Account"
                       >
                         <Edit3 className="w-4 h-4" />
@@ -161,27 +161,27 @@ export default function AccountsPage() {
                             deleteMutation.mutate(acc.id);
                           }
                         }}
-                        className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                        className="p-1 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                         title="Delete Bank Account"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     )}
                   </div>
-                  <span className="text-xs font-mono font-bold text-slate-500">
+                  <span className="text-xs font-mono font-bold text-slate-400">
                     {user?.role === 'ADMIN' ? 'OWNER A/C' : '••••••••'}
                   </span>
                 </div>
 
-                <h3 className="text-lg font-bold text-slate-900 font-heading">{acc.bankName}</h3>
-                <div className="text-xs text-slate-500 font-mono">
+                <h3 className="text-lg font-bold text-slate-800 font-heading">{acc.bankName}</h3>
+                <div className="text-xs text-slate-600 font-mono">
                   A/C: {user?.role === 'ADMIN' ? acc.accountNo : `••••••••••${String(acc.accountNo || '').slice(-4)}`}
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                <div className="text-xs text-slate-400 uppercase font-semibold">Available Ledger Balance</div>
-                <div className="text-xl font-extrabold font-mono text-emerald-600">{formatCurrency(Number(acc.balance || 0))}</div>
+              <div className="pt-4 border-t border-violet-100/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="text-[11px] sm:text-xs text-slate-400 uppercase font-semibold">Available Ledger Balance</div>
+                <div className="text-lg sm:text-xl font-extrabold font-mono text-[#5CB77E]">{formatCurrency(Number(acc.balance || 0))}</div>
               </div>
             </div>
           ))}
@@ -189,10 +189,10 @@ export default function AccountsPage() {
       )}
 
       {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border shadow-2xl w-full max-w-md p-6 space-y-6">
-            <div className="flex items-center justify-between border-b pb-4">
-              <h3 className="font-bold text-lg font-heading">Link Bank Account</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="font-bold text-lg font-heading text-slate-800">Link Bank Account</h3>
               <button onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
             </div>
             <form onSubmit={handleCreate} className="space-y-4">
@@ -202,7 +202,7 @@ export default function AccountsPage() {
                 placeholder="Bank Name (e.g. HDFC Bank Ltd) *"
                 value={newAcc.bankName}
                 onChange={(e) => setNewAcc({ ...newAcc, bankName: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                className="clay-input w-full text-sm"
               />
               <input
                 type="text"
@@ -210,13 +210,13 @@ export default function AccountsPage() {
                 placeholder="Account Number *"
                 value={newAcc.accountNo}
                 onChange={(e) => setNewAcc({ ...newAcc, accountNo: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono"
+                className="clay-input w-full text-sm font-mono"
               />
               <div className="grid grid-cols-1 gap-4">
                 <select
                   value={newAcc.accountType}
                   onChange={(e) => setNewAcc({ ...newAcc, accountType: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm"
+                  className="clay-input w-full text-sm"
                 >
                   <option value="CURRENT">Current Account</option>
                   <option value="SAVINGS">Savings Account</option>
@@ -229,11 +229,11 @@ export default function AccountsPage() {
                 placeholder="Initial Ledger Balance (₹)"
                 value={newAcc.balance}
                 onChange={(e) => setNewAcc({ ...newAcc, balance: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono"
+                className="clay-input w-full text-sm font-mono"
               />
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 rounded-xl border text-slate-600 text-sm font-semibold">Cancel</button>
-                <button type="submit" disabled={createMutation.isPending} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow">Link Account</button>
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
+                <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-violet-50 transition-colors">Cancel</button>
+                <button type="submit" disabled={createMutation.isPending} className="clay-btn px-5 py-2 text-white text-sm font-semibold">Link Account</button>
               </div>
             </form>
           </div>
@@ -242,10 +242,10 @@ export default function AccountsPage() {
 
       {/* Edit Modal */}
       {editingAcc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border shadow-2xl w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b pb-4">
-              <h3 className="font-bold text-lg font-heading">Update Bank Account</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="font-bold text-lg font-heading text-slate-800">Update Bank Account</h3>
               <button onClick={() => setEditingAcc(null)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
             </div>
             <form onSubmit={handleUpdateAcc} className="space-y-4">
@@ -255,7 +255,7 @@ export default function AccountsPage() {
                 placeholder="Bank Name *"
                 value={editingAcc.bankName || ''}
                 onChange={(e) => setEditingAcc({ ...editingAcc, bankName: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-semibold"
+                className="clay-input w-full text-sm font-semibold"
               />
               <input
                 type="text"
@@ -263,13 +263,13 @@ export default function AccountsPage() {
                 placeholder="Account Number *"
                 value={editingAcc.accountNo || ''}
                 onChange={(e) => setEditingAcc({ ...editingAcc, accountNo: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono"
+                className="clay-input w-full text-sm font-mono"
               />
               <div className="grid grid-cols-1 gap-4">
                 <select
                   value={editingAcc.accountType || 'CURRENT'}
                   onChange={(e) => setEditingAcc({ ...editingAcc, accountType: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-semibold"
+                  className="clay-input w-full text-sm font-semibold"
                 >
                   <option value="CURRENT">Current Account</option>
                   <option value="SAVINGS">Savings Account</option>
@@ -282,11 +282,11 @@ export default function AccountsPage() {
                 placeholder="Ledger Balance (₹)"
                 value={editingAcc.balance || ''}
                 onChange={(e) => setEditingAcc({ ...editingAcc, balance: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border bg-slate-50 text-sm font-mono font-bold text-emerald-600"
+                className="clay-input w-full text-sm font-mono font-bold text-[#5CB77E]"
               />
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setEditingAcc(null)} className="px-4 py-2 rounded-xl border text-slate-600 text-sm font-semibold">Cancel</button>
-                <button type="submit" disabled={updateMutation.isPending} className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow">Save Updates</button>
+              <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
+                <button type="button" onClick={() => setEditingAcc(null)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-violet-50 transition-colors">Cancel</button>
+                <button type="submit" disabled={updateMutation.isPending} className="clay-btn px-5 py-2 text-white text-sm font-semibold">Save Updates</button>
               </div>
             </form>
           </div>

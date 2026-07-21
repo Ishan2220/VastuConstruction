@@ -106,8 +106,8 @@ export default function SettingsPage() {
     <div className="p-6 space-y-6 max-w-4xl mx-auto font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2 font-heading">
-            <Settings className="w-8 h-8 text-indigo-600" />
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 flex items-center gap-2 font-heading">
+            <Settings className="w-8 h-8 text-[#7C6EF0]" />
             System Settings
           </h1>
           <p className="text-sm text-slate-500 mt-1">Manage global ERP configurations and preferences</p>
@@ -115,7 +115,7 @@ export default function SettingsPage() {
         <button 
           onClick={handleSave}
           disabled={isSaving || isLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors shadow-sm disabled:opacity-50"
+          className="clay-btn flex items-center gap-2 px-4 py-2 disabled:opacity-50"
         >
           <Save className="w-4 h-4" />
           {isSaving ? 'Saving...' : 'Save Changes'}
@@ -123,20 +123,20 @@ export default function SettingsPage() {
       </div>
 
       {isLoading ? (
-        <div className="p-8 text-center text-slate-500 bg-white rounded-2xl border border-slate-200">Loading settings...</div>
+        <div className="clay-card p-8 text-center text-slate-500">Loading settings...</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="md:col-span-1 space-y-2">
             <button 
               onClick={() => setActiveTab('security')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'security' ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'text-slate-600 hover:bg-slate-100'}`}>
-              <Lock className={`w-5 h-5 ${activeTab === 'security' ? 'text-indigo-600' : 'text-slate-400'}`} />
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'security' ? 'bg-[#7C6EF0]/10 text-[#7C6EF0] border border-[#7C6EF0]/20' : 'text-slate-600 hover:bg-white/50'}`}>
+              <Lock className={`w-5 h-5 ${activeTab === 'security' ? 'text-[#7C6EF0]' : 'text-slate-400'}`} />
               Security
             </button>
             <button 
               onClick={() => setActiveTab('permissions')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'permissions' ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'text-slate-600 hover:bg-slate-100'}`}>
-              <Shield className={`w-5 h-5 ${activeTab === 'permissions' ? 'text-indigo-600' : 'text-slate-400'}`} />
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'permissions' ? 'bg-[#7C6EF0]/10 text-[#7C6EF0] border border-[#7C6EF0]/20' : 'text-slate-600 hover:bg-white/50'}`}>
+              <Shield className={`w-5 h-5 ${activeTab === 'permissions' ? 'text-[#7C6EF0]' : 'text-slate-400'}`} />
               Permissions
             </button>
           </div>
@@ -145,12 +145,12 @@ export default function SettingsPage() {
 
 
             {activeTab === 'security' && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+              <div className="clay-card p-6 space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 font-heading">Security Policies</h3>
+                  <h3 className="text-lg font-bold text-slate-800 font-heading">Security Policies</h3>
                   <p className="text-sm text-slate-500 mt-1">Manage passwords, multi-factor auth, and sessions.</p>
                 </div>
-                <div className="p-8 text-center text-slate-500 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="p-8 text-center text-slate-500 rounded-xl border border-violet-100/30 bg-white/40">
                   <Lock className="w-8 h-8 mx-auto mb-3 text-slate-400" />
                   <p>Security settings are currently managed via direct environment variables.</p>
                 </div>
@@ -158,19 +158,19 @@ export default function SettingsPage() {
             )}
 
             {activeTab === 'permissions' && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+              <div className="clay-card p-6 space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 font-heading">Role & Page Permissions</h3>
+                  <h3 className="text-lg font-bold text-slate-800 font-heading">Role & Page Permissions</h3>
                   <p className="text-sm text-slate-500 mt-1">Grant temporary or specific page access rights to employees.</p>
                 </div>
                 
-                <div className="space-y-4 border border-slate-200 p-4 rounded-xl bg-slate-50">
+                <div className="space-y-4 border border-violet-100/30 p-4 rounded-xl bg-white/40">
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1">Select Employee</label>
                     <select
                       value={selectedUser}
                       onChange={(e) => setSelectedUser(e.target.value)}
-                      className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full clay-input"
                     >
                       <option value="">-- Choose an employee --</option>
                       {users.map((u: any) => (
@@ -188,7 +188,7 @@ export default function SettingsPage() {
                       value={tempAdminHours}
                       onChange={(e) => setTempAdminHours(e.target.value)}
                       min="1"
-                      className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full clay-input"
                     />
                     <p className="text-xs text-slate-500 mt-1">Set to 0 or leave empty for permanent changes, though temporary is recommended.</p>
                   </div>
@@ -202,7 +202,7 @@ export default function SettingsPage() {
                             type="checkbox" 
                             checked={selectedPages.includes(page)}
                             onChange={() => togglePage(page)}
-                            className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                            className="rounded border-violet-200 text-[#7C6EF0] focus:ring-[#7C6EF0]"
                           />
                           {page}
                         </label>
@@ -214,7 +214,7 @@ export default function SettingsPage() {
                     <button 
                       onClick={handleGrantPermissions}
                       disabled={grantPermissionMutation.isPending || !selectedUser}
-                      className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors shadow-sm disabled:opacity-50"
+                      className="clay-btn px-5 py-2.5 disabled:opacity-50"
                     >
                       {grantPermissionMutation.isPending ? 'Applying...' : 'Apply Permissions'}
                     </button>

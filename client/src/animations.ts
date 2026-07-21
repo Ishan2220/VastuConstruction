@@ -57,7 +57,7 @@ export const slideInRight: Variants = {
 };
 
 /** Clay card hover effect */
-export const clayCardHover = {
+export const clayCardHover: any = {
   whileHover: { y: -4, transition: { type: 'spring', stiffness: 400, damping: 17 } },
   whileTap: { scale: 0.98, transition: { duration: 0.1 } },
 };

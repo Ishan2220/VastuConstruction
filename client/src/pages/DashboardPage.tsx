@@ -144,9 +144,9 @@ const MONEY_KPIS: KpiField[] = ['monthlyIncome', 'monthlyExpenses', 'cashInHand'
 // KPI Card Config
 // ============================================
 const kpiCardConfig = [
-  { key: 'totalLeads', label: 'Total Leads', icon: Users, gradient: 'bg-clay-violet', iconColor: 'text-[#7C6EF0]', route: '/leads' },
-  { key: 'activeProjects', label: 'Active Projects', icon: Building2, gradient: 'bg-clay-green', iconColor: 'text-[#5CB77E]', route: '/projects' },
-  { key: 'activeSites', label: 'Active Sites', icon: HardHat, gradient: 'bg-clay-amber', iconColor: 'text-[#F2A65A]', route: '/sites' },
+  { key: 'totalLeads', label: 'Total Leads', icon: Users, gradient: 'bg-clay-violet', iconColor: 'text-[#7C6EF0]', route: '/leads', isMoney: false },
+  { key: 'activeProjects', label: 'Active Projects', icon: Building2, gradient: 'bg-clay-green', iconColor: 'text-[#5CB77E]', route: '/projects', isMoney: false },
+  { key: 'activeSites', label: 'Active Sites', icon: HardHat, gradient: 'bg-clay-amber', iconColor: 'text-[#F2A65A]', route: '/sites', isMoney: false },
   { key: 'monthlyIncome', label: 'Income (This Month)', icon: IndianRupee, gradient: 'bg-clay-green', iconColor: 'text-[#5CB77E]', route: '/reports', isMoney: true },
   { key: 'monthlyExpenses', label: 'Expenses (This Month)', icon: TrendingDown, gradient: 'bg-clay-rose', iconColor: 'text-[#E5636C]', route: '/reports', isMoney: true },
 ] as const;

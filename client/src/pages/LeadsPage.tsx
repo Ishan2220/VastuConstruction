@@ -179,9 +179,9 @@ export default function LeadsPage() {
           <p className="text-sm text-slate-500">Log new construction or interior project inquiries above.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredLeads.map((lead: any) => (
-            <div key={lead.id} className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+            <div key={lead.id} className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="flex justify-between items-start gap-2">
                   <div className="flex items-center gap-2">

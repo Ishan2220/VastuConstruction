@@ -27,6 +27,7 @@ import purchaseOrderRoutes from './purchaseOrder.routes.js';
 import searchRoutes from './search.routes.js';
 import milestoneRoutes from './milestone.routes.js';
 import approvalRoutes from './approval.routes.js';
+import attendanceRoutes from './attendance.routes.js';
 
 const router = Router();
 
@@ -62,5 +63,6 @@ router.use('/purchase-orders', purchaseOrderRoutes);
 router.use('/search', searchRoutes);
 router.use('/milestones', milestoneRoutes);
 router.use('/approvals', approvalRoutes);
+router.use('/attendance', attendanceRoutes);
 
 export default router;

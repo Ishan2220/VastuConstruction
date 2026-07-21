@@ -9,7 +9,7 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState('security');
 
   // For Permissions
   const [selectedUser, setSelectedUser] = useState('');
@@ -128,18 +128,6 @@ export default function SettingsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="md:col-span-1 space-y-2">
             <button 
-              onClick={() => setActiveTab('general')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'general' ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'text-slate-600 hover:bg-slate-100'}`}>
-              <Globe className={`w-5 h-5 ${activeTab === 'general' ? 'text-indigo-600' : 'text-slate-400'}`} />
-              General Details
-            </button>
-            <button 
-              onClick={() => setActiveTab('features')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'features' ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'text-slate-600 hover:bg-slate-100'}`}>
-              <LayoutTemplate className={`w-5 h-5 ${activeTab === 'features' ? 'text-indigo-600' : 'text-slate-400'}`} />
-              Feature Flags
-            </button>
-            <button 
               onClick={() => setActiveTab('security')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'security' ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'text-slate-600 hover:bg-slate-100'}`}>
               <Lock className={`w-5 h-5 ${activeTab === 'security' ? 'text-indigo-600' : 'text-slate-400'}`} />
@@ -154,106 +142,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="md:col-span-3 space-y-6">
-            {activeTab === 'general' && (
-              <>
-                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-                  <h3 className="text-lg font-bold text-slate-900 font-heading">Company Profile</h3>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1">Company Name</label>
-                      <input
-                        type="text"
-                        value={settings.companyName || ''}
-                        onChange={(e) => handleChange('companyName', e.target.value)}
-                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Default Currency</label>
-                        <select
-                          value={settings.currency || 'INR'}
-                          onChange={(e) => handleChange('currency', e.target.value)}
-                          className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                          <option value="INR">INR (₹)</option>
-                          <option value="USD">USD ($)</option>
-                          <option value="EUR">EUR (€)</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Financial Year</label>
-                        <input
-                          type="text"
-                          value={settings.financialYear || ''}
-                          onChange={(e) => handleChange('financialYear', e.target.value)}
-                          className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-                    </div>
 
-                    <div>
-                      <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Invoice Prefix</label>
-                        <input
-                          type="text"
-                          value={settings.invoicePrefix || 'INV-'}
-                          onChange={(e) => handleChange('invoicePrefix', e.target.value)}
-                          className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-              </>
-            )}
-
-            {activeTab === 'features' && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 font-heading">Feature Flags</h3>
-                  <p className="text-sm text-slate-500 mt-1">Enable or disable specific system modules.</p>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <div>
-                      <div className="font-semibold text-slate-900">Purchase Orders Module</div>
-                      <div className="text-xs text-slate-500 mt-0.5">Allow generating POs for vendors.</div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" checked={settings.enablePurchaseOrders !== false} onChange={(e) => handleChange('enablePurchaseOrders', e.target.checked)} />
-                      <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <div>
-                      <div className="font-semibold text-slate-900">System Notifications</div>
-                      <div className="text-xs text-slate-500 mt-0.5">Enable in-app alerts and notifications.</div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" checked={settings.enableNotifications !== false} onChange={(e) => handleChange('enableNotifications', e.target.checked)} />
-                      <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <div>
-                      <div className="font-semibold text-slate-900">Business Analytics</div>
-                      <div className="text-xs text-slate-500 mt-0.5">Enable advanced insights and charting.</div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" checked={settings.enableAnalytics !== false} onChange={(e) => handleChange('enableAnalytics', e.target.checked)} />
-                      <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {activeTab === 'security' && (
               <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">

@@ -166,7 +166,7 @@ export default function TasksPage() {
           />
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto">
+        <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-2 md:pb-0">
           {['ALL', 'TODO', 'IN_PROGRESS', 'COMPLETED'].map((st) => (
             <button
               key={st}

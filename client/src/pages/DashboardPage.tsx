@@ -383,15 +383,15 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
         {/* Total Leads */}
         <motion.div whileHover={{ y: -3 }} onClick={() => navigate('/leads')}
-          className={`${cardBase} p-5 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group flex flex-col justify-between`}>
+          className={`${cardBase} p-3.5 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group flex flex-col justify-between`}>
           <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
-              <Users className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+              <Users className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Leads</span>
-            <span className="text-2xl font-extrabold text-slate-900 font-heading group-hover:text-indigo-600 transition-colors">
+          <div className="mt-2.5">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Leads</span>
+            <span className="text-xl font-extrabold text-slate-900 font-heading group-hover:text-indigo-600 transition-colors">
               {kpis.totalLeads}
             </span>
           </div>
@@ -430,38 +430,47 @@ export default function DashboardPage() {
           <div className="mt-3">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Active Sites</span>
             <span className="text-2xl font-extrabold text-slate-900 font-heading group-hover:text-amber-600 transition-colors">
+          className={`${cardBase} p-3.5 hover:shadow-md hover:border-amber-300 transition-all cursor-pointer group flex flex-col justify-between`}>
+          <div className="flex items-center justify-between">
+            <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+              <Building2 className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2.5">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Active Sites</span>
+            <span className="text-xl font-extrabold text-slate-900 font-heading group-hover:text-amber-600 transition-colors">
               {kpis.activeSites}
             </span>
           </div>
         </motion.div>
 
-        {/* Monthly Income */}
-        <motion.div whileHover={{ y: -3 }} onClick={() => navigate('/income')}
-          className={`${cardBase} p-5 hover:shadow-md hover:border-emerald-300 transition-all cursor-pointer group flex flex-col justify-between`}>
+        {/* Total Income */}
+        <motion.div whileHover={{ y: -3 }} onClick={() => navigate('/reports')}
+          className={`${cardBase} p-3.5 hover:shadow-md hover:border-emerald-400 transition-all cursor-pointer group flex flex-col justify-between`}>
           <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-              <IndianRupee className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+              <IndianRupee className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Income</span>
-            <span className="text-2xl font-extrabold text-slate-900 font-mono group-hover:text-emerald-600 transition-colors">
+          <div className="mt-2.5">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Income</span>
+            <span className="text-xl font-extrabold text-slate-900 font-mono group-hover:text-emerald-600 transition-colors">
               {formatCurrency(kpis.monthlyIncome)}
             </span>
           </div>
         </motion.div>
 
-        {/* Monthly Expenses */}
-        <motion.div whileHover={{ y: -3 }} onClick={() => navigate('/expenses')}
-          className={`${cardBase} p-5 hover:shadow-md hover:border-rose-300 transition-all cursor-pointer group flex flex-col justify-between`}>
+        {/* Total Expenses */}
+        <motion.div whileHover={{ y: -3 }} onClick={() => navigate('/reports')}
+          className={`${cardBase} p-3.5 hover:shadow-md hover:border-rose-400 transition-all cursor-pointer group flex flex-col justify-between`}>
           <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
-              <BarChart3 className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
+              <TrendingDown className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Expenses</span>
-            <span className="text-2xl font-extrabold text-slate-900 font-mono group-hover:text-rose-600 transition-colors">
+          <div className="mt-2.5">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Expenses</span>
+            <span className="text-xl font-extrabold text-slate-900 font-mono group-hover:text-rose-600 transition-colors">
               {formatCurrency(kpis.monthlyExpenses)}
             </span>
           </div>

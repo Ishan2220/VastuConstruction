@@ -127,17 +127,18 @@ export default function DocumentsPage() {
     }
   };
 
-  const triggerRealDownload = (doc: any) => {
-    if (doc.fileUrl && doc.fileUrl.startsWith('/uploads')) {
-      const baseUrl = api.defaults.baseURL?.replace('/api', '') || window.location.origin;
-      window.open(baseUrl + doc.fileUrl, '_blank');
-      return;
+  const triggerRealDownload = async (doc: any) => {
+    try {
+      const res = await api.get(`/files/${doc.id}/download`);
+      if (res.data?.data?.downloadUrl) {
+        window.open(res.data.data.downloadUrl, '_blank');
+      } else {
+        toast.error('Could not retrieve document download URL.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Failed to download document.');
     }
-    if (doc.fileUrl && (doc.fileUrl.startsWith('http://') || doc.fileUrl.startsWith('https://'))) {
-      window.open(doc.fileUrl, '_blank');
-      return;
-    }
-    toast.error(`Document "${doc.title || 'file'}" does not have a valid cloud or storage file attached.`);
   };
 
   const filteredDocs = documents.filter((d: any) => {

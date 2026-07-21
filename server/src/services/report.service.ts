@@ -10,7 +10,7 @@ export const getFinancialSummary = async (params: ReportParams) => {
   const { startDate, endDate, projectId } = params;
   const dateFilter = startDate && endDate ? { gte: new Date(startDate), lte: new Date(endDate) } : undefined;
 
-  const [incomes, expenses] = await Promise.all([
+  const [incomes, expenses, vendorPayments, labourPayments, salaryPayments] = await Promise.all([
     prisma.income.findMany({
       where: { ...(dateFilter && { paymentDate: dateFilter }), ...(projectId && { projectId }) },
       include: { project: { select: { name: true } }, client: { select: { name: true } } },
@@ -19,10 +19,24 @@ export const getFinancialSummary = async (params: ReportParams) => {
       where: { ...(dateFilter && { paymentDate: dateFilter }), ...(projectId && { projectId }) },
       include: { project: { select: { name: true } }, vendor: { select: { name: true } } },
     }),
+    prisma.vendorPayment.findMany({
+      where: { ...(dateFilter && { paymentDate: dateFilter }) },
+    }),
+    prisma.labourPayment.findMany({
+      where: { ...(dateFilter && { paymentDate: dateFilter }) },
+    }),
+    prisma.salaryPayment.findMany({
+      where: { ...(dateFilter && { paymentDate: dateFilter }) },
+    }),
   ]);
 
   const totalIncome = incomes.reduce((acc: number, curr: { amount: unknown }) => acc + Number(curr.amount), 0);
-  const totalExpense = expenses.reduce((acc: number, curr: { amount: unknown }) => acc + Number(curr.amount), 0);
+  const baseExpense = expenses.reduce((acc: number, curr: { amount: unknown }) => acc + Number(curr.amount), 0);
+  const totalVendorPayments = vendorPayments.reduce((acc, curr) => acc + Number(curr.amount), 0);
+  const totalLabourPayments = labourPayments.reduce((acc, curr) => acc + Number(curr.amount), 0);
+  const totalSalaryPayments = salaryPayments.reduce((acc, curr) => acc + Number(curr.amount), 0);
+  
+  const totalExpense = baseExpense + totalVendorPayments + totalLabourPayments + totalSalaryPayments;
   const totalGstCollected = incomes.reduce((acc: number, curr: { gstAmount?: unknown }) => acc + Number(curr.gstAmount || 0), 0);
   const totalGstPaid = expenses.reduce((acc: number, curr: { gstAmount?: unknown }) => acc + Number(curr.gstAmount || 0), 0);
 

@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { UserCog, Search, IndianRupee, Wallet } from 'lucide-react';
+import { UserCog, Search, IndianRupee, Wallet, CalendarCheck, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
 import { formatCurrency } from '../lib/utils';
-import { format } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 
 export default function SalaryPaymentsPage() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<'salaries' | 'attendance'>('salaries');
   const [searchTerm, setSearchTerm] = useState('');
   const [isPayOpen, setIsPayOpen] = useState(false);
+  const [attendanceDate, setAttendanceDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [newPayment, setNewPayment] = useState({
     employeeId: '',
     amount: '',
@@ -53,6 +55,26 @@ export default function SalaryPaymentsPage() {
     }
   });
 
+  const { data: attendanceData = [], isLoading: isAttendanceLoading } = useQuery({
+    queryKey: ['attendance-list', attendanceDate],
+    queryFn: async () => {
+      const { data } = await api.get(`/attendance?date=${attendanceDate}`);
+      return data.data || [];
+    }
+  });
+
+  const markAttendanceMutation = useMutation({
+    mutationFn: async (payload: { employeeId: string, date: string, status: string }) => {
+      const { data } = await api.post('/attendance/mark', payload);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendance-list'] });
+      toast.success('Attendance updated');
+    },
+    onError: () => toast.error('Failed to update attendance')
+  });
+
   const handlePay = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPayment.employeeId || !newPayment.amount) {
@@ -68,9 +90,17 @@ export default function SalaryPaymentsPage() {
     });
   };
 
+  const handleMarkAttendance = (employeeId: string, status: string) => {
+    markAttendanceMutation.mutate({ employeeId, date: attendanceDate, status });
+  };
+
   const filteredSalaries = salaries.filter((s: any) =>
     s.employee?.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.reference?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredAttendance = attendanceData.filter((a: any) => 
+    a.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -94,27 +124,56 @@ export default function SalaryPaymentsPage() {
         </button>
       </div>
 
-      <div className="sticky top-16 z-20 bg-white/90 backdrop-blur-md p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center gap-3">
-        <div className="relative flex-1 w-full">
+      <div className="flex gap-2 border-b border-slate-200 pb-2">
+        <button 
+          onClick={() => setActiveTab('salaries')}
+          className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'salaries' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 hover:bg-slate-100'}`}
+        >
+          Salary Payments
+        </button>
+        <button 
+          onClick={() => setActiveTab('attendance')}
+          className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'attendance' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 hover:bg-slate-100'}`}
+        >
+          Daily Attendance
+        </button>
+      </div>
+
+      <div className="sticky top-16 z-20 bg-white/90 backdrop-blur-md p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center gap-3 justify-between">
+        <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by employee name or reference..."
+            placeholder="Search employees..."
             className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow shadow-inner"
           />
         </div>
+        
+        {activeTab === 'attendance' && (
+          <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">
+            <CalendarCheck className="w-4 h-4 text-slate-500" />
+            <input 
+              type="date" 
+              value={attendanceDate}
+              onChange={(e) => setAttendanceDate(e.target.value)}
+              className="bg-transparent text-sm font-bold text-slate-700 outline-none cursor-pointer"
+            />
+          </div>
+        )}
       </div>
 
-      {isLoading ? (
-        <div className="p-8 text-center text-slate-500">Loading payroll data...</div>
-      ) : filteredSalaries.length === 0 ? (
-        <div className="bg-white rounded-2xl border p-12 text-center text-slate-400">
-          <Wallet className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          No salary records found.
-        </div>
-      ) : (
+      {activeTab === 'salaries' && (
+        <>
+          {isLoading ? (
+            <div className="p-8 text-center text-slate-500">Loading payroll data...</div>
+          ) : filteredSalaries.length === 0 ? (
+            <div className="bg-white rounded-2xl border p-12 text-center text-slate-400">
+              <Wallet className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              No salary records found.
+            </div>
+          ) : (
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -158,6 +217,79 @@ export default function SalaryPaymentsPage() {
               </tbody>
             </table>
           </div>
+        </div>
+        )}
+      </>
+      )}
+
+      {activeTab === 'attendance' && (
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+          {isAttendanceLoading ? (
+            <div className="p-8 text-center text-slate-500">Loading attendance data...</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Employee</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Role</th>
+                    <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Current Status</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Mark Attendance</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white">
+                  {filteredAttendance.map((emp: any) => (
+                    <tr key={emp.employeeId} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="font-bold text-slate-900">{emp.name}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                        {emp.role}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase border ${
+                          emp.status === 'PRESENT' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                          emp.status === 'ABSENT' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                          emp.status === 'HALF_DAY' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                          'bg-slate-100 text-slate-500 border-slate-200'
+                        }`}>
+                          {emp.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right space-x-2">
+                        <button
+                          onClick={() => handleMarkAttendance(emp.employeeId, 'PRESENT')}
+                          className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition-all"
+                          title="Present"
+                        >
+                          <CheckCircle2 className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleMarkAttendance(emp.employeeId, 'HALF_DAY')}
+                          className="p-2 rounded-lg text-amber-600 hover:bg-amber-50 border border-transparent hover:border-amber-200 transition-all"
+                          title="Half Day"
+                        >
+                          <Clock className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleMarkAttendance(emp.employeeId, 'ABSENT')}
+                          className="p-2 rounded-lg text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all"
+                          title="Absent"
+                        >
+                          <XCircle className="w-5 h-5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredAttendance.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-8 text-center text-slate-500">No employees found.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

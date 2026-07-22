@@ -30,16 +30,18 @@ export const getById = async (id: string) => {
   return employee;
 };
 
-export const create = async (data: Prisma.EmployeeUncheckedCreateInput, userId: string) => {
+export const create = async (payload: Prisma.EmployeeUncheckedCreateInput & { idempotencyKey?: string }, userId: string) => {
+  const { idempotencyKey, ...data } = payload;
   const employee = await prisma.employee.create({ data });
-  eventBus.publishMutation('Employee', 'CREATE', userId, employee.id, crypto.randomUUID() || crypto.randomUUID(), employee, null);
+  eventBus.publishMutation('Employee', 'CREATE', userId, employee.id, idempotencyKey || crypto.randomUUID(), employee, null);
   return employee;
 };
 
-export const update = async (id: string, data: Prisma.EmployeeUpdateInput, userId: string) => {
+export const update = async (id: string, payload: Prisma.EmployeeUpdateInput & { idempotencyKey?: string }, userId: string) => {
+  const { idempotencyKey, ...data } = payload;
   const oldEmployee = await getById(id);
   const employee = await prisma.employee.update({ where: { id }, data });
-  eventBus.publishMutation('Employee', 'UPDATE', userId, id, crypto.randomUUID() || crypto.randomUUID(), employee, oldEmployee);
+  eventBus.publishMutation('Employee', 'UPDATE', userId, id, idempotencyKey || crypto.randomUUID(), employee, oldEmployee);
   return employee;
 };
 
@@ -62,7 +64,8 @@ export const grantTempAdmin = async (userId: string, durationHours: number, page
 };
 
 // Leave management
-export const requestLeave = async (data: Prisma.LeaveUncheckedCreateInput) => {
+export const requestLeave = async (payload: Prisma.LeaveUncheckedCreateInput & { idempotencyKey?: string }) => {
+  const { idempotencyKey, ...data } = payload;
   return prisma.leave.create({ data });
 };
 
@@ -87,7 +90,8 @@ export const listDailyReports = async (params: { projectId?: string; userId?: st
   });
 };
 
-export const createDailyReport = async (data: Prisma.DailyReportUncheckedCreateInput) => {
+export const createDailyReport = async (payload: Prisma.DailyReportUncheckedCreateInput & { idempotencyKey?: string }) => {
+  const { idempotencyKey, ...data } = payload;
   return prisma.dailyReport.create({ data });
 };
 
@@ -122,8 +126,9 @@ export const listSalaries = async () => {
   });
 };
 
-export const paySalary = async (data: Prisma.SalaryPaymentUncheckedCreateInput, userId: string) => {
+export const paySalary = async (payload: Prisma.SalaryPaymentUncheckedCreateInput & { idempotencyKey?: string }, userId: string) => {
+  const { idempotencyKey, ...data } = payload;
   const payment = await prisma.salaryPayment.create({ data });
-  eventBus.publishMutation('SalaryPayment', 'CREATE', userId, payment.id, crypto.randomUUID() || crypto.randomUUID(), payment, null);
+  eventBus.publishMutation('SalaryPayment', 'CREATE', userId, payment.id, idempotencyKey || crypto.randomUUID(), payment, null);
   return payment;
 };

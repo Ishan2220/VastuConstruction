@@ -1,39 +1,86 @@
-import { Settings, Shield, UserCog } from 'lucide-react';
+import { Settings, Shield, UserCog, ChevronRight, Bell, Lock } from 'lucide-react';
 import { Link } from 'react-router';
 
 export default function SettingsPage() {
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto font-sans">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="p-6 md:p-8 space-y-8 max-w-5xl mx-auto font-sans relative">
+      {/* Background blobs for premium glassmorphism feel */}
+      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-violet-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-fuchsia-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />
+
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/40 pb-6">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 flex items-center gap-2 font-heading">
-            <Settings className="w-8 h-8 text-[#7C6EF0]" />
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-800 flex items-center gap-3 font-heading">
+            <div className="p-2.5 bg-gradient-to-br from-violet-500 to-fuchsia-600 rounded-2xl shadow-lg shadow-violet-200">
+              <Settings className="w-8 h-8 text-white animate-spin-slow" style={{ animationDuration: '4s' }} />
+            </div>
             System Settings
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Manage global ERP configurations and preferences</p>
+          <p className="text-base text-slate-500 mt-3 max-w-xl">
+            Manage global ERP configurations, organizational preferences, and your personal account settings.
+          </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-        <Link to="/settings/account" className="clay-card p-6 flex items-start gap-4 hover:shadow-lg hover:-translate-y-1 transition-all group">
-          <div className="p-3 rounded-xl bg-violet-50 text-[#7C6EF0] group-hover:bg-[#7C6EF0] group-hover:text-white transition-colors">
-            <UserCog className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-slate-800 font-heading">My Account</h3>
-            <p className="text-sm text-slate-500 mt-1">Update your personal profile, email, and password.</p>
+        <Link to="/settings/account" className="group relative bg-white/40 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(124,110,240,0.15)] hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative flex items-start gap-5">
+            <div className="p-4 rounded-2xl bg-white shadow-sm text-violet-600 group-hover:scale-110 group-hover:bg-violet-600 group-hover:text-white transition-all duration-300">
+              <UserCog className="w-7 h-7" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-slate-800 font-heading group-hover:text-violet-700 transition-colors">My Account</h3>
+              <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">Update your personal profile, email, password, and security preferences.</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-violet-600 group-hover:translate-x-1 transition-all" />
           </div>
         </Link>
 
-        <Link to="/settings/users" className="clay-card p-6 flex items-start gap-4 hover:shadow-lg hover:-translate-y-1 transition-all group">
-          <div className="p-3 rounded-xl bg-rose-50 text-[#E5636C] group-hover:bg-[#E5636C] group-hover:text-white transition-colors">
-            <Shield className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-slate-800 font-heading">User Management</h3>
-            <p className="text-sm text-slate-500 mt-1">Manage employee accounts, roles, and system access.</p>
+        <Link to="/settings/users" className="group relative bg-white/40 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(229,99,108,0.15)] hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative flex items-start gap-5">
+            <div className="p-4 rounded-2xl bg-white shadow-sm text-rose-500 group-hover:scale-110 group-hover:bg-rose-500 group-hover:text-white transition-all duration-300">
+              <Shield className="w-7 h-7" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-slate-800 font-heading group-hover:text-rose-600 transition-colors">Admin & User Management</h3>
+              <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">Manage admin access, employee accounts, roles, and system permissions.</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-rose-500 group-hover:translate-x-1 transition-all" />
           </div>
         </Link>
+
+        {/* Future expansion placeholders */}
+        <div className="group relative bg-slate-50/50 backdrop-blur-xl border border-slate-200/50 p-6 rounded-3xl opacity-60 cursor-not-allowed">
+          <div className="flex items-start gap-5">
+            <div className="p-4 rounded-2xl bg-slate-100 text-slate-400">
+              <Bell className="w-7 h-7" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-bold text-slate-600 font-heading">Notifications</h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-500 uppercase tracking-wider">Coming Soon</span>
+              </div>
+              <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">Configure email and push notification alerts for your modules.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="group relative bg-slate-50/50 backdrop-blur-xl border border-slate-200/50 p-6 rounded-3xl opacity-60 cursor-not-allowed">
+          <div className="flex items-start gap-5">
+            <div className="p-4 rounded-2xl bg-slate-100 text-slate-400">
+              <Lock className="w-7 h-7" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-bold text-slate-600 font-heading">Security Policies</h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-500 uppercase tracking-wider">Coming Soon</span>
+              </div>
+              <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">Manage enterprise security rules, 2FA, and compliance controls.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import { authorize } from '../middleware/rbac.js';
 
 const router = Router();
 
-router.use(authenticate, authorize('ADMIN', 'ACCOUNTANT', { page: 'Vendors' }));
+router.use(authenticate, authorize('ADMIN', 'ACCOUNTANT', 'ENGINEER', { page: 'Vendors' }));
 
 router.get('/', ctrl.list);
 router.get('/:id', ctrl.getById);

@@ -33,12 +33,16 @@ export const getDashboardKPIs = async () => {
     prisma.project.count({ where: { deletedAt: null, status: 'IN_PROGRESS' } }),
   ]);
 
+  // Use all-time totals for the dashboard
+  const totalIncome = await FinancialService.calculateMonthlyIncome();
+  const totalExpenses = await FinancialService.calculateMonthlyExpenses();
+
   return {
     totalLeads,
     activeProjects,
     activeSites,
-    incomeThisMonth: financialSummary.monthlyIncome,
-    expensesThisMonth: financialSummary.monthlyExpenses,
+    incomeThisMonth: totalIncome, // Renamed to keep frontend compatible, but actually total
+    expensesThisMonth: totalExpenses, // Renamed to keep frontend compatible, but actually total
     cashInHand: financialSummary.cashInHand,
     bankBalance: financialSummary.bankBalance,
     clientReceivable: financialSummary.clientReceivable,

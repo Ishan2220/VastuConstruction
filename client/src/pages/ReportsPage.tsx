@@ -1,6 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import { formatCurrency, formatDate } from '@/lib/utils';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { toast } from 'sonner';
 import {
   BarChart3,
   TrendingUp,
@@ -79,6 +83,68 @@ export default function ReportsPage() {
     });
   }, [finSummary]);
 
+  const handleExportPDF = () => {
+    toast.success('Generating Executive Report PDF...');
+    try {
+      const doc = new jsPDF();
+      
+      // Header
+      doc.setFillColor(124, 110, 240);
+      doc.rect(0, 0, 210, 40, 'F');
+      
+      doc.setFontSize(22);
+      doc.setTextColor(255, 255, 255);
+      doc.text('EXECUTIVE FINANCIAL REPORT', 14, 20);
+      doc.setFontSize(10);
+      doc.text('Vastu x ConstraCore ERP System', 14, 28);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(255, 255, 255);
+      doc.text(`Generated: ${formatDate(new Date().toISOString())}`, 150, 20);
+
+      // Financial Summary Section
+      doc.setFontSize(14);
+      doc.setTextColor(124, 110, 240);
+      doc.text('Key Performance Indicators', 14, 55);
+
+      doc.setFontSize(11);
+      doc.setTextColor(80, 80, 80);
+      doc.text(`Gross Contract Inflow: Rs. ${Number(finSummary?.totalIncome || 0).toLocaleString('en-IN')}`, 14, 65);
+      doc.text(`Site & Procurement Outflow: Rs. ${Number(finSummary?.totalExpense || 0).toLocaleString('en-IN')}`, 14, 73);
+      
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Net Operating Profit: Rs. ${Number(finSummary?.netProfit || 0).toLocaleString('en-IN')}`, 14, 83);
+      
+      doc.setFontSize(11);
+      doc.setTextColor(80, 80, 80);
+      doc.text(`Net GST Payable: Rs. ${Number(finSummary?.gstSummary?.netPayable || 0).toLocaleString('en-IN')}`, 14, 91);
+
+      // Ledger Table
+      autoTable(doc, {
+        startY: 105,
+        headStyles: { fillColor: [124, 110, 240], textColor: [255, 255, 255], fontStyle: 'bold' },
+        bodyStyles: { textColor: [50, 50, 50] },
+        alternateRowStyles: { fillColor: [250, 249, 255] },
+        head: [['Date', 'Type', 'Description', 'Amount (INR)', 'Running Balance (INR)']],
+        body: ledgerEntries.map(entry => [
+          formatDate(entry.date.toISOString()),
+          entry.type,
+          entry.desc,
+          Number(entry.amount).toLocaleString('en-IN'),
+          Number(entry.balance).toLocaleString('en-IN')
+        ]),
+        theme: 'striped',
+        margin: { top: 10, left: 14, right: 14 }
+      });
+
+      doc.save(`Financial_Report_${format(new Date(), 'dd-MMM-yyyy')}.pdf`);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to generate PDF');
+    }
+  };
+
   return (
     <div className="p-4 md:p-8 lg:p-8 space-y-8 min-h-full font-sans">
       {/* Header */}
@@ -106,7 +172,7 @@ export default function ReportsPage() {
             Ledger
           </button>
           <button
-            onClick={() => window.print()}
+            onClick={handleExportPDF}
             className="clay-btn inline-flex items-center gap-2 ml-2"
           >
             <Download className="w-4 h-4" />

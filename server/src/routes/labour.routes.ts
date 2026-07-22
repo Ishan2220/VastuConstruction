@@ -5,7 +5,7 @@ import { authorize } from '../middleware/rbac.js';
 
 const router = Router();
 
-router.use(authenticate, authorize('ADMIN', 'ACCOUNTANT', { page: 'Labour' }));
+router.use(authenticate, authorize('ADMIN', 'ACCOUNTANT', 'ENGINEER', { page: 'Labour' }));
 
 router.get('/', ctrl.list);
 router.get('/attendance', ctrl.getAttendanceByDate);

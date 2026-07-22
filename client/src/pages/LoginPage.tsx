@@ -50,8 +50,11 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2 selection:bg-[#7C6EF0]/20 selection:text-[#7C6EF0]">
       {/* Left Brand Panel */}
-      <div className="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden border-r border-violet-100/40 bg-clay-violet bg-opacity-10">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#7c6ef00d_1px,transparent_1px),linear-gradient(to_bottom,#7c6ef00d_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+      <div className="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden border-r border-violet-100/40 bg-gradient-to-br from-[#7C6EF0]/15 via-violet-50 to-[#5CB77E]/10">
+        {/* Background elements for depth */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#7c6ef015_1px,transparent_1px),linear-gradient(to_bottom,#7c6ef015_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[#7C6EF0]/10 blur-3xl mix-blend-multiply pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-20%] w-[600px] h-[600px] rounded-full bg-[#5CB77E]/10 blur-3xl mix-blend-multiply pointer-events-none" />
         
         <div className="relative z-10 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#7C6EF0] to-[#5CB77E] flex items-center justify-center shadow-lg shadow-[#7C6EF0]/25 ring-1 ring-white/50">

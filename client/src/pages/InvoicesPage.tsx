@@ -172,8 +172,9 @@ export default function InvoicesPage() {
       
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
-      doc.text('123 Construction Avenue, Builders Park', 14, 28);
-      doc.text('Contact: +91 9876543210 | email@vastu.com', 14, 34);
+      doc.text('Sudarshan Chouk, Rp Road, Satpute Galli', 14, 26);
+      doc.text('Ichalkaranji-416115, Maharashtra', 14, 32);
+      doc.text('Contact: +91 9604459628 | vastuconstructionich@gmail.com', 14, 38);
 
       // Invoice Details
       doc.setFontSize(16);

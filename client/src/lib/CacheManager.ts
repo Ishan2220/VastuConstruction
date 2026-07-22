@@ -12,7 +12,6 @@ export class CacheManager {
     queryClient.invalidateQueries({ queryKey: ['vendors-select'] });
     // Potential future granular keys:
     queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
-    queryClient.invalidateQueries({ queryKey: ['bank-accounts-select'] });
   }
 
   /**
@@ -23,7 +22,6 @@ export class CacheManager {
     queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
     queryClient.invalidateQueries({ queryKey: ['clients-directory'] });
     queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
-    queryClient.invalidateQueries({ queryKey: ['bank-accounts-select'] });
   }
 
   /**

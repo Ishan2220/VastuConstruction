@@ -59,7 +59,7 @@ export default function ExpensesPage() {
   });
 
   const { data: accountsRaw } = useQuery({
-    queryKey: ['bank-accounts-select'],
+    queryKey: ['bank-accounts'],
     queryFn: async () => {
       const { data } = await api.get('/bank-accounts');
       if (Array.isArray(data.data)) return data.data;

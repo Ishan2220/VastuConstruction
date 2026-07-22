@@ -109,6 +109,7 @@ export const login = async (
       avatar: true,
       tempAdminUntil: true,
       tempAdminPages: true,
+      forcePasswordChange: true,
     },
   });
 
@@ -267,6 +268,7 @@ export const getMe = async (userId: string) => {
       createdAt: true,
       tempAdminUntil: true,
       tempAdminPages: true,
+      forcePasswordChange: true,
       employee: {
         select: {
           designation: true,
@@ -288,17 +290,51 @@ export const getMe = async (userId: string) => {
 export const forgotPassword = async (email: string) => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
-    throw new ApiError(404, 'User with this email not found');
+    // For security, don't reveal if user exists
+    return { success: true };
   }
 
-  // Generate a random temporary password
-  const tempPassword = Math.random().toString(36).slice(-8);
-  const hashedPassword = await bcrypt.hash(tempPassword, 12);
-
+  // Demo flow: generate temp password and update
+  const tempPassword = crypto.randomBytes(4).toString('hex');
+  const hashed = await bcrypt.hash(tempPassword, 12);
+  
   await prisma.user.update({
     where: { id: user.id },
-    data: { password: hashedPassword }
+    data: { password: hashed },
   });
 
   return { tempPassword };
+};
+
+export const changePassword = async (userId: string, currentPassword: string, newPassword: string) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new ApiError(404, 'User not found');
+
+  const isValid = await bcrypt.compare(currentPassword, user.password);
+  if (!isValid) throw new ApiError(400, 'Invalid current password');
+
+  const hashed = await bcrypt.hash(newPassword, 12);
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashed, forcePasswordChange: false },
+  });
+
+  eventBus.emit('auth.passwordChanged', { userId });
+};
+
+export const changeEmail = async (userId: string, newEmail: string) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new ApiError(404, 'User not found');
+
+  const existingUser = await prisma.user.findUnique({ where: { email: newEmail } });
+  if (existingUser && existingUser.id !== userId) {
+    throw new ApiError(400, 'Email is already in use by another account');
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { email: newEmail },
+  });
+
+  eventBus.emit('auth.emailChanged', { userId, oldEmail: user.email, newEmail });
 };

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import {
   TrendingUp,
   TrendingDown,
+  Minus,
   Building2,
   HardHat,
   IndianRupee,
@@ -176,22 +177,32 @@ export default function DashboardPage() {
     refetchInterval: 300000, // 5 minutes
   });
 
-  const kpis: KpiState = useMemo(() => {
-    if (!serverDashboard?.kpis) return defaultKpis;
-    return {
-      totalLeads: serverDashboard.kpis.leadCount || 0,
-      activeProjects: serverDashboard.kpis.activeProjectCount || 0,
-      activeSites: serverDashboard.kpis.activeSiteCount || 0,
-      monthlyIncome: Number(serverDashboard.kpis.monthlyIncome) || 0,
-      monthlyExpenses: Number(serverDashboard.kpis.monthlyExpense) || 0,
-      cashInHand: Number(serverDashboard.kpis.cashInHand) || 0,
-      bankBalance: Number(serverDashboard.kpis.bankBalance) || 0,
-      clientReceivable: Number(serverDashboard.kpis.clientReceivable) || 0,
-      vendorPayable: Number(serverDashboard.kpis.vendorPayable) || 0,
-    };
-  }, [serverDashboard]);
+  const { data: kpiData } = useQuery({
+    queryKey: ['dashboard-kpis'],
+    queryFn: async () => {
+      const { data } = await api.get('/dashboard/kpis');
+      return data || null; // Returning exact shape, not data.data
+    },
+    refetchInterval: 60000, // 1 minute
+  });
 
-  const overallProfit = kpis.monthlyIncome - kpis.monthlyExpenses;
+  const kpis: KpiState & { overallProfit: number } = useMemo(() => {
+    if (!kpiData) return { ...defaultKpis, overallProfit: 0 };
+    return {
+      totalLeads: kpiData.totalLeads || 0,
+      activeProjects: kpiData.activeProjects || 0,
+      activeSites: kpiData.activeSites || 0,
+      monthlyIncome: Number(kpiData.incomeThisMonth) || 0,
+      monthlyExpenses: Number(kpiData.expensesThisMonth) || 0,
+      cashInHand: Number(kpiData.cashInHand) || 0,
+      bankBalance: Number(kpiData.bankBalance) || 0,
+      clientReceivable: Number(kpiData.clientReceivable) || 0,
+      vendorPayable: Number(kpiData.vendorPayable) || 0,
+      overallProfit: Number(kpiData.overallProfit) || 0,
+    };
+  }, [kpiData]);
+
+  const overallProfit = kpis.overallProfit;
 
   // ---- Dashboard Data Mappings ----
   const sites = useMemo(() => {
@@ -451,12 +462,12 @@ export default function DashboardPage() {
           onClick={() => navigate('/reports')}
           className="clay-card-sm p-3 sm:p-4 cursor-pointer group flex flex-col justify-between col-span-2 sm:col-span-1 min-h-[90px]"
         >
-          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center ${overallProfit >= 0 ? 'bg-clay-green text-[#5CB77E]' : 'bg-clay-rose text-[#E5636C]'} mb-2 shrink-0`}>
-            {overallProfit >= 0 ? <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5" />}
+          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center ${overallProfit > 0 ? 'bg-clay-green text-[#5CB77E]' : overallProfit < 0 ? 'bg-clay-rose text-[#E5636C]' : 'bg-slate-100 text-slate-500'} mb-2 shrink-0`}>
+            {overallProfit > 0 ? <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" /> : overallProfit < 0 ? <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5" /> : <Minus className="w-4 h-4 sm:w-5 sm:h-5" />}
           </div>
           <div className="min-w-0">
             <div className="text-[10px] sm:text-[11px] font-semibold text-slate-400 leading-tight">Overall Profit</div>
-            <div className={`text-sm sm:text-lg font-extrabold font-heading ${overallProfit >= 0 ? 'text-[#5CB77E]' : 'text-[#E5636C]'} truncate mt-0.5`}>
+            <div className={`text-sm sm:text-lg font-extrabold font-heading ${overallProfit > 0 ? 'text-[#5CB77E]' : overallProfit < 0 ? 'text-[#E5636C]' : 'text-slate-500'} truncate mt-0.5`}>
               {formatCurrency(overallProfit)}
             </div>
           </div>

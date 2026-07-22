@@ -209,7 +209,7 @@ export default function LeadsPage() {
                   <select
                     value={lead.status}
                     onChange={(e) => updateStatusMutation.mutate({ id: lead.id, status: e.target.value })}
-                    className="text-xs font-bold uppercase px-2 py-1 clay-input text-slate-700 focus:outline-none"
+                    className="text-xs font-bold uppercase px-2 py-1 clay-input text-slate-700 focus:outline-none w-28 sm:w-auto truncate"
                   >
                     <option value="NEW">New</option>
                     <option value="CONTACTED">Contacted</option>

@@ -133,9 +133,9 @@ export default function DocumentsPage() {
       if (res.data?.data?.downloadUrl) {
         let downloadUrl = res.data.data.downloadUrl;
         
-        if (downloadUrl.startsWith('/uploads') || downloadUrl.includes(window.location.origin + '/uploads')) {
-          const baseUrl = api.defaults.baseURL?.replace('/api', '') || window.location.origin;
-          downloadUrl = baseUrl + downloadUrl.replace(window.location.origin, '');
+        if (!downloadUrl.startsWith('http')) {
+          const backendUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '';
+          downloadUrl = backendUrl + downloadUrl;
         }
 
         window.open(downloadUrl, '_blank');
@@ -357,9 +357,9 @@ export default function DocumentsPage() {
                   {previewDoc.fileUrl ? (
                     <iframe
                       src={
-                        (previewDoc.fileUrl.startsWith('/uploads') || previewDoc.fileUrl.includes(window.location.origin + '/uploads')) 
-                          ? (api.defaults.baseURL?.replace('/api', '') || window.location.origin) + previewDoc.fileUrl.replace(window.location.origin, '')
-                          : previewDoc.fileUrl
+                        previewDoc.fileUrl.startsWith('http') 
+                          ? previewDoc.fileUrl 
+                          : (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') + previewDoc.fileUrl
                       }
                       className="w-full h-full border-none"
                       title={previewDoc.title || 'Document Preview'}

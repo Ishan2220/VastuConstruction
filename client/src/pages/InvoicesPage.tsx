@@ -112,6 +112,20 @@ export default function InvoicesPage() {
     }
   });
 
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status, paymentMethod, accountId }: { id: string, status: string, paymentMethod?: string, accountId?: string }) => {
+      await api.patch(`/invoices/${id}/status`, { status, paymentMethod, accountId });
+    },
+    onSuccess: () => {
+      toast.success('Invoice status updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['dashboard-kpis'] });
+      fetchInvoices();
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to update invoice status');
+    }
+  });
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'UNPAID': return 'bg-clay-rose text-[#E5636C] border-[#E5636C]/20';
@@ -323,9 +337,20 @@ export default function InvoicesPage() {
                       ₹{Number(invoice.totalAmount).toLocaleString('en-IN')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] uppercase font-bold border ${getStatusColor(invoice.status)}`}>
-                        {invoice.status}
-                      </span>
+                      <select
+                        value={invoice.status}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          updateStatusMutation.mutate({ id: invoice.id, status: e.target.value });
+                        }}
+                        className={`inline-flex items-center px-2 py-1 rounded-md text-[10px] uppercase font-bold border focus:outline-none cursor-pointer ${getStatusColor(invoice.status)}`}
+                      >
+                        <option value="UNPAID">UNPAID</option>
+                        <option value="PARTIAL">PARTIAL</option>
+                        <option value="PAID">PAID</option>
+                        <option value="CANCELLED">CANCELLED</option>
+                      </select>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -379,9 +404,20 @@ export default function InvoicesPage() {
                 </div>
 
                 <div className="flex justify-between items-center mt-2 pt-3 border-t border-violet-100/40">
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] uppercase font-bold border ${getStatusColor(invoice.status)}`}>
-                    {invoice.status}
-                  </span>
+                  <select
+                    value={invoice.status}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      updateStatusMutation.mutate({ id: invoice.id, status: e.target.value });
+                    }}
+                    className={`inline-flex items-center px-2 py-1 rounded-md text-[10px] uppercase font-bold border focus:outline-none cursor-pointer ${getStatusColor(invoice.status)}`}
+                  >
+                    <option value="UNPAID">UNPAID</option>
+                    <option value="PARTIAL">PARTIAL</option>
+                    <option value="PAID">PAID</option>
+                    <option value="CANCELLED">CANCELLED</option>
+                  </select>
                   <div className="flex gap-2">
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDownloadPDF(invoice); }}

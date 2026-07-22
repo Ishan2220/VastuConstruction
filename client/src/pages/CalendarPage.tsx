@@ -351,90 +351,94 @@ export default function CalendarPage() {
             </div>
           </div>
 
-          {/* Day Headers (Sun - Sat) */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((dayName, idx) => (
-              <div
-                key={dayName}
-                className={`py-1.5 sm:py-2 text-[10px] sm:text-xs font-extrabold uppercase tracking-wider rounded-lg ${
-                  idx === 0 || idx === 6 ? 'text-[#E5636C] bg-clay-rose' : 'text-slate-400 bg-white/40'
-                }`}
-              >
-                {dayName}
+          <div className="overflow-x-auto pb-2">
+            <div className="min-w-[350px]">
+              {/* Day Headers (Sun - Sat) */}
+              <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center mb-2">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((dayName, idx) => (
+                  <div
+                    key={dayName}
+                    className={`py-1.5 sm:py-2 text-[10px] sm:text-xs font-extrabold uppercase tracking-wider rounded-lg ${
+                      idx === 0 || idx === 6 ? 'text-[#E5636C] bg-clay-rose' : 'text-slate-400 bg-white/40'
+                    }`}
+                  >
+                    {dayName}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* Calendar Grid Cells */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-2 flex-1">
-            {calendarDays.map((cell, idx) => {
-              if (!cell.dayNumber || !cell.dateStr) {
-                return <div key={`pad-${idx}`} className="min-h-[56px] sm:min-h-[90px] bg-white/20 rounded-xl border border-violet-100/20" />;
-              }
+              {/* Calendar Grid Cells */}
+              <div className="grid grid-cols-7 gap-1 sm:gap-2 flex-1">
+                {calendarDays.map((cell, idx) => {
+                  if (!cell.dayNumber || !cell.dateStr) {
+                    return <div key={`pad-${idx}`} className="min-h-[56px] sm:min-h-[90px] bg-white/20 rounded-xl border border-violet-100/20" />;
+                  }
 
-              const isSelected = cell.dateStr === selectedDateStr;
-              const isToday = cell.dateStr === todayStr;
-              const cellEvents = events.filter((e) => e.dateStr === cell.dateStr);
+                  const isSelected = cell.dateStr === selectedDateStr;
+                  const isToday = cell.dateStr === todayStr;
+                  const cellEvents = events.filter((e) => e.dateStr === cell.dateStr);
 
-              return (
-                <div
-                  key={cell.dateStr}
-                  onClick={() => setSelectedDateStr(cell.dateStr!)}
-                  className={`min-h-[56px] sm:min-h-[90px] p-1 sm:p-2 rounded-xl border transition-all cursor-pointer flex flex-col overflow-hidden relative group ${
-                    isSelected
-                      ? 'border-[#7C6EF0] ring-2 ring-[#7C6EF0]/20 bg-violet-50/40 shadow-md'
-                      : isToday
-                      ? 'border-[#F2A65A] bg-amber-50/30 ring-2 ring-[#F2A65A]/30'
-                      : 'border-violet-100/30 bg-white/60 hover:border-[#7C6EF0]/30 hover:bg-violet-50/20'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center font-bold text-[10px] sm:text-xs font-heading transition-colors ${
+                  return (
+                    <div
+                      key={cell.dateStr}
+                      onClick={() => setSelectedDateStr(cell.dateStr!)}
+                      className={`min-h-[56px] sm:min-h-[90px] p-1 sm:p-2 rounded-xl border transition-all cursor-pointer flex flex-col overflow-hidden relative group ${
                         isSelected
-                          ? 'bg-[#7C6EF0] text-white'
+                          ? 'border-[#7C6EF0] ring-2 ring-[#7C6EF0]/20 bg-violet-50/40 shadow-md'
                           : isToday
-                          ? 'bg-[#F2A65A] text-white'
-                          : 'text-slate-600 group-hover:bg-violet-100/50'
+                          ? 'border-[#F2A65A] bg-amber-50/30 ring-2 ring-[#F2A65A]/30'
+                          : 'border-violet-100/30 bg-white/60 hover:border-[#7C6EF0]/30 hover:bg-violet-50/20'
                       }`}
                     >
-                      {cell.dayNumber}
-                    </span>
-                    {isToday && (
-                      <span className="text-[8px] font-extrabold uppercase px-1 py-0.5 rounded-md bg-clay-amber text-[#F2A65A] hidden sm:inline">
-                        T
-                      </span>
-                    )}
-                  </div>
+                      <div className="flex items-center justify-between">
+                        <span
+                          className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center font-bold text-[10px] sm:text-xs font-heading transition-colors ${
+                            isSelected
+                              ? 'bg-[#7C6EF0] text-white'
+                              : isToday
+                              ? 'bg-[#F2A65A] text-white'
+                              : 'text-slate-600 group-hover:bg-violet-100/50'
+                          }`}
+                        >
+                          {cell.dayNumber}
+                        </span>
+                        {isToday && (
+                          <span className="text-[8px] font-extrabold uppercase px-1 py-0.5 rounded-md bg-clay-amber text-[#F2A65A] hidden sm:inline">
+                            T
+                          </span>
+                        )}
+                      </div>
 
-                  {/* Events preview inside cell */}
-                  <div className="space-y-0.5 mt-1 overflow-hidden">
-                    {cellEvents.slice(0, 2).map((ev) => (
-                      <div
-                        key={ev.id}
-                        className={`text-[9px] sm:text-[10px] font-bold px-1 py-0.5 rounded-md truncate ${
-                          ev.type === 'POUR'
-                            ? 'bg-clay-violet text-[#7C6EF0]'
-                            : ev.type === 'DELIVERY'
-                            ? 'bg-clay-green text-[#5CB77E]'
-                            : ev.type === 'AUDIT'
-                            ? 'bg-clay-rose text-[#E5636C]'
-                            : 'bg-white/60 text-slate-500'
-                        }`}
-                        title={ev.title}
-                      >
-                        {ev.completed ? '✓ ' : ''}{ev.title}
+                      {/* Events preview inside cell */}
+                      <div className="space-y-0.5 mt-1 overflow-hidden">
+                        {cellEvents.slice(0, 2).map((ev) => (
+                          <div
+                            key={ev.id}
+                            className={`text-[9px] sm:text-[10px] font-bold px-1 py-0.5 rounded-md truncate ${
+                              ev.type === 'POUR'
+                                ? 'bg-clay-violet text-[#7C6EF0]'
+                                : ev.type === 'DELIVERY'
+                                ? 'bg-clay-green text-[#5CB77E]'
+                                : ev.type === 'AUDIT'
+                                ? 'bg-clay-rose text-[#E5636C]'
+                                : 'bg-white/60 text-slate-500'
+                            }`}
+                            title={ev.title}
+                          >
+                            {ev.completed ? '✓ ' : ''}{ev.title}
+                          </div>
+                        ))}
+                        {cellEvents.length > 2 && (
+                          <div className="text-[9px] font-bold text-slate-500 pl-1">
+                            +{cellEvents.length - 2} more...
+                          </div>
+                        )}
                       </div>
-                    ))}
-                    {cellEvents.length > 2 && (
-                      <div className="text-[9px] font-bold text-slate-500 pl-1">
-                        +{cellEvents.length - 2} more...
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center justify-between pt-3 border-t border-violet-100/30 text-[11px] text-slate-400 gap-3">

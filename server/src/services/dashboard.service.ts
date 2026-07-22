@@ -25,6 +25,28 @@ const getTodayRange = () => {
   return { start, end };
 };
 
+export const getDashboardKPIs = async () => {
+  const financialSummary = await FinancialService.getFinancialSummary();
+  const [totalLeads, activeProjects, activeSites] = await Promise.all([
+    prisma.lead.count({ where: { deletedAt: null } }),
+    prisma.project.count({ where: { deletedAt: null, status: { in: ['IN_PROGRESS', 'PLANNING'] } } }),
+    prisma.project.count({ where: { deletedAt: null, status: 'IN_PROGRESS' } }),
+  ]);
+
+  return {
+    totalLeads,
+    activeProjects,
+    activeSites,
+    incomeThisMonth: financialSummary.monthlyIncome,
+    expensesThisMonth: financialSummary.monthlyExpenses,
+    cashInHand: financialSummary.cashInHand,
+    bankBalance: financialSummary.bankBalance,
+    clientReceivable: financialSummary.clientReceivable,
+    vendorPayable: financialSummary.vendorPayable,
+    overallProfit: financialSummary.profit
+  };
+};
+
 export const getAdminDashboard = async () => {
   const { start: monthStart, end: monthEnd } = getCurrentMonthRange();
   const { start: todayStart, end: todayEnd } = getTodayRange();
@@ -78,10 +100,11 @@ export const getAdminDashboard = async () => {
     prisma.project.findMany({
       where: { deletedAt: null, status: 'IN_PROGRESS' },
       select: {
-        id: true, name: true, progress: true, city: true,
+        id: true, name: true, city: true,
         client: { select: { name: true } },
         engineer: { select: { name: true } },
         contractValue: true,
+        milestones: { select: { status: true } }, // compute progress dynamically
       },
       orderBy: { updatedAt: 'desc' },
       take: 10,
@@ -225,6 +248,14 @@ export const getAdminDashboard = async () => {
     .sort((a, b) => b.outstanding - a.outstanding)
     .slice(0, 5);
 
+  const computedActiveSites = activeSites.map(site => {
+    const total = site.milestones?.length || 0;
+    const completed = site.milestones?.filter(m => m.status === 'COMPLETED').length || 0;
+    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const { milestones, ...rest } = site;
+    return { ...rest, progress };
+  });
+
   return {
     kpis: {
       leadCount,
@@ -240,7 +271,7 @@ export const getAdminDashboard = async () => {
       clientReceivable: financialSummary.clientReceivable,
       vendorPayable: financialSummary.vendorPayable,
     },
-    activeSites,
+    activeSites: computedActiveSites,
     siteWisePL: siteWiseData,
     expenseByCategory,
     topMaterialPurchases,

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import authRoutes from './auth.routes.js';
+import userRoutes from './user.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
 import clientRoutes from './client.routes.js';
 import leadRoutes from './lead.routes.js';
@@ -36,6 +37,7 @@ router.get('/health', (req, res) => {
 });
 
 router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/clients', clientRoutes);
 router.use('/leads', leadRoutes);

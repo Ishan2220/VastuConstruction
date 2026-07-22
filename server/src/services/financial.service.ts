@@ -36,16 +36,14 @@ export class FinancialService {
   }
 
   /**
-   * Client Receivable = Contract Value of Active Projects - Incomes on Active Projects
+   * Client Receivable = Sum of UNPAID and PARTIAL Invoices
    */
   static async calculateClientReceivable(): Promise<number> {
-    const data = await prisma.$queryRaw<{ receivable: Prisma.Decimal }[]>`
-      SELECT COALESCE(
-        (SELECT SUM(contract_value) FROM projects WHERE deleted_at IS NULL AND contract_value IS NOT NULL AND status != 'CANCELLED') -
-        (SELECT COALESCE(SUM(amount), 0) FROM incomes WHERE project_id IN (SELECT id FROM projects WHERE deleted_at IS NULL AND status != 'CANCELLED')), 0
-      ) as receivable
-    `;
-    return Number(data[0]?.receivable) || 0;
+    const agg = await prisma.invoice.aggregate({
+      _sum: { totalAmount: true },
+      where: { status: { in: ['UNPAID', 'PARTIAL'] }, isArchived: false }
+    });
+    return Number(agg._sum.totalAmount) || 0;
   }
 
   /**

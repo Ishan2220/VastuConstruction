@@ -8,6 +8,11 @@ export const getAdminDashboard = asyncHandler(async (_req: Request, res: Respons
   res.json(new ApiResponse(200, data, 'Dashboard data fetched'));
 });
 
+export const getKPIs = asyncHandler(async (_req: Request, res: Response) => {
+  const data = await dashboardService.getDashboardKPIs();
+  res.json(data); // Must return exact shape without wrapper based on PDF
+});
+
 export const getEngineerDashboard = asyncHandler(async (req: Request, res: Response) => {
   const data = await dashboardService.getEngineerDashboard(req.user!.userId);
   res.json(new ApiResponse(200, data, 'Engineer dashboard data fetched'));

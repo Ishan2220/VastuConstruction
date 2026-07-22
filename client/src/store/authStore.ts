@@ -14,14 +14,6 @@ interface AuthState {
   logout: () => void;
 }
 
-const normalizeUser = (u: User | null): User | null => {
-  if (!u) return null;
-  if (u.name === 'Rajesh Sharma' || u.email === 'admin@vastuconstruction.in') {
-    return { ...u, name: 'Sandeep Jadhav' };
-  }
-  return u;
-};
-
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -33,7 +25,7 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (token, user) =>
         set({
           accessToken: token,
-          user: normalizeUser(user) as User,
+          user: user,
           isAuthenticated: true,
           isLoading: false,
         }),
@@ -42,7 +34,7 @@ export const useAuthStore = create<AuthState>()(
         set({ accessToken: token }),
 
       setUser: (user) =>
-        set({ user: normalizeUser(user) as User }),
+        set({ user: user }),
 
       setLoading: (loading) =>
         set({ isLoading: loading }),

@@ -25,11 +25,26 @@ const loginSchema = z.object({
   }),
 });
 
+const changePasswordSchema = z.object({
+  body: z.object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z.string().min(6, 'New password must be at least 6 characters'),
+  }),
+});
+
+const changeEmailSchema = z.object({
+  body: z.object({
+    newEmail: z.string().email('Invalid email'),
+  }),
+});
+
 router.post('/register', authenticate, authorize('ADMIN'), validate(registerSchema), authController.register);
 router.post('/login', authLimiter, validate(loginSchema), authController.login);
 router.post('/forgot-password', authLimiter, authController.forgotPassword);
 router.post('/refresh', authController.refresh);
 router.post('/logout', authenticate, authController.logout);
 router.get('/me', authenticate, authController.getMe);
+router.put('/change-password', authenticate, validate(changePasswordSchema), authController.changePassword);
+router.put('/change-email', authenticate, authorize('ADMIN'), validate(changeEmailSchema), authController.changeEmail);
 
 export default router;

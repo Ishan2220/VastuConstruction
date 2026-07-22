@@ -78,3 +78,15 @@ export const forgotPassword = asyncHandler(async (req: Request, res: Response) =
   const result = await authService.forgotPassword(email);
   res.json(new ApiResponse(200, result, 'Password reset successfully (Temporary test flow)'));
 });
+
+export const changePassword = asyncHandler(async (req: Request, res: Response) => {
+  const { currentPassword, newPassword } = req.body;
+  await authService.changePassword(req.user!.userId, currentPassword, newPassword);
+  res.json(new ApiResponse(200, null, 'Password changed successfully'));
+});
+
+export const changeEmail = asyncHandler(async (req: Request, res: Response) => {
+  const { newEmail } = req.body;
+  await authService.changeEmail(req.user!.userId, newEmail);
+  res.json(new ApiResponse(200, null, 'Email changed successfully'));
+});

@@ -268,7 +268,7 @@ export default function Header() {
             </div>
             {isDashboard && (
               <p className="text-xs text-slate-400 hidden sm:block truncate">
-                Welcome back, <strong className="text-slate-600">{user?.name || 'Sandeep Jadhav'}</strong>
+                Welcome back, <strong className="text-slate-600">{user?.name || 'User'}</strong>
               </p>
             )}
           </div>
@@ -500,11 +500,11 @@ export default function Header() {
             >
               <Avatar className="h-8 w-8 border border-violet-200/40 rounded-lg pointer-events-none">
                 <AvatarFallback className="bg-gradient-to-br from-[#7C6EF0] to-[#A78BFA] text-xs font-bold text-white rounded-lg pointer-events-none">
-                  {getInitials(user?.name || 'Sandeep Jadhav')}
+                  {getInitials(user?.name || 'User')}
                 </AvatarFallback>
               </Avatar>
               <div className="hidden text-left md:block pr-1">
-                <p className="text-xs font-bold text-slate-800 leading-tight">{user?.name || 'Sandeep Jadhav'}</p>
+                <p className="text-xs font-bold text-slate-800 leading-tight">{user?.name || 'User'}</p>
                 <p className="text-[10px] font-semibold text-[#7C6EF0] uppercase tracking-wider">
                   {user?.role ?? 'ADMIN'}
                 </p>
@@ -512,8 +512,8 @@ export default function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-60 p-2 clay-card">
               <div className="px-3 py-2 border-b border-slate-100 mb-1">
-                <p className="text-xs font-bold text-slate-900">{user?.name || 'Sandeep Jadhav'}</p>
-                <p className="text-[11px] text-slate-500 truncate">{user?.email || 'admin@vastuconstruction.in'}</p>
+                <p className="text-xs font-bold text-slate-900">{user?.name || 'User'}</p>
+                <p className="text-[11px] text-slate-500 truncate">{user?.email}</p>
                 <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-clay-violet text-[#7C6EF0]">
                   <Sparkles className="w-3 h-3 text-[#7C6EF0]" /> Admin
                 </div>

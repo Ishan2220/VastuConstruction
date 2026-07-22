@@ -14,6 +14,7 @@ import routes from './routes/index.js';
 validateConfiguration();
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Security and middleware setup
 app.use(helmet());

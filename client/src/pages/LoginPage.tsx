@@ -7,8 +7,8 @@ import api from '@/lib/api';
 import { toast } from 'sonner';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('admin@vastuconstruction.in');
-  const [password, setPassword] = useState('Admin@123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
@@ -46,11 +46,6 @@ export default function LoginPage() {
     }
   };
 
-  const setDemoRole = (roleEmail: string, rolePass: string) => {
-    setEmail(roleEmail);
-    setPassword(rolePass);
-    toast.info(`Selected ${roleEmail.split('@')[0].toUpperCase()} demo credentials`);
-  };
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 selection:bg-[#7C6EF0]/20 selection:text-[#7C6EF0]">
@@ -158,44 +153,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick Demo Access Bar */}
-          <div className="pt-6 border-t border-violet-100/40 space-y-4">
-            <div className="text-xs font-bold text-slate-400 text-center uppercase tracking-wider">Quick Demo Role Switcher</div>
-            <div className="grid grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => setDemoRole('admin@vastuconstruction.in', 'Admin@123')}
-                className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/60 hover:bg-white border border-violet-100/40 shadow-sm text-xs text-slate-600 hover:text-[#7C6EF0] transition-all group backdrop-blur-sm"
-              >
-                <div className="w-8 h-8 rounded-xl bg-[#7C6EF0]/10 text-[#7C6EF0] group-hover:bg-[#7C6EF0]/20 flex items-center justify-center transition-colors">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <span className="font-bold">Admin</span>
-              </button>
 
-              <button
-                type="button"
-                onClick={() => setDemoRole('engineer@vastuconstruction.in', 'Engineer@123')}
-                className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/60 hover:bg-white border border-violet-100/40 shadow-sm text-xs text-slate-600 hover:text-[#F2A65A] transition-all group backdrop-blur-sm"
-              >
-                <div className="w-8 h-8 rounded-xl bg-[#F2A65A]/10 text-[#F2A65A] group-hover:bg-[#F2A65A]/20 flex items-center justify-center transition-colors">
-                  <HardHat className="w-4 h-4" />
-                </div>
-                <span className="font-bold">Engineer</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setDemoRole('accountant@vastuconstruction.in', 'Accountant@123')}
-                className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/60 hover:bg-white border border-violet-100/40 shadow-sm text-xs text-slate-600 hover:text-[#5CB77E] transition-all group backdrop-blur-sm"
-              >
-                <div className="w-8 h-8 rounded-xl bg-[#5CB77E]/10 text-[#5CB77E] group-hover:bg-[#5CB77E]/20 flex items-center justify-center transition-colors">
-                  <Calculator className="w-4 h-4" />
-                </div>
-                <span className="font-bold">Accountant</span>
-              </button>
-            </div>
-          </div>
         </motion.div>
       </div>
 

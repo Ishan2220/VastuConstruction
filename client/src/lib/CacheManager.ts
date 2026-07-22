@@ -8,9 +8,9 @@ export class CacheManager {
   static invalidateOnExpense(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: ['expenses-list'] });
     queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-kpis'] });
     queryClient.invalidateQueries({ queryKey: ['vendors-list'] });
     queryClient.invalidateQueries({ queryKey: ['vendors-select'] });
-    // Potential future granular keys:
     queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
   }
 
@@ -20,6 +20,7 @@ export class CacheManager {
   static invalidateOnIncome(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: ['incomes-list'] });
     queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-kpis'] });
     queryClient.invalidateQueries({ queryKey: ['clients-directory'] });
     queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
   }
@@ -31,6 +32,7 @@ export class CacheManager {
     queryClient.invalidateQueries({ queryKey: ['projects'] });
     queryClient.invalidateQueries({ queryKey: ['projects-list'] });
     queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-kpis'] });
   }
 
   /**
@@ -39,5 +41,6 @@ export class CacheManager {
   static invalidateEntity(queryClient: QueryClient, entityListKey: string) {
     queryClient.invalidateQueries({ queryKey: [entityListKey] });
     queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-kpis'] });
   }
 }

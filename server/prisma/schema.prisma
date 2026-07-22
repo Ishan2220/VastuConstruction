@@ -115,6 +115,7 @@ model User {
   role           Role      @default(ENGINEER)
   avatar         String?
   isActive       Boolean   @default(true) @map("is_active")
+  forcePasswordChange Boolean @default(false) @map("force_password_change")
   lastLoginAt    DateTime? @map("last_login_at")
   tempAdminUntil DateTime? @map("temp_admin_until")
   tempAdminPages String[]  @map("temp_admin_pages")

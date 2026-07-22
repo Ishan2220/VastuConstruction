@@ -29,6 +29,9 @@ import SettingsPage from '@/pages/SettingsPage';
 import SiteProfitLossPage from '@/pages/SiteProfitLossPage';
 import StorageAnalyticsPage from '@/pages/StorageAnalyticsPage';
 import InvoicesPage from '@/pages/InvoicesPage';
+import UsersPage from '@/pages/settings/UsersPage';
+import AccountPage from '@/pages/settings/AccountPage';
+import NotFoundPage from '@/pages/NotFoundPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -48,6 +51,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
+  return <>{children}</>;
+}
+
+function RoleRoute({ allowedRoles, children }: { allowedRoles: string[], children: React.ReactNode }) {
+  const { user } = useAuthStore();
+  
+  if (!user || !allowedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />;
+  }
   return <>{children}</>;
 }
 
@@ -115,11 +127,13 @@ export default function App() {
           <Route path="employees" element={<EmployeesPage />} />
           <Route path="employees/:id" element={<EmployeeDetailsPage />} />
           <Route path="salaries" element={<SalaryPaymentsPage />} />
-          <Route path="audit-logs" element={<AuditLogsPage />} />
+          <Route path="audit-logs" element={<RoleRoute allowedRoles={['ADMIN']}><AuditLogsPage /></RoleRoute>} />
           <Route path="storage-analytics" element={<StorageAnalyticsPage />} />
           <Route path="invoices" element={<InvoicesPage />} />
           <Route path="settings" element={<SettingsPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="settings/users" element={<RoleRoute allowedRoles={['ADMIN']}><UsersPage /></RoleRoute>} />
+          <Route path="settings/account" element={<AccountPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
 

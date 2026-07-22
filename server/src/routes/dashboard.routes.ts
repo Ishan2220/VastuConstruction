@@ -6,6 +6,7 @@ import { authorize } from '../middleware/rbac.js';
 const router = Router();
 
 router.get('/summary', authenticate, dashboardController.getAdminDashboard);
+router.get('/kpis', authenticate, dashboardController.getKPIs);
 router.get('/stats', authenticate, dashboardController.getAdminDashboard);
 router.get('/engineer-stats', authenticate, dashboardController.getEngineerDashboard);
 

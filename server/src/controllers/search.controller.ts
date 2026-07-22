@@ -24,7 +24,7 @@ export const globalSearch = async (req: Request, res: Response) => {
         { phone: { contains: searchTerm } },
         { companyName: { contains: searchTerm, mode: 'insensitive' } }
       ],
-      isArchived: false
+      deletedAt: null
     },
     take: 5
   });
@@ -37,7 +37,7 @@ export const globalSearch = async (req: Request, res: Response) => {
         { name: { contains: searchTerm, mode: 'insensitive' } },
         { projectCode: { contains: searchTerm, mode: 'insensitive' } }
       ],
-      isArchived: false
+      deletedAt: null
     },
     take: 5
   });
@@ -50,7 +50,7 @@ export const globalSearch = async (req: Request, res: Response) => {
         { name: { contains: searchTerm, mode: 'insensitive' } },
         { phone: { contains: searchTerm } }
       ],
-      isArchived: false
+      deletedAt: null
     },
     take: 5
   });
@@ -65,7 +65,7 @@ export const globalSearch = async (req: Request, res: Response) => {
           { email: { contains: searchTerm, mode: 'insensitive' } }
         ]
       },
-      isArchived: false
+      deletedAt: null
     },
     include: { user: true },
     take: 5

@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { ApiResponse } from '../utils/ApiResponse.js';
+import { ApiError } from '../utils/ApiError.js';
+import * as incomeService from '../services/income.service.js';
 
 const prisma = new PrismaClient();
 
@@ -100,12 +102,40 @@ export const createInvoice = async (req: Request, res: Response) => {
 };
 
 export const updateInvoiceStatus = async (req: Request, res: Response) => {
-  const { status } = req.body;
+  const { status, paymentMethod, accountId } = req.body;
+  const invoiceId = req.params.id as string;
 
+  const existingInvoice = await prisma.invoice.findUnique({
+    where: { id: invoiceId },
+    include: { client: true }
+  });
+
+  if (!existingInvoice) {
+    throw new ApiError(404, 'Invoice not found');
+  }
+
+  // Update status
   const invoice = await prisma.invoice.update({
-    where: { id: req.params.id as string },
+    where: { id: invoiceId },
     data: { status }
   });
+
+  // If status is PAID and was not previously PAID
+  if (status === 'PAID' && existingInvoice.status !== 'PAID') {
+    // Auto-create Income record
+    await incomeService.create({
+      clientId: existingInvoice.clientId,
+      projectId: existingInvoice.projectId,
+      amount: Number(existingInvoice.totalAmount),
+      paymentDate: new Date(),
+      paymentMethod: paymentMethod || 'BANK',
+      accountId: accountId || null,
+      type: 'Invoice Payment',
+      invoiceNo: existingInvoice.invoiceNumber,
+      reference: `Payment for Invoice ${existingInvoice.invoiceNumber}`,
+      notes: `Auto-generated from Invoice status change`
+    }, req.user!.userId);
+  }
 
   res.json(new ApiResponse(200, invoice, 'Invoice status updated successfully'));
 };

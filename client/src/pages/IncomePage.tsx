@@ -75,6 +75,7 @@ export default function IncomePage() {
     },
     onSuccess: () => {
       CacheManager.invalidateOnIncome(queryClient);
+      queryClient.invalidateQueries({ queryKey: ['dashboard-kpis'] });
       toast.success('Inflow payment logged successfully');
       setIsAddOpen(false);
     },

@@ -5,12 +5,15 @@ import { authorize } from '../middleware/rbac.js';
 
 const router = Router();
 
-router.use(authenticate, authorize('ADMIN', 'ACCOUNTANT', { page: 'Accounts' }));
+router.use(authenticate);
 
+// Publicly readable (for dropdowns when logging expenses/incomes)
 router.get('/', ctrl.list);
 router.get('/:id', ctrl.getById);
-router.post('/', ctrl.create);
-router.put('/:id', ctrl.update);
-router.delete('/:id', ctrl.remove);
+
+// Restricted to Admin/Accountant
+router.post('/', authorize('ADMIN', 'ACCOUNTANT', { page: 'Accounts' }), ctrl.create);
+router.put('/:id', authorize('ADMIN', 'ACCOUNTANT', { page: 'Accounts' }), ctrl.update);
+router.delete('/:id', authorize('ADMIN', 'ACCOUNTANT', { page: 'Accounts' }), ctrl.remove);
 
 export default router;

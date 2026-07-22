@@ -65,7 +65,7 @@ export const globalSearch = async (req: Request, res: Response) => {
           { email: { contains: searchTerm, mode: 'insensitive' } }
         ]
       },
-      deletedAt: null
+      isArchived: false
     },
     include: { user: true },
     take: 5

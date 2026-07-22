@@ -15,7 +15,7 @@ export const createUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const updateUserEmail = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const { email } = req.body;
   if (!email) throw new ApiError(400, 'Email is required');
   await userService.updateUserEmail(id, email);
@@ -23,7 +23,7 @@ export const updateUserEmail = asyncHandler(async (req: Request, res: Response) 
 });
 
 export const resetUserPassword = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const { newPassword } = req.body;
   if (!newPassword) throw new ApiError(400, 'New password is required');
   await userService.resetUserPassword(id, newPassword);
@@ -31,7 +31,7 @@ export const resetUserPassword = asyncHandler(async (req: Request, res: Response
 });
 
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   if (id === req.user!.userId) {
     throw new ApiError(400, 'You cannot delete yourself');
   }

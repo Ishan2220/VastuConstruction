@@ -42,6 +42,10 @@ class EventBus {
     
     this.emitter.emit('ENTITY_MUTATION', entityType, action, payload);
   }
+
+  public emit(event: string, payload: any) {
+    this.emitter.emit(event, payload);
+  }
 }
 
 export const eventBus = new EventBus();

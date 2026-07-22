@@ -38,3 +38,11 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   await userService.deleteUser(id);
   res.json(new ApiResponse(200, null, 'User deleted successfully'));
 });
+
+export const grantTempAdmin = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const { pages, durationHours } = req.body;
+  if (!pages || !durationHours) throw new ApiError(400, 'Pages and duration are required');
+  await userService.grantTempAdmin(id, pages, durationHours);
+  res.json(new ApiResponse(200, null, 'Temporary admin rights granted successfully'));
+});

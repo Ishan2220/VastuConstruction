@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, Key, Mail, X, Shield, Users, Search, MoreVertical } from 'lucide-react';
+import { Plus, Edit2, Trash2, Key, Mail, X, Shield, Users, Search, MoreVertical, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -9,6 +9,7 @@ export default function UsersPage() {
   const queryClient = useQueryClient();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null);
+  const [tempAdminUserId, setTempAdminUserId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data: usersData, isLoading } = useQuery({
@@ -133,6 +134,13 @@ export default function UsersPage() {
                 
                 <div className="flex items-center gap-1">
                   <button
+                    onClick={() => setTempAdminUserId(user.id)}
+                    className="p-2 rounded-xl text-slate-400 hover:text-orange-600 hover:bg-orange-50 transition-colors"
+                    title="Grant Temp Admin Access"
+                  >
+                    <Clock className="h-4 w-4" />
+                  </button>
+                  <button
                     onClick={() => setResetPasswordUserId(user.id)}
                     className="p-2 rounded-xl text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors"
                     title="Reset Password"
@@ -159,6 +167,10 @@ export default function UsersPage() {
 
       {isCreateModalOpen && (
         <CreateUserModal onClose={() => setIsCreateModalOpen(false)} />
+      )}
+
+      {tempAdminUserId && (
+        <TempAdminModal userId={tempAdminUserId} onClose={() => setTempAdminUserId(null)} />
       )}
 
       {resetPasswordUserId && (
@@ -371,6 +383,119 @@ function ResetPasswordModal({ userId, onClose }: { userId: string; onClose: () =
               className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold py-2.5 px-6 rounded-xl shadow-[0_4px_14px_0_rgb(124,110,240,0.39)] hover:shadow-[0_6px_20px_rgba(124,110,240,0.23)] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {resetMutation.isPending ? 'Resetting...' : 'Reset Password'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function TempAdminModal({ userId, onClose }: { userId: string; onClose: () => void }) {
+  const queryClient = useQueryClient();
+  const [pages, setPages] = useState<string[]>([]);
+  const [durationHours, setDurationHours] = useState(12);
+
+  const pagesList = [
+    'Expenses', 'Income / Payments', 'Accounts', 'Invoices', 'Vendors', 
+    'Labour / Staff', 'Clients', 'Employees', 'Salaries', 'Reports', 
+    'Audit Logs', 'Storage Analytics', 'Settings'
+  ];
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      await api.put(`/users/${userId}/temp-admin`, { pages, durationHours });
+    },
+    onSuccess: () => {
+      toast.success('Temporary admin rights granted successfully');
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      onClose();
+    },
+    onError: () => {
+      toast.error('Failed to grant temporary admin rights');
+    },
+  });
+
+  const togglePage = (page: string) => {
+    setPages(prev => prev.includes(page) ? prev.filter(p => p !== page) : [...prev, page]);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white/85 backdrop-blur-xl border border-white/60 rounded-3xl p-6 md:p-8 w-full max-w-lg shadow-2xl">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold font-heading text-slate-800 flex items-center gap-2">
+            <Clock className="w-6 h-6 text-orange-500" />
+            Grant Temp Admin Access
+          </h2>
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }} className="space-y-6">
+          
+          <div className="space-y-3">
+            <label className="block text-sm font-bold text-slate-700">Duration</label>
+            <div className="grid grid-cols-2 gap-3">
+              {[12, 24].map(hours => (
+                <button
+                  key={hours}
+                  type="button"
+                  onClick={() => setDurationHours(hours)}
+                  className={cn(
+                    "px-4 py-3 rounded-xl border text-sm font-bold transition-all",
+                    durationHours === hours 
+                      ? "border-orange-500 bg-orange-50 text-orange-700 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]" 
+                      : "border-slate-200 bg-white text-slate-600 hover:border-orange-300"
+                  )}
+                >
+                  {hours} Hours
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-bold text-slate-700">Select Pages</label>
+              <button 
+                type="button" 
+                onClick={() => setPages(pages.length === pagesList.length ? [] : pagesList)}
+                className="text-xs font-bold text-orange-600 hover:text-orange-700"
+              >
+                {pages.length === pagesList.length ? 'Deselect All' : 'Select All'}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2">
+              {pagesList.map(page => (
+                <label key={page} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={pages.includes(page)}
+                    onChange={() => togglePage(page)}
+                    className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                  />
+                  <span className="text-sm font-medium text-slate-600">{page}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={mutation.isPending || pages.length === 0}
+              className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-400 hover:to-rose-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_14px_0_rgba(249,115,22,0.39)] transition-all"
+            >
+              {mutation.isPending ? 'Granting...' : 'Grant Access'}
             </button>
           </div>
         </form>

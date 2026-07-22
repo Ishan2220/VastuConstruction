@@ -185,7 +185,7 @@ export default function LeadsPage() {
             <div key={lead.id} className="clay-card p-4 space-y-4 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between pb-3 border-b border-violet-100/30 gap-3">
-                  <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+                  <div className="flex items-center gap-2 flex-wrap pb-1">
                     <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-clay-violet text-[#7C6EF0] whitespace-nowrap">{lead.source}</span>
                     <button
                       onClick={() => setEditingLead(lead)}

@@ -137,14 +137,11 @@ export const getAdminDashboard = async () => {
       take: 10,
     }),
 
-    // Payment mode summary (current month income)
+    // Payment mode summary (All time income)
     prisma.income.groupBy({
       by: ['paymentMethod'],
       _sum: { amount: true },
       _count: true,
-      where: {
-        paymentDate: { gte: monthStart, lte: monthEnd },
-      },
     }),
 
     // Recent audit logs as activities

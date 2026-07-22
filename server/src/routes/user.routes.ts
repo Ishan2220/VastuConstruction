@@ -33,9 +33,17 @@ const resetPasswordSchema = z.object({
 });
 
 router.get('/', userController.listUsers);
+const tempAdminSchema = z.object({
+  body: z.object({
+    pages: z.array(z.string()),
+    durationHours: z.number().min(1).max(72),
+  }),
+});
+
 router.post('/', validate(createUserSchema), userController.createUser);
 router.put('/:id/email', validate(updateEmailSchema), userController.updateUserEmail);
 router.put('/:id/reset-password', validate(resetPasswordSchema), userController.resetUserPassword);
+router.put('/:id/temp-admin', validate(tempAdminSchema), userController.grantTempAdmin);
 router.delete('/:id', userController.deleteUser);
 
 export default router;

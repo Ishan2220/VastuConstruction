@@ -54,12 +54,26 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function RoleRoute({ allowedRoles, children }: { allowedRoles: string[], children: React.ReactNode }) {
+function RoleRoute({ allowedRoles, pageName, children }: { allowedRoles: string[], pageName?: string, children: React.ReactNode }) {
   const { user } = useAuthStore();
   
-  if (!user || !allowedRoles.includes(user.role)) {
+  if (!user) {
     return <Navigate to="/" replace />;
   }
+
+  const hasBaseRole = allowedRoles.includes(user.role);
+  
+  let hasTempAdmin = false;
+  if (pageName && user.tempAdminUntil && user.tempAdminPages) {
+    if (new Date(user.tempAdminUntil) > new Date() && user.tempAdminPages.includes(pageName)) {
+      hasTempAdmin = true;
+    }
+  }
+
+  if (!hasBaseRole && !hasTempAdmin) {
+    return <Navigate to="/" replace />;
+  }
+  
   return <>{children}</>;
 }
 
@@ -113,25 +127,25 @@ export default function App() {
           <Route path="projects/:id" element={<ProjectDetailsPage />} />
           <Route path="sites" element={<SitesPage />} />
           <Route path="site-profit-loss" element={<SiteProfitLossPage />} />
-          <Route path="expenses" element={<ExpensesPage />} />
-          <Route path="income" element={<IncomePage />} />
-          <Route path="accounts" element={<AccountsPage />} />
-          <Route path="vendors" element={<VendorsPage />} />
-          <Route path="vendors/:id" element={<VendorDetailsPage />} />
-          <Route path="labour" element={<LabourPage />} />
-          <Route path="clients" element={<ClientsPage />} />
+          <Route path="expenses" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'ACCOUNTANT']} pageName="Expenses"><ExpensesPage /></RoleRoute>} />
+          <Route path="income" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'ACCOUNTANT']} pageName="Income / Payments"><IncomePage /></RoleRoute>} />
+          <Route path="accounts" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'ACCOUNTANT']} pageName="Accounts"><AccountsPage /></RoleRoute>} />
+          <Route path="vendors" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'ACCOUNTANT', 'ENGINEER']} pageName="Vendors"><VendorsPage /></RoleRoute>} />
+          <Route path="vendors/:id" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'ACCOUNTANT', 'ENGINEER']} pageName="Vendors"><VendorDetailsPage /></RoleRoute>} />
+          <Route path="labour" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'ENGINEER']} pageName="Labour / Staff"><LabourPage /></RoleRoute>} />
+          <Route path="clients" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER']} pageName="Clients"><ClientsPage /></RoleRoute>} />
           <Route path="documents" element={<DocumentsPage />} />
-          <Route path="reports" element={<ReportsPage />} />
+          <Route path="reports" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'ACCOUNTANT']} pageName="Reports"><ReportsPage /></RoleRoute>} />
           <Route path="calendar" element={<CalendarPage />} />
           <Route path="tasks" element={<TasksPage />} />
-          <Route path="employees" element={<EmployeesPage />} />
-          <Route path="employees/:id" element={<EmployeeDetailsPage />} />
-          <Route path="salaries" element={<SalaryPaymentsPage />} />
-          <Route path="audit-logs" element={<RoleRoute allowedRoles={['ADMIN']}><AuditLogsPage /></RoleRoute>} />
-          <Route path="storage-analytics" element={<StorageAnalyticsPage />} />
-          <Route path="invoices" element={<InvoicesPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="settings/users" element={<RoleRoute allowedRoles={['ADMIN']}><UsersPage /></RoleRoute>} />
+          <Route path="employees" element={<RoleRoute allowedRoles={['ADMIN', 'ACCOUNTANT']} pageName="Employees"><EmployeesPage /></RoleRoute>} />
+          <Route path="employees/:id" element={<RoleRoute allowedRoles={['ADMIN', 'ACCOUNTANT']} pageName="Employees"><EmployeeDetailsPage /></RoleRoute>} />
+          <Route path="salaries" element={<RoleRoute allowedRoles={['ADMIN', 'ACCOUNTANT']} pageName="Salaries"><SalaryPaymentsPage /></RoleRoute>} />
+          <Route path="audit-logs" element={<RoleRoute allowedRoles={['ADMIN']} pageName="Audit Logs"><AuditLogsPage /></RoleRoute>} />
+          <Route path="storage-analytics" element={<RoleRoute allowedRoles={['ADMIN']} pageName="Storage Analytics"><StorageAnalyticsPage /></RoleRoute>} />
+          <Route path="invoices" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'ACCOUNTANT']} pageName="Invoices"><InvoicesPage /></RoleRoute>} />
+          <Route path="settings" element={<RoleRoute allowedRoles={['ADMIN']} pageName="Settings"><SettingsPage /></RoleRoute>} />
+          <Route path="settings/users" element={<RoleRoute allowedRoles={['ADMIN']} pageName="Settings"><UsersPage /></RoleRoute>} />
           <Route path="settings/account" element={<AccountPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

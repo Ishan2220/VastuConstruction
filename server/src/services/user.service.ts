@@ -94,3 +94,19 @@ export const deleteUser = async (userId: string) => {
     where: { userId },
   });
 };
+
+export const grantTempAdmin = async (userId: string, pages: string[], durationHours: number) => {
+  const user = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } });
+  if (!user) throw new ApiError(404, 'User not found');
+
+  const until = new Date();
+  until.setHours(until.getHours() + durationHours);
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      tempAdminUntil: until,
+      tempAdminPages: pages,
+    },
+  });
+};

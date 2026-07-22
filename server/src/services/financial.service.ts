@@ -74,17 +74,35 @@ export class FinancialService {
     return Number(agg._sum.amount) || 0;
   }
 
-  /**
-   * Total Expenses (Using explicit Date Filters)
-   */
   static async calculateMonthlyExpenses(startDate?: Date, endDate?: Date): Promise<number> {
-    const agg = await prisma.expense.aggregate({
-      _sum: { amount: true },
-      where: {
-        ...(startDate && endDate && { paymentDate: { gte: startDate, lte: endDate } })
-      }
-    });
-    return Number(agg._sum.amount) || 0;
+    const dateFilter = startDate && endDate ? { paymentDate: { gte: startDate, lte: endDate } } : {};
+    
+    const [expenseAgg, vendorAgg, labourAgg, salaryAgg] = await Promise.all([
+      prisma.expense.aggregate({
+        _sum: { amount: true },
+        where: dateFilter
+      }),
+      prisma.vendorPayment.aggregate({
+        _sum: { amount: true },
+        where: dateFilter
+      }),
+      prisma.labourPayment.aggregate({
+        _sum: { amount: true },
+        where: dateFilter
+      }),
+      prisma.salaryPayment.aggregate({
+        _sum: { amount: true },
+        where: dateFilter
+      })
+    ]);
+
+    const total = 
+      (Number(expenseAgg._sum.amount) || 0) +
+      (Number(vendorAgg._sum.amount) || 0) +
+      (Number(labourAgg._sum.amount) || 0) +
+      (Number(salaryAgg._sum.amount) || 0);
+
+    return total;
   }
 
   /**

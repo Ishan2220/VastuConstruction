@@ -162,6 +162,16 @@ export const getAdminDashboard = async () => {
     prisma.labour.count({ where: { deletedAt: null, isActive: true } }),
   ]);
 
+  const [vendorMonthAgg, labourMonthAgg, salaryMonthAgg] = await Promise.all([
+    prisma.vendorPayment.aggregate({ _sum: { amount: true }, where: { paymentDate: { gte: monthStart, lte: monthEnd } } }),
+    prisma.labourPayment.aggregate({ _sum: { amount: true }, where: { paymentDate: { gte: monthStart, lte: monthEnd } } }),
+    prisma.salaryPayment.aggregate({ _sum: { amount: true }, where: { paymentDate: { gte: monthStart, lte: monthEnd } } }),
+  ]);
+
+  if (Number(vendorMonthAgg._sum.amount) > 0) expenseByCategory.push({ type: 'VENDOR', _sum: { amount: vendorMonthAgg._sum.amount as any } } as any);
+  if (Number(labourMonthAgg._sum.amount) > 0) expenseByCategory.push({ type: 'LABOUR', _sum: { amount: labourMonthAgg._sum.amount as any } } as any);
+  if (Number(salaryMonthAgg._sum.amount) > 0) expenseByCategory.push({ type: 'SALARY', _sum: { amount: salaryMonthAgg._sum.amount as any } } as any);
+
   // Site-wise P/L
   const siteWisePL = await prisma.project.findMany({
     where: { deletedAt: null, status: { in: ['IN_PROGRESS', 'COMPLETED'] } },

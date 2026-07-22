@@ -227,9 +227,10 @@ export default function InvoicesPage() {
   };
 
   const filteredInvoices = invoices.filter((inv) => {
-    const matchesSearch = inv.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          inv.client?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          inv.client?.companyName?.toLowerCase().includes(searchTerm.toLowerCase());
+    const search = searchTerm.toLowerCase();
+    const matchesSearch = inv.invoiceNumber?.toLowerCase().includes(search) ||
+                          inv.client?.name?.toLowerCase().includes(search) ||
+                          inv.client?.companyName?.toLowerCase().includes(search);
     const matchesFilter = filterStatus === 'ALL' || inv.status === filterStatus;
     return matchesSearch && matchesFilter;
   });

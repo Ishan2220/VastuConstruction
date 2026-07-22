@@ -23,6 +23,8 @@ import api from '@/lib/api';
 export default function ReportsPage() {
   const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
 
+  const [activeTab, setActiveTab] = useState<'analytics' | 'ledger'>('analytics');
+
   const { data: finSummary, isLoading: finLoading } = useQuery({
     queryKey: ['fin-summary', dateRange],
     queryFn: async () => {
@@ -46,21 +48,6 @@ export default function ReportsPage() {
     refetchOnMount: true,
   });
 
-  if (finLoading || projLoading) {
-    return (
-      <div className="p-8 space-y-6 animate-pulse">
-        <div className="h-10 w-64 bg-slate-200/50 rounded-xl" />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-36 bg-slate-200/50 rounded-2xl" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const [activeTab, setActiveTab] = useState<'analytics' | 'ledger'>('analytics');
-
   const ledgerEntries = useMemo(() => {
     const entries: any[] = [];
     if (finSummary?.incomeSources) {
@@ -82,6 +69,19 @@ export default function ReportsPage() {
       return { ...entry, balance };
     });
   }, [finSummary]);
+
+  if (finLoading || projLoading) {
+    return (
+      <div className="p-8 space-y-6 animate-pulse">
+        <div className="h-10 w-64 bg-slate-200/50 rounded-xl" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-36 bg-slate-200/50 rounded-2xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   const handleExportPDF = () => {
     toast.success('Generating Executive Report PDF...');

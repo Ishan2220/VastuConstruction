@@ -185,9 +185,9 @@
 }
 
 /* ============================================ */
-/* Clay Utility Classes                         */
+/* Clay Component Classes                       */
 /* ============================================ */
-@layer utilities {
+@layer components {
   .clay-card {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(12px);
@@ -228,6 +228,7 @@
     outline: none;
   }
   .clay-btn {
+    @apply px-4 py-2 text-sm;
     background: linear-gradient(135deg, #7C6EF0 0%, #6558D3 100%);
     color: white;
     border-radius: 0.75rem;

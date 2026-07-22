@@ -135,6 +135,12 @@ export default function Header() {
     { title: 'Master Construction Schedule', category: 'MODULE', link: '/calendar', icon: Calendar },
     { title: 'Document Vault & Blueprints', category: 'MODULE', link: '/documents', icon: FileText },
     { title: 'Engineering Tasks Checklist', category: 'MODULE', link: '/tasks', icon: CheckCircle2 },
+    { title: 'Employees & Workforce', category: 'MODULE', link: '/employees', icon: Users },
+    { title: 'Salary Payments', category: 'MODULE', link: '/salaries', icon: IndianRupee },
+    { title: 'Client Directory', category: 'MODULE', link: '/clients', icon: Users },
+    { title: 'Vendor Directory', category: 'MODULE', link: '/vendors', icon: PackageCheck },
+    { title: 'Invoices & Billing', category: 'MODULE', link: '/invoices', icon: FileText },
+    { title: 'System Settings & Configuration', category: 'MODULE', link: '/settings', icon: Settings },
     { title: 'Audit Logs & Security Compliance', category: 'MODULE', link: '/audit-logs', icon: Layers },
   ];
 
@@ -146,11 +152,13 @@ export default function Header() {
     icon: getIconForType(res.type),
   }));
 
-  const searchItems = [...dynamicGlobalItems, ...baseNavItems];
+  const filteredBaseNav = searchQuery.trim().length >= 2 
+    ? baseNavItems.filter(item => item.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    : baseNavItems.slice(0, 7);
 
   const filteredSearch = searchQuery.trim().length < 2
-    ? baseNavItems.slice(0, 7)
-    : searchItems;
+    ? filteredBaseNav
+    : [...dynamicGlobalItems, ...filteredBaseNav];
 
   function getLinkForType(type: string, id: string) {
     switch (type) {

@@ -26,6 +26,7 @@ import {
   CheckSquare,
   X,
   ChevronRight,
+  Users,
 } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';

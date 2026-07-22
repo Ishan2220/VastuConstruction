@@ -2,6 +2,14 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User } from '@/types';
 
+const normalizeUser = (user: any): any => {
+  if (!user) return null;
+  return {
+    ...user,
+    role: user.role || user.employee?.designation || 'ADMIN',
+  };
+};
+
 interface AuthState {
   accessToken: string | null;
   user: User | null;

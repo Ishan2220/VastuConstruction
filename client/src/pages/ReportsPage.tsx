@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { format } from 'date-fns';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'sonner';
@@ -17,7 +18,6 @@ import {
   ArrowUpRight,
   Calculator,
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
 import api from '@/lib/api';
 
 export default function ReportsPage() {

@@ -139,7 +139,7 @@ export default function ExpensesPage() {
               <tr className="border-b border-violet-100/30 text-xs font-bold uppercase text-slate-400">
                 <th className="p-4">Type</th>
                 <th className="p-4">Project Contract</th>
-                <th className="p-4">Vendor / Payee</th>
+                <th className="p-4">Payable To (Vendor)</th>
                 <th className="p-4">Payment Date</th>
                 <th className="p-4">Description</th>
                 <th className="p-4">Amount (₹)</th>
@@ -257,7 +257,7 @@ export default function ExpensesPage() {
                 onChange={(e) => setNewExpense({ ...newExpense, vendorId: e.target.value })}
                 className="clay-input w-full text-sm"
               >
-                <option value="">Select Vendor (if applicable)</option>
+                <option value="">Select Payable To (Vendor) (if applicable)</option>
                 {vendors.map((v: any) => <option key={v.id} value={v.id}>{v.name}</option>)}
               </select>
 

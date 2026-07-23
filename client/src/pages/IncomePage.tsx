@@ -138,7 +138,7 @@ export default function IncomePage() {
             <thead>
               <tr className="border-b border-violet-100/30 text-xs font-bold uppercase text-slate-400">
                 <th className="p-4">Invoice / Ref</th>
-                <th className="p-4">Client</th>
+                <th className="p-4">Billed To (Client)</th>
                 <th className="p-4">Project Contract</th>
                 <th className="p-4">Payment Date</th>
                 <th className="p-4">Method</th>
@@ -239,7 +239,7 @@ export default function IncomePage() {
                 onChange={(e) => setNewIncome({ ...newIncome, clientId: e.target.value })}
                 className="clay-input w-full text-sm"
               >
-                <option value="">Select Client *</option>
+                <option value="">Select Billed To (Client) *</option>
                 {clients.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
 

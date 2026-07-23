@@ -23,31 +23,31 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-        <Link to="/settings/account" className="group relative bg-white/40 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(124,110,240,0.15)] hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <div className="relative flex items-start gap-5">
-            <div className="p-4 rounded-2xl bg-white shadow-sm text-violet-600 group-hover:scale-110 group-hover:bg-violet-600 group-hover:text-white transition-all duration-300">
+        <Link to="/settings/account" className="block group relative bg-white/70 backdrop-blur-md border border-slate-200/60 p-6 rounded-3xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          <div className="relative flex items-start gap-5 pointer-events-none">
+            <div className="p-4 rounded-2xl bg-white border border-slate-100 text-slate-800 shadow-sm group-hover:scale-110 group-hover:bg-slate-800 group-hover:text-white transition-all duration-300">
               <UserCog className="w-7 h-7" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-slate-800 font-heading group-hover:text-violet-700 transition-colors">My Account</h3>
+              <h3 className="text-xl font-bold text-slate-800 font-heading group-hover:text-slate-900 transition-colors">My Account</h3>
               <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">Update your personal profile, email, password, and security preferences.</p>
             </div>
-            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-violet-600 group-hover:translate-x-1 transition-all" />
+            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-800 group-hover:translate-x-1 transition-all" />
           </div>
         </Link>
 
-        <Link to="/settings/users" className="group relative bg-white/40 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(229,99,108,0.15)] hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <div className="relative flex items-start gap-5">
-            <div className="p-4 rounded-2xl bg-white shadow-sm text-rose-500 group-hover:scale-110 group-hover:bg-rose-500 group-hover:text-white transition-all duration-300">
+        <Link to="/settings/users" className="block group relative bg-white/70 backdrop-blur-md border border-slate-200/60 p-6 rounded-3xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          <div className="relative flex items-start gap-5 pointer-events-none">
+            <div className="p-4 rounded-2xl bg-white border border-slate-100 text-slate-800 shadow-sm group-hover:scale-110 group-hover:bg-slate-800 group-hover:text-white transition-all duration-300">
               <Shield className="w-7 h-7" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-slate-800 font-heading group-hover:text-rose-600 transition-colors">Admin & User Management</h3>
+              <h3 className="text-xl font-bold text-slate-800 font-heading group-hover:text-slate-900 transition-colors">Admin & User Management</h3>
               <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">Manage admin access, employee accounts, roles, and system permissions.</p>
             </div>
-            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-rose-500 group-hover:translate-x-1 transition-all" />
+            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-800 group-hover:translate-x-1 transition-all" />
           </div>
         </Link>
 

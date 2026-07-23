@@ -48,7 +48,7 @@ export default function UsersPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-200/50">
         <div>
           <h1 className="text-4xl font-extrabold font-heading text-slate-800 tracking-tight flex items-center gap-3">
-            <div className="p-2.5 bg-gradient-to-br from-rose-500 to-orange-500 rounded-2xl shadow-lg shadow-rose-200">
+            <div className="p-2.5 bg-slate-900 rounded-2xl shadow-sm">
               <Users className="w-8 h-8 text-white" />
             </div>
             User Management
@@ -70,7 +70,7 @@ export default function UsersPage() {
           </div>
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold py-2.5 px-5 rounded-xl shadow-[0_4px_14px_0_rgb(124,110,240,0.39)] hover:shadow-[0_6px_20px_rgba(124,110,240,0.23)] hover:-translate-y-0.5 transition-all duration-200 shrink-0"
+            className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-5 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 shrink-0"
           >
             <Plus className="h-5 w-5" />
             <span>Create User</span>
@@ -93,8 +93,8 @@ export default function UsersPage() {
           </div>
         ) : (
           filteredUsers.map((user: any) => (
-            <div key={user.id} className="group relative bg-white/60 backdrop-blur-xl border border-white/80 p-6 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(124,110,240,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+            <div key={user.id} className="group relative bg-white/70 backdrop-blur-md border border-slate-200/60 p-6 rounded-3xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
               
               <div className="flex justify-between items-start mb-4 relative z-10">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-100 to-fuchsia-100 text-violet-600 flex items-center justify-center font-bold text-lg shadow-inner">
@@ -309,7 +309,7 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
             <button
               type="submit"
               disabled={createMutation.isPending}
-              className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold py-2.5 px-6 rounded-xl shadow-[0_4px_14px_0_rgb(124,110,240,0.39)] hover:shadow-[0_6px_20px_rgba(124,110,240,0.23)] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {createMutation.isPending ? 'Creating...' : 'Create User'}
             </button>
@@ -380,7 +380,7 @@ function ResetPasswordModal({ userId, onClose }: { userId: string; onClose: () =
             <button
               type="submit"
               disabled={resetMutation.isPending}
-              className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold py-2.5 px-6 rounded-xl shadow-[0_4px_14px_0_rgb(124,110,240,0.39)] hover:shadow-[0_6px_20px_rgba(124,110,240,0.23)] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {resetMutation.isPending ? 'Resetting...' : 'Reset Password'}
             </button>
@@ -493,7 +493,7 @@ function TempAdminModal({ userId, onClose }: { userId: string; onClose: () => vo
             <button
               type="submit"
               disabled={mutation.isPending || pages.length === 0}
-              className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-400 hover:to-rose-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_14px_0_rgba(249,115,22,0.39)] transition-all"
+              className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
             >
               {mutation.isPending ? 'Granting...' : 'Grant Access'}
             </button>

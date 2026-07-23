@@ -161,11 +161,11 @@ export default function AccountPage() {
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-slate-100">
+              <div className="pt-6 border-t border-slate-100 flex justify-end">
                 <button
                   type="submit"
                   disabled={passwordMutation.isPending}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold py-3 px-8 rounded-xl shadow-[0_4px_14px_0_rgb(124,110,240,0.39)] hover:shadow-[0_6px_20px_rgba(124,110,240,0.23)] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-8 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   <Save className="w-4 h-4" />
                   {passwordMutation.isPending ? 'Updating Password...' : 'Update Password'}

@@ -36,6 +36,7 @@ export default function ClientsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients-directory'] });
+      queryClient.invalidateQueries({ queryKey: ['clients-select'] });
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       toast.success('Client profile created successfully');
       setIsAddOpen(false);
@@ -52,6 +53,7 @@ export default function ClientsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients-directory'] });
+      queryClient.invalidateQueries({ queryKey: ['clients-select'] });
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       toast.success('Client profile updated successfully');
       setEditingClient(null);
@@ -68,6 +70,7 @@ export default function ClientsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients-directory'] });
+      queryClient.invalidateQueries({ queryKey: ['clients-select'] });
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       toast.success('Client profile deleted successfully');
     },

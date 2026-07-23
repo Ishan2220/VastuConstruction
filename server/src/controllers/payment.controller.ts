@@ -191,7 +191,7 @@ export const getPaymentHistory = asyncHandler(async (req: Request, res: Response
         sp.payment_method as "paymentMethod",
         sp.reference,
         sp.notes as remarks,
-        sp.status as status,
+        CAST(sp.status AS TEXT) as status,
         sp.created_at as "createdAt",
         'Salary Payment' as "source",
         NULL as "clientId",
@@ -294,13 +294,13 @@ export const getPaymentSummary = asyncHandler(async (req: Request, res: Response
     WITH AllPayments AS (
       SELECT CAST('INFLOW' AS TEXT) as direction, amount, CAST('COMPLETED' AS TEXT) as status, payment_date as "paymentDate" FROM incomes
       UNION ALL
-      SELECT 'OUTFLOW' as direction, amount, 'COMPLETED' as status, payment_date as "paymentDate" FROM expenses
+      SELECT CAST('OUTFLOW' AS TEXT) as direction, amount, CAST('COMPLETED' AS TEXT) as status, payment_date as "paymentDate" FROM expenses
       UNION ALL
-      SELECT 'OUTFLOW' as direction, amount, 'COMPLETED' as status, payment_date as "paymentDate" FROM vendor_payments
+      SELECT CAST('OUTFLOW' AS TEXT) as direction, amount, CAST('COMPLETED' AS TEXT) as status, payment_date as "paymentDate" FROM vendor_payments
       UNION ALL
-      SELECT 'OUTFLOW' as direction, amount, 'COMPLETED' as status, payment_date as "paymentDate" FROM labour_payments
+      SELECT CAST('OUTFLOW' AS TEXT) as direction, amount, CAST('COMPLETED' AS TEXT) as status, payment_date as "paymentDate" FROM labour_payments
       UNION ALL
-      SELECT 'OUTFLOW' as direction, amount, status, payment_date as "paymentDate" FROM salary_payments
+      SELECT CAST('OUTFLOW' AS TEXT) as direction, amount, CAST(status AS TEXT) as status, payment_date as "paymentDate" FROM salary_payments
     )
   `;
 

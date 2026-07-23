@@ -217,7 +217,7 @@ export default function InvoicesPage() {
       doc.rect(14, 75, 182, 35, 'F');
       doc.setFontSize(11);
       doc.setTextColor(124, 110, 240);
-      doc.text('BILLED TO', 20, 85);
+      doc.text('INVOICE FOR CLIENT', 20, 85);
       
       doc.setFontSize(12);
       doc.setTextColor(40, 40, 40);

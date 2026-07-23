@@ -571,8 +571,8 @@ export default function ProjectDetailsPage() {
 
       {/* Edit Project Modal */}
       {isEditOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-lg p-6 space-y-6 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full h-full sm:h-auto sm:max-w-lg sm:rounded-2xl rounded-none p-4 sm:p-6 space-y-4 sm:space-y-6 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-violet-100/40 pb-4">
               <h3 className="text-lg font-bold text-slate-800 font-heading">Edit Project Details: {project.name}</h3>
               <button
@@ -723,8 +723,8 @@ export default function ProjectDetailsPage() {
 
       {/* Log Progress Modal */}
       {isProgressOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full h-full sm:h-auto sm:max-w-md sm:rounded-2xl rounded-none p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-violet-100/40 pb-4">
               <h3 className="text-lg font-bold text-slate-800 font-heading">Log Daily Site Progress</h3>
               <button

@@ -397,7 +397,7 @@ export default function DashboardPage() {
         variants={staggerContainer}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
       >
         {kpiCardConfig.map((cfg) => {
           const Icon = cfg.icon;
@@ -408,7 +408,7 @@ export default function DashboardPage() {
               variants={fadeInUp}
               {...clayCardHover}
               onClick={() => navigate(cfg.route)}
-              className={`clay-card p-4 cursor-pointer group flex flex-col justify-between min-h-[110px] ${cfg.key === 'monthlyExpenses' ? 'col-span-2 sm:col-span-1' : ''}`}
+              className={`clay-card p-4 cursor-pointer group flex flex-col justify-between min-h-[110px]`}
             >
               <div className={`w-10 h-10 rounded-xl ${cfg.gradient} flex items-center justify-center ${cfg.iconColor} mb-2`}>
                 <Icon className="w-5 h-5" />
@@ -431,7 +431,7 @@ export default function DashboardPage() {
         variants={staggerContainer}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
       >
         {finCardConfig.map((cfg) => {
           const Icon = cfg.icon;
@@ -460,7 +460,7 @@ export default function DashboardPage() {
         <motion.div
           variants={fadeInUp}
           onClick={() => navigate('/reports')}
-          className="clay-card-sm p-3 sm:p-4 cursor-pointer group flex flex-col justify-between col-span-2 sm:col-span-1 min-h-[90px]"
+          className="clay-card-sm p-3 sm:p-4 cursor-pointer group flex flex-col justify-between min-h-[90px]"
         >
           <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center ${overallProfit > 0 ? 'bg-clay-green text-[#5CB77E]' : overallProfit < 0 ? 'bg-clay-rose text-[#E5636C]' : 'bg-slate-100 text-slate-500'} mb-2 shrink-0`}>
             {overallProfit > 0 ? <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" /> : overallProfit < 0 ? <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5" /> : <Minus className="w-4 h-4 sm:w-5 sm:h-5" />}

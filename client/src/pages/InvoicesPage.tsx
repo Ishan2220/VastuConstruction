@@ -473,7 +473,7 @@ export default function InvoicesPage() {
         </div>
       {isCreateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-2xl p-6 space-y-6 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+          <div className="clay-card w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-violet-100/40 pb-4">
               <h3 className="text-lg font-bold text-slate-800 font-heading flex items-center gap-2">
                 <FileText className="w-5 h-5 text-[#7C6EF0]" />

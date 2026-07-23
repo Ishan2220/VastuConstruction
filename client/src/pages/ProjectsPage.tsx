@@ -226,136 +226,206 @@ export default function ProjectsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((project: any) => (
-            <motion.div
-              key={project.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              onClick={() => navigate(`/projects/${project.id}`)}
-              className="clay-card p-6 hover:shadow-md hover:border-[#7C6EF0]/30 transition-all flex flex-col justify-between space-y-6 group cursor-pointer"
-            >
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <span className="text-xs font-heading font-bold px-2 py-0.5 rounded bg-clay-violet/20 text-[#7C6EF0] border border-violet-100/40">
-                      {project.code}
+        <>
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto clay-card !p-0">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-violet-100/40">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Project</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Client & Location</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Timeline</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Value</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Status & Progress</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-violet-100/30">
+                {filteredProjects.map((project: any) => (
+                  <tr key={project.id} onClick={() => navigate(`/projects/${project.id}`)} className="hover:bg-white/60 transition-colors group cursor-pointer">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-heading font-bold text-[#7C6EF0]">{project.code}</span>
+                        <span className="text-sm font-bold text-slate-800">{project.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-slate-800">{project.client?.name || 'N/A'}</span>
+                        <span className="text-xs text-slate-500">{project.address ? `${project.address}, ${project.city}` : `${project.city}, ${project.state}`}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col text-xs text-slate-600">
+                        <span>{project.startDate ? formatDate(project.startDate) : 'TBD'} - </span>
+                        <span>{project.expectedCompletion ? formatDate(project.expectedCompletion) : 'TBD'}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="font-heading text-sm font-extrabold text-slate-900">
+                        {formatCurrency(Number(project.contractValue || 0))}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col items-center gap-1.5">
+                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${
+                          project.status === 'IN_PROGRESS'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : project.status === 'COMPLETED'
+                            ? 'bg-blue-50 text-blue-700 border-blue-200'
+                            : 'bg-amber-50 text-amber-700 border-amber-200'
+                        }`}>
+                          {project.status.replace('_', ' ')}
+                        </span>
+                        <div className="w-24 h-1.5 bg-violet-100/50 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#7C6EF0] to-[#A78BFA] rounded-full"
+                            style={{ width: `${project.progress || 0}%` }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingProject({
+                              ...project,
+                              budget: String(project.budget || 0),
+                              contractValue: String(project.contractValue || 0),
+                              expectedCompletion: project.expectedCompletion ? new Date(project.expectedCompletion).toISOString().split('T')[0] : '',
+                              actualCompletion: project.actualCompletion ? new Date(project.actualCompletion).toISOString().split('T')[0] : '',
+                            });
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-clay-violet rounded-lg transition-all"
+                          title="Quick Edit Project"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Are you sure you want to delete "${project.name}"?`)) {
+                              deleteMutation.mutate(project.id);
+                            }
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-clay-rose rounded-lg transition-all"
+                          title="Delete Project Site"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="grid grid-cols-1 md:hidden gap-4">
+            {filteredProjects.map((project: any) => (
+              <motion.div
+                key={project.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                onClick={() => navigate(`/projects/${project.id}`)}
+                className="clay-card-sm p-5 hover:shadow-md hover:border-[#7C6EF0]/30 transition-all flex flex-col justify-between space-y-4 cursor-pointer"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <span className="text-xs font-heading font-bold px-2 py-0.5 rounded bg-clay-violet/20 text-[#7C6EF0] border border-violet-100/40">
+                        {project.code}
+                      </span>
+                      <h3 className="text-base font-bold text-slate-900 mt-1 font-heading transition-colors">
+                        {project.name}
+                      </h3>
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full border whitespace-nowrap ${
+                      project.status === 'IN_PROGRESS'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : project.status === 'COMPLETED'
+                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      {project.status.replace('_', ' ')}
                     </span>
-                    <h3 className="text-lg font-bold text-slate-900 mt-2 font-heading group-hover:text-[#7C6EF0] transition-colors flex items-center gap-1.5">
-                      <span>{project.name}</span>
-                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#7C6EF0] transition-transform group-hover:translate-x-1" />
-                    </h3>
                   </div>
-                  <span className={`text-[11px] font-bold uppercase px-2.5 py-1 rounded-full border ${
-                    project.status === 'IN_PROGRESS'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : project.status === 'COMPLETED'
-                      ? 'bg-blue-50 text-blue-700 border-blue-200'
-                      : 'bg-amber-50 text-amber-700 border-amber-200'
-                  }`}>
-                    {project.status.replace('_', ' ')}
-                  </span>
-                </div>
 
-                <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                  {project.description || 'Enterprise construction contract with full architectural milestone compliance.'}
-                </p>
-
-                <div className="flex items-center gap-4 text-xs text-slate-600">
-                  <span className="flex items-center gap-1 font-medium text-slate-700">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400" /> Site: {project.address ? `${project.address}, ${project.city}` : `${project.city}, ${project.state}`}
-                  </span>
-                </div>
-                <div className="flex items-center gap-4 text-xs text-slate-600">
-                  <span className="flex items-center gap-1 font-medium">
-                    <TrendingUp className="w-3.5 h-3.5 text-[#7C6EF0]" /> Client: {project.client?.name || 'N/A'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-4 text-xs text-slate-600">
-                  <span className="flex items-center gap-1 font-medium">
-                    <Calendar className="w-3.5 h-3.5 text-emerald-500" /> 
-                    {project.startDate ? formatDate(project.startDate) : 'TBD'} 
-                    {' - '} 
-                    {project.expectedCompletion ? formatDate(project.expectedCompletion) : 'TBD'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Progress & Valuation */}
-              <div className="space-y-4 pt-4 border-t border-violet-100/30">
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-semibold">
-                    <span className="text-slate-600">Physical Progress</span>
-                    <span className="text-[#7C6EF0] font-heading">{project.progress || 0}%</span>
-                  </div>
-                  <div className="h-2 w-full bg-violet-100/50 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-[#7C6EF0] to-[#A78BFA] rounded-full transition-all duration-500"
-                      style={{ width: `${project.progress || 0}%` }}
-                    />
+                  <div className="flex items-center gap-2 text-xs text-slate-600">
+                    <span className="flex items-center gap-1 font-medium text-slate-700">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400" /> {project.city}
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1 font-medium text-slate-700">
+                      <TrendingUp className="w-3.5 h-3.5 text-[#7C6EF0]" /> {project.client?.name || 'N/A'}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-violet-100/30">
-                  <div className="text-xs text-slate-500">Contract Value</div>
-                  <div className="text-sm font-extrabold text-slate-900 font-heading">
-                    {formatCurrency(Number(project.contractValue || 0))}
+                <div className="space-y-3 pt-3 border-t border-violet-100/30">
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs font-semibold">
+                      <span className="text-slate-600">Progress</span>
+                      <span className="text-[#7C6EF0] font-heading">{project.progress || 0}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-violet-100/50 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#7C6EF0] to-[#A78BFA] rounded-full transition-all duration-500"
+                        style={{ width: `${project.progress || 0}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-violet-100/30">
+                    <div className="text-xs text-slate-500">Value</div>
+                    <div className="text-sm font-extrabold text-slate-900 font-heading">
+                      {formatCurrency(Number(project.contractValue || 0))}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingProject({
+                          ...project,
+                          budget: String(project.budget || 0),
+                          contractValue: String(project.contractValue || 0),
+                          expectedCompletion: project.expectedCompletion ? new Date(project.expectedCompletion).toISOString().split('T')[0] : '',
+                          actualCompletion: project.actualCompletion ? new Date(project.actualCompletion).toISOString().split('T')[0] : '',
+                        });
+                      }}
+                      className="p-2 rounded-xl bg-violet-50 text-[#7C6EF0] transition-all"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Are you sure you want to delete "${project.name}"?`)) {
+                          deleteMutation.mutate(project.id);
+                        }
+                      }}
+                      className="p-2 rounded-xl bg-rose-50 text-[#E5636C] transition-all"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between pt-1 gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/projects/${project.id}`);
-                    }}
-                    className="flex-1 py-2 rounded-xl bg-violet-50 hover:bg-violet-100 text-[#7C6EF0] text-xs font-bold transition-all flex items-center justify-center gap-1.5"
-                  >
-                    <span>View & Daily Logs</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingProject({
-                        ...project,
-                        budget: String(project.budget || 0),
-                        contractValue: String(project.contractValue || 0),
-                        expectedCompletion: project.expectedCompletion ? new Date(project.expectedCompletion).toISOString().split('T')[0] : '',
-                        actualCompletion: project.actualCompletion ? new Date(project.actualCompletion).toISOString().split('T')[0] : '',
-                      });
-                    }}
-                    className="px-3 py-2 rounded-xl border border-violet-100/30 bg-white/50 hover:bg-violet-50 text-slate-700 hover:text-[#7C6EF0] text-xs font-semibold transition-all flex items-center gap-1"
-                    title="Quick Edit Project"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>Edit</span>
-                  </button>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (confirm(`Are you sure you want to delete "${project.name}"?`)) {
-                        deleteMutation.mutate(project.id);
-                      }
-                    }}
-                    className="p-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-[#E5636C] transition-all flex items-center justify-center"
-                    title="Delete Project Site"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+              </motion.div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Create Project Modal */}
       {isCreateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-lg p-6 space-y-6 max-h-[90vh] overflow-y-auto scrollbar-hide animate-in fade-in zoom-in-95 duration-200">
+          <div className="clay-card w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="text-lg font-bold text-slate-900 font-heading">Register New Site Project</h3>
               <button
@@ -486,7 +556,7 @@ export default function ProjectsPage() {
       {/* Quick Edit Project Modal */}
       {editingProject && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-lg p-6 space-y-6 max-h-[90vh] overflow-y-auto scrollbar-hide animate-in fade-in zoom-in-95 duration-200">
+          <div className="clay-card w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="text-lg font-bold text-slate-900 font-heading">Quick Edit Project: {editingProject.name}</h3>
               <button

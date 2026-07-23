@@ -188,90 +188,195 @@ export default function TasksPage() {
       ) : filteredTasks.length === 0 ? (
         <div className="clay-card p-12 text-center text-slate-400">No site engineering tasks listed.</div>
       ) : (
-        <div className="space-y-3">
-          {filteredTasks.map((task: any) => (
-            <div
-              key={task.id}
-              className={`p-5 clay-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${
-                task.status === 'COMPLETED' ? 'opacity-60 bg-white/30' : 'hover:border-[#7C6EF0]/30'
-              }`}
-            >
-              <div className="space-y-1.5 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                    task.priority === 'HIGH' || task.priority === 'URGENT'
-                      ? 'bg-clay-rose text-[#E5636C]'
-                      : task.priority === 'MEDIUM'
-                      ? 'bg-clay-amber text-[#F2A65A]'
-                      : 'bg-clay-blue text-[#4EA8DE]'
-                  }`}>
-                    {task.priority}
-                  </span>
-                  {task.project && (
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-clay-violet text-[#7C6EF0]">
-                      {task.project.name}
+        <div className="clay-card overflow-hidden">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto scrollbar-hide">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-violet-100/30 text-xs font-bold uppercase text-slate-400">
+                  <th className="p-4">Task</th>
+                  <th className="p-4">Project</th>
+                  <th className="p-4">Priority</th>
+                  <th className="p-4">Due Date</th>
+                  <th className="p-4">Assignee</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-violet-100/30 text-sm">
+                {filteredTasks.map((task: any) => (
+                  <tr key={task.id} className={`transition-colors ${task.status === 'COMPLETED' ? 'opacity-60 bg-white/30' : 'hover:bg-violet-50/50'}`}>
+                    <td className="p-4 min-w-[200px]">
+                      <div className={`font-bold text-base font-heading ${task.status === 'COMPLETED' ? 'line-through text-slate-500' : 'text-slate-800'}`}>
+                        {task.title}
+                      </div>
+                      {task.description && <div className="text-xs text-slate-600 line-clamp-1 mt-1">{task.description}</div>}
+                    </td>
+                    <td className="p-4 whitespace-nowrap">
+                      {task.project ? (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-clay-violet text-[#7C6EF0]">
+                          {task.project.name}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400">-</span>
+                      )}
+                    </td>
+                    <td className="p-4 whitespace-nowrap">
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                        task.priority === 'HIGH' || task.priority === 'URGENT'
+                          ? 'bg-clay-rose text-[#E5636C]'
+                          : task.priority === 'MEDIUM'
+                          ? 'bg-clay-amber text-[#F2A65A]'
+                          : 'bg-clay-blue text-[#4EA8DE]'
+                      }`}>
+                        {task.priority}
+                      </span>
+                    </td>
+                    <td className="p-4 text-slate-500 whitespace-nowrap">
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        {task.dueDate ? formatDate(task.dueDate) : 'Soon'}
+                      </div>
+                    </td>
+                    <td className="p-4 font-semibold text-slate-600 whitespace-nowrap">
+                      {task.assignee?.name || 'Unassigned'}
+                    </td>
+                    <td className="p-4">
+                      <select
+                        value={task.status}
+                        onChange={(e) => updateStatusMutation.mutate({ id: task.id, status: e.target.value })}
+                        className="text-xs font-bold uppercase px-2 py-1.5 rounded-xl bg-white/50 border border-violet-100/40 text-slate-700 focus:outline-none cursor-pointer"
+                      >
+                        <option value="TODO">To Do</option>
+                        <option value="IN_PROGRESS">In Progress</option>
+                        <option value="COMPLETED">Completed</option>
+                      </select>
+                    </td>
+                    <td className="p-4 text-center whitespace-nowrap space-x-1">
+                      {task.status !== 'COMPLETED' && (
+                        <button
+                          onClick={() => updateStatusMutation.mutate({ id: task.id, status: 'COMPLETED' })}
+                          className="p-1.5 text-slate-400 hover:text-[#5CB77E] hover:bg-green-50 rounded-lg transition-colors cursor-pointer inline-block"
+                          title="Mark Complete"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setEditingTask(task)}
+                        className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer inline-block"
+                        title="Edit Task Details"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to delete task "${task.title}"?`)) {
+                            deleteMutation.mutate(task.id);
+                          }
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer inline-block"
+                        title="Delete Task"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden flex flex-col divide-y divide-violet-100/30">
+            {filteredTasks.map((task: any) => (
+              <div
+                key={task.id}
+                className={`p-4 flex flex-col gap-3 transition-colors ${
+                  task.status === 'COMPLETED' ? 'opacity-60 bg-white/30' : 'hover:bg-violet-50/50'
+                }`}
+              >
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                        task.priority === 'HIGH' || task.priority === 'URGENT'
+                          ? 'bg-clay-rose text-[#E5636C]'
+                          : task.priority === 'MEDIUM'
+                          ? 'bg-clay-amber text-[#F2A65A]'
+                          : 'bg-clay-blue text-[#4EA8DE]'
+                      }`}>
+                        {task.priority}
+                      </span>
+                      {task.project && (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-clay-violet text-[#7C6EF0]">
+                          {task.project.name}
+                        </span>
+                      )}
+                    </div>
+                    <select
+                      value={task.status}
+                      onChange={(e) => updateStatusMutation.mutate({ id: task.id, status: e.target.value })}
+                      className="text-[10px] font-bold uppercase px-2 py-1 rounded-lg bg-white/50 border border-violet-100/40 text-slate-700 focus:outline-none"
+                    >
+                      <option value="TODO">To Do</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                      <option value="COMPLETED">Done</option>
+                    </select>
+                  </div>
+                  <h3 className={`font-bold text-base font-heading ${task.status === 'COMPLETED' ? 'line-through text-slate-500' : 'text-slate-800'}`}>
+                    {task.title}
+                  </h3>
+                  {task.description && <p className="text-xs text-slate-600 line-clamp-2">{task.description}</p>}
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 pt-1">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" /> {task.dueDate ? formatDate(task.dueDate) : 'Soon'}
                     </span>
+                    <span>•</span>
+                    <span className="truncate max-w-[120px]">
+                      {task.assignee?.name || 'Unassigned'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-violet-100/30">
+                  <button
+                    onClick={() => setEditingTask(task)}
+                    className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
+                    title="Edit Task Details"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm(`Are you sure you want to delete task "${task.title}"?`)) {
+                        deleteMutation.mutate(task.id);
+                      }
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-[#E5636C]/10 rounded-lg transition-colors cursor-pointer"
+                    title="Delete Task"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  {task.status !== 'COMPLETED' && (
+                    <button
+                      onClick={() => updateStatusMutation.mutate({ id: task.id, status: 'COMPLETED' })}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-clay-green text-[#5CB77E] text-[10px] font-bold transition-all hover:opacity-80"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Complete</span>
+                    </button>
                   )}
                 </div>
-                <h3 className={`font-bold text-base font-heading ${task.status === 'COMPLETED' ? 'line-through text-slate-500' : 'text-slate-800'}`}>
-                  {task.title}
-                </h3>
-                {task.description && <p className="text-xs text-slate-600 line-clamp-2">{task.description}</p>}
-                <div className="flex items-center gap-4 text-xs text-slate-400 pt-1">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" /> Due: {task.dueDate ? formatDate(task.dueDate) : 'Soon'}
-                  </span>
-                  <span>•</span>
-                  <span>Assignee: <strong className="text-slate-600">{task.assignee?.name || 'Assigned Engineer'}</strong></span>
-                </div>
               </div>
-
-              <div className="flex items-center gap-2 self-end sm:self-center">
-                <button
-                  onClick={() => setEditingTask(task)}
-                  className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
-                  title="Edit Task Details"
-                >
-                  <Edit3 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => {
-                    if (confirm(`Are you sure you want to delete task "${task.title}"?`)) {
-                      deleteMutation.mutate(task.id);
-                    }
-                  }}
-                  className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-[#E5636C]/10 rounded-lg transition-colors cursor-pointer"
-                  title="Delete Task"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-                {task.status !== 'COMPLETED' && (
-                  <button
-                    onClick={() => updateStatusMutation.mutate({ id: task.id, status: 'COMPLETED' })}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-clay-green text-[#5CB77E] text-xs font-bold transition-all hover:opacity-80"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Complete</span>
-                  </button>
-                )}
-                <select
-                  value={task.status}
-                  onChange={(e) => updateStatusMutation.mutate({ id: task.id, status: e.target.value })}
-                  className="text-xs font-bold uppercase px-3 py-1.5 rounded-xl bg-white/50 border border-violet-100/40 text-slate-700 focus:outline-none"
-                >
-                  <option value="TODO">To Do</option>
-                  <option value="IN_PROGRESS">In Progress</option>
-                  <option value="COMPLETED">Completed</option>
-                </select>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
       {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full h-full sm:h-auto sm:max-w-md sm:rounded-2xl rounded-none p-4 sm:p-6 space-y-4 sm:space-y-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Create Engineering Task</h3>
               <button onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
@@ -331,8 +436,8 @@ export default function TasksPage() {
 
       {/* Edit Modal */}
       {editingTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full h-full sm:h-auto sm:max-w-md sm:rounded-2xl rounded-none p-4 sm:p-6 space-y-4 sm:space-y-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Update Engineering Task</h3>
               <button onClick={() => setEditingTask(null)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>

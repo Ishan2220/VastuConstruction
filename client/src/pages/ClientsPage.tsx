@@ -147,83 +147,156 @@ export default function ClientsPage() {
       ) : filteredClients.length === 0 ? (
         <div className="clay-card p-12 text-center text-slate-400">No client profiles found.</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredClients.map((client: any) => (
-            <div key={client.id} className="clay-card p-6 space-y-4 flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold px-2.5 py-1 rounded bg-[#7C6EF0]/10 text-[#7C6EF0]">
-                      {client.companyName || 'Private Client'}
-                    </span>
-                    <span className="text-[11px] font-mono text-slate-400">{client.gst || client.gstin || 'No GSTIN'}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => setEditingClient(client)}
-                      className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
-                      title="Edit Client Details"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Are you sure you want to delete client ${client.name}?`)) {
-                          deleteMutation.mutate(client.id);
-                        }
-                      }}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                      title="Delete Client Profile"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <h3 className="text-lg font-bold text-slate-800 font-heading">{client.name}</h3>
-                <div className="text-xs text-slate-500 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-3.5 h-3.5 text-slate-400" /> <span>{client.phone}</span>
-                  </div>
-                  {client.email && (
+        <>
+          {/* Mobile Cards */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            {filteredClients.map((client: any) => (
+              <div key={client.id} className="clay-card p-6 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
-                      <Mail className="w-3.5 h-3.5 text-slate-400" /> <span>{client.email}</span>
+                      <span className="text-xs font-bold px-2.5 py-1 rounded bg-[#7C6EF0]/10 text-[#7C6EF0]">
+                        {client.companyName || 'Private Client'}
+                      </span>
+                      <span className="text-[11px] font-mono text-slate-400">{client.gst || client.gstin || 'No GSTIN'}</span>
                     </div>
-                  )}
-                </div>
-              </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setEditingClient(client)}
+                        className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
+                        title="Edit Client Details"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to delete client ${client.name}?`)) {
+                            deleteMutation.mutate(client.id);
+                          }
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                        title="Delete Client Profile"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
 
-              <div className="space-y-2 mt-2 pt-4 border-t border-violet-100/30">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 font-medium">Total Billed</span>
-                  <span className="font-bold text-slate-700">₹{(client.totalBilled || 0).toLocaleString()}</span>
+                  <h3 className="text-lg font-bold text-slate-800 font-heading">{client.name}</h3>
+                  <div className="text-xs text-slate-500 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-3.5 h-3.5 text-slate-400" /> <span>{client.phone}</span>
+                    </div>
+                    {client.email && (
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-3.5 h-3.5 text-slate-400" /> <span>{client.email}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 font-medium">Total Paid</span>
-                  <span className="font-bold text-emerald-600">₹{(client.totalPaid || 0).toLocaleString()}</span>
+
+                <div className="space-y-2 mt-2 pt-4 border-t border-violet-100/30">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500 font-medium">Total Billed</span>
+                    <span className="font-bold text-slate-700">₹{(client.totalBilled || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500 font-medium">Total Paid</span>
+                    <span className="font-bold text-emerald-600">₹{(client.totalPaid || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm font-bold pt-2 border-t border-violet-100/30">
+                    <span className="text-slate-800">Outstanding</span>
+                    <span className={(client.outstanding || 0) > 0 ? 'text-rose-600' : 'text-slate-500'}>
+                      ₹{(client.outstanding || 0).toLocaleString()}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-sm font-bold pt-2 border-t border-violet-100/30">
-                  <span className="text-slate-800">Outstanding</span>
-                  <span className={(client.outstanding || 0) > 0 ? 'text-rose-600' : 'text-slate-500'}>
-                    ₹{(client.outstanding || 0).toLocaleString()}
+
+                <div className="pt-4 mt-2 flex items-center justify-between text-[11px] text-slate-400 border-t border-violet-100/30">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5" /> {client.city || 'Mumbai'}
                   </span>
+                  <span className="font-semibold text-slate-500 uppercase tracking-wider">Client Account</span>
                 </div>
               </div>
+            ))}
+          </div>
 
-              <div className="pt-4 mt-2 flex items-center justify-between text-[11px] text-slate-400 border-t border-violet-100/30">
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" /> {client.city || 'Mumbai'}
-                </span>
-                <span className="font-semibold text-slate-500 uppercase tracking-wider">Client Account</span>
-              </div>
-            </div>
-          ))}
-        </div>
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto clay-card">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 border-b border-violet-100/30">
+                <tr>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase">Client</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase">Contact</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase">Financials</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-violet-100/30">
+                {filteredClients.map((client: any) => (
+                  <tr key={client.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="p-4">
+                      <div className="font-bold text-slate-800">{client.name}</div>
+                      <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+                        <span className="font-bold text-[#7C6EF0] bg-[#7C6EF0]/10 px-2 py-0.5 rounded">
+                          {client.companyName || 'Private Client'}
+                        </span>
+                        <span className="font-mono">{client.gst || client.gstin || 'No GSTIN'}</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-sm text-slate-600 flex flex-col gap-1">
+                        <div className="flex items-center gap-2 text-xs"><Phone className="w-3.5 h-3.5" /> {client.phone}</div>
+                        {client.email && <div className="flex items-center gap-2 text-xs"><Mail className="w-3.5 h-3.5" /> {client.email}</div>}
+                        <div className="flex items-center gap-2 text-xs text-slate-400 mt-1"><MapPin className="w-3.5 h-3.5" /> {client.city || 'Mumbai'}</div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-xs space-y-1">
+                        <div className="flex justify-between gap-4"><span className="text-slate-500">Billed:</span> <span className="font-bold">₹{(client.totalBilled || 0).toLocaleString()}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-slate-500">Paid:</span> <span className="font-bold text-emerald-600">₹{(client.totalPaid || 0).toLocaleString()}</span></div>
+                        <div className="flex justify-between gap-4 border-t pt-1 mt-1">
+                          <span className="text-slate-500">Due:</span> 
+                          <span className={(client.outstanding || 0) > 0 ? 'text-rose-600 font-bold' : 'text-slate-500 font-bold'}>
+                            ₹{(client.outstanding || 0).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setEditingClient(client)}
+                          className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
+                          title="Edit Client Details"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete client ${client.name}?`)) {
+                              deleteMutation.mutate(client.id);
+                            }
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          title="Delete Client Profile"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {isAddOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6">
+          <div className="clay-card w-full max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 rounded-2xl">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Register Client Profile</h3>
               <button onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
@@ -301,7 +374,7 @@ export default function ClientsPage() {
       {/* Edit Modal */}
       {editingClient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+          <div className="clay-card w-full max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 rounded-2xl">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Update Client Profile</h3>
               <button onClick={() => setEditingClient(null)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>

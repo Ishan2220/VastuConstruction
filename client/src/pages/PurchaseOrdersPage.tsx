@@ -87,59 +87,92 @@ export default function PurchaseOrdersPage() {
           </button>
         </div>
 
-        <div className="overflow-x-auto scrollbar-hide">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-violet-100/40 bg-white/50">
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">PO Number</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Vendor</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Project</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-violet-100/40">
-              {isLoading ? (
-                <tr><td colSpan={7} className="p-8 text-center text-slate-500 font-medium">Loading purchase orders...</td></tr>
-              ) : filteredPOs.length === 0 ? (
-                <tr><td colSpan={7} className="p-8 text-center text-slate-500 font-medium">No purchase orders found.</td></tr>
-              ) : (
-                filteredPOs.map((po) => (
-                  <tr key={po.id} className="hover:bg-white/50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-[#7C6EF0]" />
-                        <span className="text-sm font-bold text-slate-800 font-heading">{po.poNumber}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">
-                      {po.vendor?.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">
-                      {po.project?.name || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 font-medium">
-                      {format(new Date(po.issueDate), 'dd MMM yyyy')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-[#7C6EF0] text-right font-mono">
-                      ₹{Number(po.totalAmount).toLocaleString('en-IN')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(po.status)}`}>
-                        {po.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                      <button className="text-[#F2A65A] hover:text-[#d98b42] font-bold px-3 py-1.5 rounded-lg bg-clay-amber/10 hover:bg-clay-amber/20 transition-colors">View</button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="overflow-x-auto scrollbar-hide">
+            <table className="w-full hidden md:table min-w-max">
+              <thead>
+                <tr className="border-b border-violet-100/40 bg-white/50">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">PO Number</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Vendor</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Project</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-violet-100/40">
+                {isLoading ? (
+                  <tr><td colSpan={7} className="p-8 text-center text-slate-500 font-medium">Loading purchase orders...</td></tr>
+                ) : filteredPOs.length === 0 ? (
+                  <tr><td colSpan={7} className="p-8 text-center text-slate-500 font-medium">No purchase orders found.</td></tr>
+                ) : (
+                  filteredPOs.map((po) => (
+                    <tr key={po.id} className="hover:bg-white/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-[#7C6EF0]" />
+                          <span className="text-sm font-bold text-slate-800 font-heading">{po.poNumber}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">
+                        {po.vendor?.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">
+                        {po.project?.name || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 font-medium">
+                        {format(new Date(po.issueDate), 'dd MMM yyyy')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-[#7C6EF0] text-right font-mono">
+                        ₹{Number(po.totalAmount).toLocaleString('en-IN')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(po.status)}`}>
+                          {po.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                        <button className="text-[#F2A65A] hover:text-[#d98b42] font-bold px-3 py-1.5 rounded-lg bg-clay-amber/10 hover:bg-clay-amber/20 transition-colors">View</button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Mobile Card View */}
+          <div className="flex flex-col gap-3 p-4 bg-slate-50/50 md:hidden">
+            {isLoading ? (
+              <div className="text-center text-slate-500 font-medium py-4">Loading purchase orders...</div>
+            ) : filteredPOs.length === 0 ? (
+              <div className="text-center text-slate-500 font-medium py-4">No purchase orders found.</div>
+            ) : (
+              filteredPOs.map((po) => (
+                <div key={po.id} className="clay-card-sm p-4 flex flex-col gap-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-[#7C6EF0]" />
+                      <span className="text-sm font-bold text-slate-800 font-heading">{po.poNumber}</span>
+                    </div>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(po.status)}`}>
+                      {po.status}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-slate-800 font-bold">{po.vendor?.name}</div>
+                    <div className="text-slate-500 text-xs font-medium">{po.project?.name || 'No Project Assigned'}</div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-500 border-t border-violet-100/40 pt-3 mt-1">
+                    <span>{format(new Date(po.issueDate), 'dd MMM yyyy')}</span>
+                    <span className="font-bold text-[#7C6EF0] font-mono text-sm">₹{Number(po.totalAmount).toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </>
       </div>
     </div>
   );

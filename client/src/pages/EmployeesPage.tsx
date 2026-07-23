@@ -162,92 +162,171 @@ export default function EmployeesPage() {
           No executive employees or site staff registered yet. Click "+ Onboard New Staff" above to add staff profiles and configure ERP role access.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEmp.map((emp: any) => {
-            const nameStr = emp.user?.name || emp.name || 'Staff Member profile';
-            const emailStr = emp.user?.email || emp.email || 'No email provided';
-            const phoneStr = emp.user?.phone || emp.phone || 'No contact provided';
-            const roleStr = (emp.designation || emp.role || emp.user?.role || 'ENGINEER').replace(/_/g, ' ');
-            const deptStr = emp.department || 'Site Operations';
-            const statusStr = emp.user?.isActive === false || emp.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE';
-            
-            // Get initials
-            const initials = nameStr.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'E';
+        <>
+          {/* Mobile Cards */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            {filteredEmp.map((emp: any) => {
+              const nameStr = emp.user?.name || emp.name || 'Staff Member profile';
+              const emailStr = emp.user?.email || emp.email || 'No email provided';
+              const phoneStr = emp.user?.phone || emp.phone || 'No contact provided';
+              const roleStr = (emp.designation || emp.role || emp.user?.role || 'ENGINEER').replace(/_/g, ' ');
+              const deptStr = emp.department || 'Site Operations';
+              const statusStr = emp.user?.isActive === false || emp.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE';
+              
+              // Get initials
+              const initials = nameStr.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'E';
 
-            return (
-              <div key={emp.id} onClick={() => setSelectedEmpAttendance(emp)} className="p-6 clay-card-sm space-y-4 flex flex-col justify-between hover:border-[#7C6EF0]/30 transition-all cursor-pointer group">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-start">
-                    <span className="text-xs font-mono font-bold uppercase px-2.5 py-1 rounded-full bg-clay-violet text-[#7C6EF0]">
-                      {roleStr}
-                    </span>
-                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                      statusStr === 'ACTIVE' ? 'bg-clay-green text-[#5CB77E]' : 'bg-white/50 text-slate-400'
-                    }`}>
-                      {statusStr}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold bg-gradient-to-br from-[#7C6EF0] to-[#A78BFA] shadow-md shadow-[#7C6EF0]/30">
-                      {initials}
+              return (
+                <div key={emp.id} onClick={() => setSelectedEmpAttendance(emp)} className="p-6 clay-card-sm space-y-4 flex flex-col justify-between hover:border-[#7C6EF0]/30 transition-all cursor-pointer group">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-start">
+                      <span className="text-xs font-mono font-bold uppercase px-2.5 py-1 rounded-full bg-clay-violet text-[#7C6EF0]">
+                        {roleStr}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                        statusStr === 'ACTIVE' ? 'bg-clay-green text-[#5CB77E]' : 'bg-white/50 text-slate-400'
+                      }`}>
+                        {statusStr}
+                      </span>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-800 font-heading">{nameStr}</h3>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                        <Building2 className="w-3.5 h-3.5 flex-shrink-0" /> <span className="truncate">{deptStr}</span>
+
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold bg-gradient-to-br from-[#7C6EF0] to-[#A78BFA] shadow-md shadow-[#7C6EF0]/30">
+                        {initials}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-800 font-heading">{nameStr}</h3>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                          <Building2 className="w-3.5 h-3.5 flex-shrink-0" /> <span className="truncate">{deptStr}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-xs text-slate-600 space-y-1.5 pt-1">
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" /> <span className="truncate">{emailStr}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" /> <span className="truncate">{phoneStr}</span>
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="text-xs text-slate-600 space-y-1.5 pt-1">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" /> <span className="truncate">{emailStr}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" /> <span className="truncate">{phoneStr}</span>
-                    </div>
-                  </div>
-                </div>
 
-                <div className="pt-3 border-t border-violet-100/30 flex justify-between items-center text-xs">
-                  <span className="text-slate-400 flex items-center gap-1">
-                    <Shield className="w-3.5 h-3.5 text-[#7C6EF0]" /> ERP Access
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-clay-green text-[#5CB77E] mr-2">
-                      PAYMENTS UP TO DATE
+                  <div className="pt-3 border-t border-violet-100/30 flex justify-between items-center text-xs">
+                    <span className="text-slate-400 flex items-center gap-1">
+                      <Shield className="w-3.5 h-3.5 text-[#7C6EF0]" /> ERP Access
                     </span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setEditingEmp(emp); }}
-                      className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
-                      title="Edit Employee Role & Details"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (confirm(`Remove staff member ${nameStr} from ERP access records?`)) {
-                          deleteMutation.mutate(emp.id);
-                        }
-                      }}
-                      className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-[#E5636C]/10 rounded-lg transition-colors cursor-pointer"
-                      title="Delete Employee Record"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-clay-green text-[#5CB77E] mr-2">
+                        PAYMENTS UP TO DATE
+                      </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditingEmp(emp); }}
+                        className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
+                        title="Edit Employee Role & Details"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Remove staff member ${nameStr} from ERP access records?`)) {
+                            deleteMutation.mutate(emp.id);
+                          }
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-[#E5636C]/10 rounded-lg transition-colors cursor-pointer"
+                        title="Delete Employee Record"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto clay-card">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 border-b border-violet-100/30">
+                <tr>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase">Employee</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase">Contact</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase">Role & Status</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-violet-100/30">
+                {filteredEmp.map((emp: any) => {
+                  const nameStr = emp.user?.name || emp.name || 'Staff Member profile';
+                  const emailStr = emp.user?.email || emp.email || 'No email provided';
+                  const phoneStr = emp.user?.phone || emp.phone || 'No contact provided';
+                  const roleStr = (emp.designation || emp.role || emp.user?.role || 'ENGINEER').replace(/_/g, ' ');
+                  const deptStr = emp.department || 'Site Operations';
+                  const statusStr = emp.user?.isActive === false || emp.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE';
+                  const initials = nameStr.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'E';
+
+                  return (
+                    <tr key={emp.id} onClick={() => setSelectedEmpAttendance(emp)} className="hover:bg-slate-50/50 transition-colors cursor-pointer">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold bg-gradient-to-br from-[#7C6EF0] to-[#A78BFA] shadow-md text-sm">
+                            {initials}
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-800">{nameStr}</div>
+                            <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5"><Building2 className="w-3 h-3" /> {deptStr}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-sm text-slate-600 flex flex-col gap-1">
+                          <div className="flex items-center gap-2 text-xs"><Phone className="w-3.5 h-3.5" /> {phoneStr}</div>
+                          <div className="flex items-center gap-2 text-xs"><Mail className="w-3.5 h-3.5" /> {emailStr}</div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-col gap-2 items-start">
+                          <span className="text-xs font-mono font-bold uppercase px-2 py-0.5 rounded bg-clay-violet text-[#7C6EF0]">{roleStr}</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${statusStr === 'ACTIVE' ? 'bg-clay-green text-[#5CB77E]' : 'bg-slate-100 text-slate-400'}`}>{statusStr}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setEditingEmp(emp); }}
+                            className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors"
+                            title="Edit Employee"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Remove staff member ${nameStr}?`)) {
+                                deleteMutation.mutate(emp.id);
+                              }
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors"
+                            title="Delete Employee"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {isAddOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6">
+          <div className="clay-card w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide p-4 sm:p-6 space-y-4 sm:space-y-6 rounded-2xl">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Onboard Staff Member</h3>
               <button onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
@@ -311,7 +390,7 @@ export default function EmployeesPage() {
       {/* Edit Modal */}
       {editingEmp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
+          <div className="clay-card w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide p-4 sm:p-6 space-y-4 sm:space-y-6 rounded-2xl">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Update Employee Profile</h3>
               <button onClick={() => setEditingEmp(null)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
@@ -375,7 +454,7 @@ export default function EmployeesPage() {
       {/* Attendance Modal */}
       {selectedEmpAttendance && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-lg p-6 space-y-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
+          <div className="clay-card w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide p-4 sm:p-6 space-y-4 sm:space-y-6 rounded-2xl">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">
                 Attendance: {selectedEmpAttendance.name || selectedEmpAttendance.user?.name}

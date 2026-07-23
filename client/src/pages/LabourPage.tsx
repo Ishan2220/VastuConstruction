@@ -321,7 +321,7 @@ export default function LabourPage() {
           </div>
 
           <div className="overflow-x-auto scrollbar-hide">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse hidden md:table min-w-max">
               <thead>
                 <tr className="border-b border-violet-100/30 text-xs font-bold uppercase text-slate-400">
                   <th className="p-4">Worker Name</th>
@@ -362,13 +362,44 @@ export default function LabourPage() {
               </tbody>
             </table>
           </div>
+          <div className="flex flex-col gap-3 md:hidden">
+            {attendanceList.length === 0 ? (
+              <div className="text-center text-slate-400 p-6">
+                No attendance marked for {attendData.date}.
+              </div>
+            ) : (
+              attendanceList.map((a: any) => (
+                <div key={a.id} className="clay-card-sm p-4 flex flex-col gap-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-bold text-slate-800">{a.labour?.name || 'Worker'}</div>
+                      <div className="text-xs text-slate-500">{a.labour?.skill || 'HELPER'}</div>
+                    </div>
+                    {a.present ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-[#5CB77E] border border-emerald-200/50">
+                        <CheckCircle2 className="w-3 h-3" /> {a.halfDay ? 'Half Day' : 'Present'}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-50 text-[#E5636C] border border-rose-200/50">
+                        <XCircle className="w-3 h-3" /> Absent
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-violet-100/30">
+                    <span>OT: <strong className="font-mono text-slate-700">{a.overtime || 0} hrs</strong></span>
+                    <span className="font-mono font-bold text-slate-800">₹{a.labour?.dailyWage || 600}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
 
       {/* Register Worker Modal */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="text-lg font-bold text-slate-800 font-heading">Register New Site Worker</h3>
               <button onClick={() => setIsCreateOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">
@@ -389,7 +420,7 @@ export default function LabourPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700">Trade / Skill *</label>
                   <CategorySelect
@@ -447,8 +478,8 @@ export default function LabourPage() {
 
       {/* Record Attendance Modal */}
       {isAttendOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="text-lg font-bold text-slate-800 font-heading">Mark Muster Attendance</h3>
               <button onClick={() => setIsAttendOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">
@@ -472,7 +503,7 @@ export default function LabourPage() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700">Date *</label>
                   <input
@@ -527,8 +558,8 @@ export default function LabourPage() {
 
       {/* Edit Modal */}
       {editingLabour && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Update Worker Profile</h3>
               <button onClick={() => setEditingLabour(null)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
@@ -542,7 +573,7 @@ export default function LabourPage() {
                 onChange={(e) => setEditingLabour({ ...editingLabour, name: e.target.value })}
                 className="clay-input w-full text-sm font-semibold"
               />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input
                   type="tel"
                   required
@@ -559,7 +590,7 @@ export default function LabourPage() {
                   placeholder="Select Trade/Skill..."
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input
                   type="number"
                   required

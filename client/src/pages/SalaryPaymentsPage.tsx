@@ -176,7 +176,7 @@ export default function SalaryPaymentsPage() {
           ) : (
         <div className="clay-card overflow-hidden">
           <div className="overflow-x-auto scrollbar-hide">
-            <table className="w-full">
+            <table className="w-full hidden md:table min-w-max">
               <thead>
                 <tr className="border-b border-violet-100/30">
                   <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Date</th>
@@ -217,6 +217,32 @@ export default function SalaryPaymentsPage() {
               </tbody>
             </table>
           </div>
+          <div className="flex flex-col gap-3 p-4 md:hidden">
+            {filteredSalaries.map((salary: any) => (
+              <div key={salary.id} className="clay-card-sm p-4 flex flex-col gap-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-bold text-slate-800">{salary.employee?.user?.name || 'Unknown'}</div>
+                    <div className="text-xs text-slate-500 font-mono">{salary.paymentMonth}/{salary.paymentYear}</div>
+                  </div>
+                  <div className="font-mono font-extrabold text-slate-900 text-lg">
+                    {formatCurrency(Number(salary.amount))}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-xs border-t border-violet-100/30 pt-2">
+                  <span className="text-slate-500">{format(new Date(salary.paymentDate), 'dd MMM yyyy')}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-white/50 px-2 py-0.5 rounded-md shadow-sm border border-violet-100/50 text-slate-500">{salary.paymentMethod}</span>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
+                      salary.status === 'PAID' ? 'bg-emerald-50 text-[#5CB77E] border border-emerald-200/50' : 'bg-amber-50 text-[#F2A65A] border border-amber-200/50'
+                    }`}>
+                      {salary.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
         )}
       </>
@@ -227,8 +253,9 @@ export default function SalaryPaymentsPage() {
           {isAttendanceLoading ? (
             <div className="p-8 text-center text-slate-500">Loading attendance data...</div>
           ) : (
+          <>
             <div className="overflow-x-auto scrollbar-hide">
-              <table className="w-full">
+              <table className="w-full hidden md:table min-w-max">
                 <thead>
                   <tr className="border-b border-violet-100/30">
                     <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Employee</th>
@@ -289,13 +316,61 @@ export default function SalaryPaymentsPage() {
                 </tbody>
               </table>
             </div>
+            <div className="flex flex-col gap-3 p-4 md:hidden">
+              {filteredAttendance.length === 0 ? (
+                <div className="text-center text-slate-500 py-8">No employees found.</div>
+              ) : (
+                filteredAttendance.map((emp: any) => (
+                  <div key={emp.employeeId} className="clay-card-sm p-4 flex flex-col gap-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-bold text-slate-800">{emp.name}</div>
+                        <div className="text-xs text-slate-500">{emp.role}</div>
+                      </div>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase border ${
+                        emp.status === 'PRESENT' ? 'bg-emerald-50 text-[#5CB77E] border-emerald-200/50' :
+                        emp.status === 'ABSENT' ? 'bg-rose-50 text-[#E5636C] border-rose-200/50' :
+                        emp.status === 'HALF_DAY' ? 'bg-amber-50 text-[#F2A65A] border-amber-200/50' :
+                        'bg-white text-slate-500 border-violet-100/50'
+                      }`}>
+                        {emp.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-violet-100/30">
+                      <button
+                        onClick={() => handleMarkAttendance(emp.employeeId, 'PRESENT')}
+                        className="p-2 rounded-xl text-[#5CB77E] hover:bg-emerald-50 border border-transparent hover:border-emerald-200/50 transition-all shadow-sm"
+                        title="Present"
+                      >
+                        <CheckCircle2 className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleMarkAttendance(emp.employeeId, 'HALF_DAY')}
+                        className="p-2 rounded-xl text-[#F2A65A] hover:bg-amber-50 border border-transparent hover:border-amber-200/50 transition-all shadow-sm"
+                        title="Half Day"
+                      >
+                        <Clock className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleMarkAttendance(emp.employeeId, 'ABSENT')}
+                        className="p-2 rounded-xl text-[#E5636C] hover:bg-rose-50 border border-transparent hover:border-rose-200/50 transition-all shadow-sm"
+                        title="Absent"
+                      >
+                        <XCircle className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
           )}
         </div>
       )}
 
       {isPayOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Record Salary Payment</h3>
               <button onClick={() => setIsPayOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm">✕</button>
@@ -316,7 +391,7 @@ export default function SalaryPaymentsPage() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-slate-500 uppercase">Amount</label>
                   <input
@@ -341,7 +416,7 @@ export default function SalaryPaymentsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-slate-500 uppercase">For Month</label>
                   <input
@@ -365,7 +440,7 @@ export default function SalaryPaymentsPage() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-slate-500 uppercase">Method</label>
                   <select

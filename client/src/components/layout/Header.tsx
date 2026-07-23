@@ -250,7 +250,7 @@ export default function Header() {
           {!isDashboard && (
             <button
               onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-50/50 hover:bg-violet-100/50 text-slate-600 font-bold text-xs transition-all border border-violet-100/40 shrink-0"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-50/50 hover:bg-violet-100/50 text-slate-600 font-bold text-xs transition-all border border-violet-100/40 shrink-0"
               title="Go back to previous screen or dashboard"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-[#7C6EF0]" />
@@ -258,7 +258,14 @@ export default function Header() {
             </button>
           )}
 
-          <div className="min-w-0">
+          {/* Mobile Logo */}
+          <div className="flex items-center lg:hidden mr-1">
+            <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#F2A65A] to-orange-500 shadow-md">
+              <Building2 className="h-4 w-4 text-white" />
+            </div>
+          </div>
+
+          <div className="hidden sm:block min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="text-base sm:text-lg font-bold text-slate-800 tracking-tight font-heading truncate">{pageTitle}</h1>
               {!isDashboard && (
@@ -307,7 +314,7 @@ export default function Header() {
             <Search className="h-5 w-5" />
           </button>
           {/* Quick Add Dropdown */}
-          <div className="relative shrink-0">
+          <div className="relative shrink-0 hidden sm:block">
             <button 
               id="quick-add-btn"
               onClick={() => setIsQuickAddOpen(!isQuickAddOpen)}

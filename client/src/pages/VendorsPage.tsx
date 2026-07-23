@@ -164,86 +164,161 @@ export default function VendorsPage() {
       ) : filteredVendors.length === 0 ? (
         <div className="clay-card p-12 text-center text-slate-400">No vendor agencies found.</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredVendors.map((vendor: any) => (
-            <div key={vendor.id} onClick={() => navigate(`/vendors/${vendor.id}`)} className="clay-card p-6 space-y-4 flex flex-col justify-between hover:border-[#7C6EF0]/30 transition-all cursor-pointer group">
-              <div className="space-y-3">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-[#7C6EF0]/10 text-[#7C6EF0] border border-[#7C6EF0]/20">
-                      {vendor.category}
-                    </span>
-                    <span className="text-[11px] font-mono text-slate-400">{vendor.gst || vendor.gstin || 'GST Unregistered'}</span>
+        <>
+          {/* Mobile Cards */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            {filteredVendors.map((vendor: any) => (
+              <div key={vendor.id} onClick={() => navigate(`/vendors/${vendor.id}`)} className="clay-card p-6 space-y-4 flex flex-col justify-between hover:border-[#7C6EF0]/30 transition-all cursor-pointer group">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-[#7C6EF0]/10 text-[#7C6EF0] border border-[#7C6EF0]/20">
+                        {vendor.category}
+                      </span>
+                      <span className="text-[11px] font-mono text-slate-400">{vendor.gst || vendor.gstin || 'GST Unregistered'}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditingVendor(vendor); }}
+                        className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
+                        title="Edit Vendor Details"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Are you sure you want to delete vendor agency ${vendor.name}?`)) {
+                            deleteMutation.mutate(vendor.id);
+                          }
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                        title="Delete Vendor Agency"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setEditingVendor(vendor); }}
-                      className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
-                      title="Edit Vendor Details"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (confirm(`Are you sure you want to delete vendor agency ${vendor.name}?`)) {
-                          deleteMutation.mutate(vendor.id);
-                        }
-                      }}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                      title="Delete Vendor Agency"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+
+                  <h3 className="text-lg font-bold text-slate-800 font-heading">{vendor.name}</h3>
+                  <div className="text-xs text-slate-500 space-y-1">
+                    <div>Contact: <strong className="text-slate-700">{vendor.contactPerson}</strong></div>
+                    <div className="flex items-center gap-1.5 pt-1">
+                      <Phone className="w-3.5 h-3.5 text-slate-400" /> <span>{vendor.phone || 'N/A'}</span>
+                    </div>
+                    {vendor.email && (
+                      <div className="flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-slate-400" /> <span>{vendor.email}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="pt-4 space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500 font-medium">Purchased</span>
+                    <span className="font-bold text-slate-800">₹{(vendor.totalPurchased || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500 font-medium">Paid</span>
+                    <span className="font-bold text-emerald-600">₹{(vendor.totalPaid || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm font-bold pt-2 border-t border-violet-100/30">
+                    <span className="text-slate-800">Outstanding</span>
+                    <span className={(vendor.outstanding || 0) > 0 ? 'text-rose-600' : 'text-slate-500'}>
+                      ₹{(vendor.outstanding || 0).toLocaleString()}
+                    </span>
                   </div>
                 </div>
 
-                <h3 className="text-lg font-bold text-slate-800 font-heading">{vendor.name}</h3>
-                <div className="text-xs text-slate-500 space-y-1">
-                  <div>Contact: <strong className="text-slate-700">{vendor.contactPerson}</strong></div>
-                  <div className="flex items-center gap-1.5 pt-1">
-                    <Phone className="w-3.5 h-3.5 text-slate-400" /> <span>{vendor.phone || 'N/A'}</span>
-                  </div>
-                  {vendor.email && (
-                    <div className="flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5 text-slate-400" /> <span>{vendor.email}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="pt-4 space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500 font-medium">Purchased</span>
-                  <span className="font-bold text-slate-800">₹{(vendor.totalPurchased || 0).toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500 font-medium">Paid</span>
-                  <span className="font-bold text-emerald-600">₹{(vendor.totalPaid || 0).toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm font-bold pt-2 border-t border-violet-100/30">
-                  <span className="text-slate-800">Outstanding</span>
-                  <span className={(vendor.outstanding || 0) > 0 ? 'text-rose-600' : 'text-slate-500'}>
-                    ₹{(vendor.outstanding || 0).toLocaleString()}
+                <div className="pt-3 border-t border-violet-100/30 flex items-center justify-between text-xs text-slate-500">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400" /> {vendor.city || 'Mumbai'}
+                  </span>
+                  <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Approved
                   </span>
                 </div>
               </div>
+            ))}
+          </div>
 
-              <div className="pt-3 border-t border-violet-100/30 flex items-center justify-between text-xs text-slate-500">
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" /> {vendor.city || 'Mumbai'}
-                </span>
-                <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Approved
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto clay-card">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 border-b border-violet-100/30">
+                <tr>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase">Vendor</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase">Contact</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase">Financials</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-violet-100/30">
+                {filteredVendors.map((vendor: any) => (
+                  <tr key={vendor.id} onClick={() => navigate(`/vendors/${vendor.id}`)} className="hover:bg-slate-50/50 transition-colors cursor-pointer group">
+                    <td className="p-4">
+                      <div className="font-bold text-slate-800">{vendor.name}</div>
+                      <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+                        <span className="font-bold text-[#7C6EF0] bg-[#7C6EF0]/10 px-2 py-0.5 rounded border border-[#7C6EF0]/20 font-mono">
+                          {vendor.category}
+                        </span>
+                        <span className="font-mono">{vendor.gst || vendor.gstin || 'GST Unregistered'}</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-sm text-slate-600 flex flex-col gap-1">
+                        <div><strong className="text-slate-700">{vendor.contactPerson}</strong></div>
+                        <div className="flex items-center gap-2 text-xs"><Phone className="w-3.5 h-3.5" /> {vendor.phone || 'N/A'}</div>
+                        {vendor.email && <div className="flex items-center gap-2 text-xs"><Mail className="w-3.5 h-3.5" /> {vendor.email}</div>}
+                        <div className="flex items-center gap-2 text-xs text-slate-400 mt-1"><MapPin className="w-3.5 h-3.5" /> {vendor.city || 'Mumbai'}</div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-xs space-y-1">
+                        <div className="flex justify-between gap-4"><span className="text-slate-500">Purchased:</span> <span className="font-bold">₹{(vendor.totalPurchased || 0).toLocaleString()}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-slate-500">Paid:</span> <span className="font-bold text-emerald-600">₹{(vendor.totalPaid || 0).toLocaleString()}</span></div>
+                        <div className="flex justify-between gap-4 border-t pt-1 mt-1">
+                          <span className="text-slate-500">Due:</span> 
+                          <span className={(vendor.outstanding || 0) > 0 ? 'text-rose-600 font-bold' : 'text-slate-500 font-bold'}>
+                            ₹{(vendor.outstanding || 0).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditingVendor(vendor); }}
+                          className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors"
+                          title="Edit Vendor Details"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Are you sure you want to delete vendor agency ${vendor.name}?`)) {
+                              deleteMutation.mutate(vendor.id);
+                            }
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          title="Delete Vendor Agency"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {isAddOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6">
+          <div className="clay-card w-full max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 rounded-2xl">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Onboard Vendor Agency</h3>
               <button onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
@@ -323,7 +398,7 @@ export default function VendorsPage() {
       {/* Edit Modal */}
       {editingVendor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+          <div className="clay-card w-full max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 rounded-2xl">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Update Vendor Agency</h3>
               <button onClick={() => setEditingVendor(null)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>

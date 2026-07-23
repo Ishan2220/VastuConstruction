@@ -340,7 +340,7 @@ export default function MaterialsPage() {
       {activeTab === 'ORDERS' && (
         <div className="clay-card overflow-hidden">
           <div className="overflow-x-auto scrollbar-hide">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse hidden md:table min-w-max">
               <thead>
                 <tr className="border-b border-violet-100/30 text-xs font-bold uppercase text-slate-400">
                   <th className="p-4">PO Number</th>
@@ -394,6 +394,50 @@ export default function MaterialsPage() {
                 )}
               </tbody>
             </table>
+          </div>
+          
+          <div className="flex flex-col gap-3 p-4 bg-slate-50/50 md:hidden">
+            {ordersList.length === 0 ? (
+              <div className="text-center text-slate-400 p-8">No purchase orders dispatched yet.</div>
+            ) : (
+              ordersList.map((o: any) => (
+                <div key={o.id} className="clay-card-sm p-4 flex flex-col gap-3">
+                  <div className="flex justify-between items-start">
+                    <div className="font-mono font-bold text-[#7C6EF0]">{o.orderNumber}</div>
+                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border shadow-sm ${
+                      o.status === 'DELIVERED'
+                        ? 'bg-emerald-50 text-[#5CB77E] border-emerald-200/50'
+                        : o.status === 'PARTIAL'
+                        ? 'bg-amber-50 text-[#F2A65A] border-amber-200/50'
+                        : 'bg-blue-50 text-[#4EA8DE] border-blue-200/50'
+                    }`}>
+                      {o.status}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-800">{o.project?.name || 'Site Project'}</div>
+                    <div className="text-slate-600 text-xs">{o.vendor?.name || 'Authorized Distributor'}</div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs border-t border-violet-100/40 pt-3 mt-1">
+                    <span className="text-slate-500">{new Date(o.orderDate).toLocaleDateString('en-IN')}</span>
+                    <span className="font-mono font-extrabold text-slate-800 text-sm">{formatCurrency(Number(o.totalAmount))}</span>
+                  </div>
+                  <div className="flex justify-end pt-1">
+                    <button
+                      onClick={() => {
+                        if (confirm(`Are you sure you want to delete PO ${o.orderNumber}?`)) {
+                          deleteOrderMutation.mutate(o.id);
+                        }
+                      }}
+                      className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-[#E5636C] transition-all shadow-sm border border-rose-100/50"
+                      title="Delete Purchase Order"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
@@ -454,8 +498,8 @@ export default function MaterialsPage() {
 
       {/* New Purchase Order Modal */}
       {isOrderOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-lg p-6 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="text-lg font-bold text-slate-800 font-heading">Raise Material Purchase Order</h3>
               <button onClick={() => setIsOrderOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">
@@ -512,7 +556,7 @@ export default function MaterialsPage() {
                     ))}
                   </select>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <input
                       type="number"
                       required
@@ -562,8 +606,8 @@ export default function MaterialsPage() {
 
       {/* Edit Stock Modal */}
       {isEditStockOpen && editStock && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-sm p-6 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-sm mx-4 max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Update Stock: {editStock.materialName}</h3>
               <button onClick={() => setIsEditStockOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
@@ -596,8 +640,8 @@ export default function MaterialsPage() {
 
       {/* Add Directory Modal */}
       {isAddDirOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Add Material to Directory</h3>
               <button onClick={() => setIsAddDirOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
@@ -627,7 +671,7 @@ export default function MaterialsPage() {
                   className="clay-input w-full text-sm mt-1"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-slate-700">Item Code</label>
                   <input
@@ -649,7 +693,7 @@ export default function MaterialsPage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-slate-700">Unit</label>
                   <input
@@ -682,8 +726,8 @@ export default function MaterialsPage() {
 
       {/* Edit Directory Modal */}
       {isEditDirOpen && editDir && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Edit Material Directory Item</h3>
               <button onClick={() => setIsEditDirOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
@@ -714,7 +758,7 @@ export default function MaterialsPage() {
                   className="clay-input w-full text-sm mt-1"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-slate-700">Category</label>
                   <CategorySelect
@@ -735,7 +779,7 @@ export default function MaterialsPage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-slate-700">Unit</label>
                   <input

@@ -98,6 +98,17 @@ export default function Sidebar() {
   const user = useAuthStore((s) => s.user);
   const location = useLocation();
 
+  // ESC support for mobile drawer
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && sidebarMobileOpen) {
+        setSidebarMobileOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [sidebarMobileOpen, setSidebarMobileOpen]);
+
   const userRole = user?.role ?? 'ADMIN';
 
   const hasTempAdmin = (label: string) => {
@@ -115,98 +126,103 @@ export default function Sidebar() {
     return location.pathname.startsWith(href);
   };
 
-  const sidebarContent = (
-    <div className="flex h-full flex-col bg-gradient-to-b from-[#7C6EF0] to-[#6558D3] overflow-hidden">
-      {/* Logo */}
-      <div className={cn(
-        "flex items-center gap-3 border-b border-white/10 px-4 py-5",
-        sidebarCollapsed && "justify-center px-2"
-      )}>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#F2A65A] to-orange-500 shadow-md">
-          <Building2 className="h-5 w-5 text-white" />
+  const renderSidebarContent = (isMobile: boolean) => {
+    const isCollapsed = !isMobile && sidebarCollapsed;
+    return (
+      <div className="flex h-full flex-col bg-gradient-to-b from-[#7C6EF0] to-[#6558D3] overflow-hidden">
+        {/* Logo */}
+        <div className={cn(
+          "flex items-center gap-3 border-b border-white/10 px-4 py-5",
+          isCollapsed && "justify-center px-2"
+        )}>
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#F2A65A] to-orange-500 shadow-md">
+            <Building2 className="h-5 w-5 text-white" />
+          </div>
+          <AnimatePresence>
+            {!isCollapsed && (
+              <motion.div
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'auto' }}
+                exit={{ opacity: 0, width: 0 }}
+                className="overflow-hidden whitespace-nowrap"
+              >
+                <div className="flex flex-col">
+                  <h1 className="text-xs font-bold tracking-wider text-white leading-tight font-heading">
+                    VASTU <span className="text-[#F2A65A] font-extrabold">×</span> CONSTRACORE
+                  </h1>
+                  <p className="text-[9px] font-semibold text-white/70 tracking-widest mt-0.5 uppercase">
+                    By Shivlink Technologies
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-        <AnimatePresence>
-          {!sidebarCollapsed && (
-            <motion.div
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: 'auto' }}
-              exit={{ opacity: 0, width: 0 }}
-              className="overflow-hidden whitespace-nowrap"
-            >
-              <div className="flex flex-col">
-                <h1 className="text-xs font-bold tracking-wider text-white leading-tight font-heading">
-                  VASTU <span className="text-[#F2A65A] font-extrabold">×</span> CONSTRACORE
-                </h1>
-                <p className="text-[9px] font-semibold text-white/70 tracking-widest mt-0.5 uppercase">
-                  By Shivlink Technologies
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3 scrollbar-hide">
-        <ul className="space-y-0.5">
-          {filteredNav.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            return (
-              <li key={item.href} className="relative">
-                <NavLink
-                  to={item.href}
-                  onClick={() => setSidebarMobileOpen(false)}
-                  className={cn(
-                    "relative group flex items-center gap-3 rounded-md px-3 py-2 text-[13px] font-medium transition-all duration-200 overflow-hidden",
-                    active
-                      ? "bg-white/20 text-white font-bold"
-                      : "text-white/80 hover:bg-white/10 hover:text-white",
-                    sidebarCollapsed && "justify-center px-2"
-                  )}
-                >
-                  <Icon className={cn(
-                    "h-[18px] w-[18px] shrink-0 transition-colors",
-                    active ? "text-white" : "text-white/70 group-hover:text-white"
-                  )} />
-                  <AnimatePresence>
-                    {!sidebarCollapsed && (
-                      <motion.span
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: 'auto' }}
-                        exit={{ opacity: 0, width: 0 }}
-                        className="overflow-hidden whitespace-nowrap"
-                      >
-                        {item.label}
-                      </motion.span>
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3 scrollbar-hide">
+          <ul className="space-y-0.5">
+            {filteredNav.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              return (
+                <li key={item.href} className="relative">
+                  <NavLink
+                    to={item.href}
+                    onClick={() => setSidebarMobileOpen(false)}
+                    className={cn(
+                      "relative group flex items-center gap-3 rounded-md px-3 py-2 text-[13px] font-medium transition-all duration-200 overflow-hidden",
+                      active
+                        ? "bg-white/20 text-white font-bold"
+                        : "text-white/80 hover:bg-white/10 hover:text-white",
+                      isCollapsed && "justify-center px-2"
                     )}
-                  </AnimatePresence>
-                  {active && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3.5px] rounded-r-full bg-[#F2A65A] shadow-[0_0_8px_rgba(242,166,90,0.6)]" />
-                  )}
-                </NavLink>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+                  >
+                    <Icon className={cn(
+                      "h-[18px] w-[18px] shrink-0 transition-colors",
+                      active ? "text-white" : "text-white/70 group-hover:text-white"
+                    )} />
+                    <AnimatePresence>
+                      {!isCollapsed && (
+                        <motion.span
+                          initial={{ opacity: 0, width: 0 }}
+                          animate={{ opacity: 1, width: 'auto' }}
+                          exit={{ opacity: 0, width: 0 }}
+                          className="overflow-hidden whitespace-nowrap"
+                        >
+                          {item.label}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                    {active && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3.5px] rounded-r-full bg-[#F2A65A] shadow-[0_0_8px_rgba(242,166,90,0.6)]" />
+                    )}
+                  </NavLink>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
 
-      {/* Footer - Date & Time */}
-      <Clock sidebarCollapsed={sidebarCollapsed} />
+        {/* Footer - Date & Time */}
+        <Clock sidebarCollapsed={isCollapsed} />
 
-      {/* Collapse Toggle - Desktop */}
-      <button
-        onClick={toggleSidebar}
-        className="hidden border-t border-white/10 px-4 py-2.5 text-white/60 transition-colors hover:bg-white/5 hover:text-white/90 lg:flex lg:items-center lg:justify-center cursor-pointer"
-      >
-        {sidebarCollapsed ? (
-          <ChevronRight className="h-4 w-4" />
-        ) : (
-          <ChevronLeft className="h-4 w-4" />
+        {/* Collapse Toggle - Desktop */}
+        {!isMobile && (
+          <button
+            onClick={toggleSidebar}
+            className="hidden border-t border-white/10 px-4 py-2.5 text-white/60 transition-colors hover:bg-white/5 hover:text-white/90 lg:flex lg:items-center lg:justify-center cursor-pointer"
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </button>
         )}
-      </button>
-    </div>
-  );
+      </div>
+    );
+  };
 
   return (
     <>
@@ -217,7 +233,7 @@ export default function Sidebar() {
         transition={{ duration: 0.2, ease: 'easeInOut' }}
         className="relative hidden h-screen flex-shrink-0 lg:block z-30 overflow-hidden"
       >
-        {sidebarContent}
+        {renderSidebarContent(false)}
       </motion.aside>
 
       {/* Mobile Overlay */}
@@ -228,7 +244,7 @@ export default function Sidebar() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+              className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm lg:hidden"
               onClick={() => setSidebarMobileOpen(false)}
             />
             <motion.aside
@@ -236,15 +252,15 @@ export default function Sidebar() {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed inset-y-0 left-0 z-50 w-[260px] lg:hidden"
+              className="fixed inset-y-0 left-0 z-50 w-[260px] lg:hidden shadow-2xl"
             >
               <button
                 onClick={() => setSidebarMobileOpen(false)}
-                className="absolute right-3 top-4 rounded-md p-1 text-slate-400 hover:text-white"
+                className="absolute right-3 top-4 rounded-md p-1.5 text-white/70 hover:text-white hover:bg-white/10 z-50 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
-              {sidebarContent}
+              {renderSidebarContent(true)}
             </motion.aside>
           </>
         )}

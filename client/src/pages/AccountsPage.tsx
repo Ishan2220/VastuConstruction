@@ -136,61 +136,121 @@ export default function AccountsPage() {
       ) : accounts.length === 0 ? (
         <div className="clay-card p-12 text-center text-slate-400">No bank accounts linked yet.</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {accounts.map((acc: any) => (
-            <div key={acc.id} className="clay-card p-6 space-y-4 flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="flex justify-between items-start gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-[#7C6EF0]/10 text-[#7C6EF0] uppercase">
-                      {acc.accountType} ACCOUNT
+        <div className="clay-card overflow-hidden">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto scrollbar-hide">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-violet-100/30 text-xs font-bold uppercase text-slate-400">
+                  <th className="p-4">Type</th>
+                  <th className="p-4">Bank Name</th>
+                  <th className="p-4">Account No</th>
+                  <th className="p-4">Balance (₹)</th>
+                  <th className="p-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-violet-100/30 text-sm">
+                {accounts.map((acc: any) => (
+                  <tr key={acc.id} className="hover:bg-violet-50/50 transition-colors">
+                    <td className="p-4">
+                      <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-[#7C6EF0]/10 text-[#7C6EF0] uppercase">
+                        {acc.accountType}
+                      </span>
+                    </td>
+                    <td className="p-4 font-bold text-slate-800">{acc.bankName}</td>
+                    <td className="p-4 font-mono text-slate-600">
+                      {user?.role === 'ADMIN' ? acc.accountNo : `••••••••••${String(acc.accountNo || '').slice(-4)}`}
+                    </td>
+                    <td className="p-4 font-mono font-extrabold text-[#5CB77E]">{formatCurrency(Number(acc.balance || 0))}</td>
+                    <td className="p-4 text-center space-x-2">
+                      {user?.role === 'ADMIN' ? (
+                        <>
+                          <button
+                            onClick={() => setEditingAcc(acc)}
+                            className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer inline-block"
+                            title="Edit Bank Account"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to unlink and remove ${acc.bankName} (${acc.accountNo})?`)) {
+                                deleteMutation.mutate(acc.id);
+                              }
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer inline-block"
+                            title="Delete Bank Account"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-slate-400 text-xs">-</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden flex flex-col divide-y divide-violet-100/30">
+            {accounts.map((acc: any) => (
+              <div key={acc.id} className="p-4 space-y-4 hover:bg-violet-50/50 transition-colors">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#7C6EF0]/10 text-[#7C6EF0] uppercase">
+                        {acc.accountType}
+                      </span>
+                      {user?.role === 'ADMIN' && (
+                        <button
+                          onClick={() => setEditingAcc(acc)}
+                          className="p-1 text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer"
+                          title="Edit Bank Account"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                      )}
+                      {user?.role === 'ADMIN' && (
+                        <button
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to unlink and remove ${acc.bankName} (${acc.accountNo})?`)) {
+                              deleteMutation.mutate(acc.id);
+                            }
+                          }}
+                          className="p-1 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          title="Delete Bank Account"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">
+                      {user?.role === 'ADMIN' ? 'OWNER A/C' : '••••••••'}
                     </span>
-                    {user?.role === 'ADMIN' && (
-                      <button
-                        onClick={() => setEditingAcc(acc)}
-                        className="p-1 text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer"
-                        title="Edit Bank Account"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                    )}
-                    {user?.role === 'ADMIN' && (
-                      <button
-                        onClick={() => {
-                          if (confirm(`Are you sure you want to unlink and remove ${acc.bankName} (${acc.accountNo})?`)) {
-                            deleteMutation.mutate(acc.id);
-                          }
-                        }}
-                        className="p-1 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                        title="Delete Bank Account"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
                   </div>
-                  <span className="text-xs font-mono font-bold text-slate-400">
-                    {user?.role === 'ADMIN' ? 'OWNER A/C' : '••••••••'}
-                  </span>
+
+                  <h3 className="text-base font-bold text-slate-800 font-heading">{acc.bankName}</h3>
+                  <div className="text-xs text-slate-600 font-mono">
+                    A/C: {user?.role === 'ADMIN' ? acc.accountNo : `••••••••••${String(acc.accountNo || '').slice(-4)}`}
+                  </div>
                 </div>
 
-                <h3 className="text-lg font-bold text-slate-800 font-heading">{acc.bankName}</h3>
-                <div className="text-xs text-slate-600 font-mono">
-                  A/C: {user?.role === 'ADMIN' ? acc.accountNo : `••••••••••${String(acc.accountNo || '').slice(-4)}`}
+                <div className="pt-3 border-t border-violet-100/30 flex justify-between items-center">
+                  <div className="text-[10px] text-slate-400 uppercase font-semibold">Available Ledger Balance</div>
+                  <div className="text-lg font-extrabold font-mono text-[#5CB77E]">{formatCurrency(Number(acc.balance || 0))}</div>
                 </div>
               </div>
-
-              <div className="pt-4 border-t border-violet-100/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="text-[11px] sm:text-xs text-slate-400 uppercase font-semibold">Available Ledger Balance</div>
-                <div className="text-lg sm:text-xl font-extrabold font-mono text-[#5CB77E]">{formatCurrency(Number(acc.balance || 0))}</div>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
       {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full h-full sm:h-auto sm:max-w-md sm:rounded-2xl rounded-none p-4 sm:p-6 space-y-4 sm:space-y-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Link Bank Account</h3>
               <button onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
@@ -242,8 +302,8 @@ export default function AccountsPage() {
 
       {/* Edit Modal */}
       {editingAcc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full h-full sm:h-auto sm:max-w-md sm:rounded-2xl rounded-none p-4 sm:p-6 space-y-4 sm:space-y-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Update Bank Account</h3>
               <button onClick={() => setEditingAcc(null)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>

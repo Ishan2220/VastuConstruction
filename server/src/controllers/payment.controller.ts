@@ -50,26 +50,26 @@ export const getPaymentHistory = asyncHandler(async (req: Request, res: Response
     WITH AllPayments AS (
       SELECT 
         i.id,
-        'INFLOW' as direction,
+        CAST('INFLOW' AS TEXT) as direction,
         i.type as "paymentType",
         i.payment_date as "paymentDate",
         i.amount,
         i.payment_method as "paymentMethod",
         i.reference,
         i.notes as remarks,
-        'COMPLETED' as status,
+        CAST('COMPLETED' AS TEXT) as status,
         i.created_at as "createdAt",
-        'Client Payment' as "source",
+        CAST('Client Payment' AS TEXT) as "source",
         i.client_id as "clientId",
         c.name as "clientName",
         i.project_id as "projectId",
         p.name as "projectName",
-        NULL as "vendorId",
-        NULL as "vendorName",
-        NULL as "employeeId",
-        NULL as "employeeName",
-        NULL as "labourId",
-        NULL as "labourName",
+        CAST(NULL AS TEXT) as "vendorId",
+        CAST(NULL AS TEXT) as "vendorName",
+        CAST(NULL AS TEXT) as "employeeId",
+        CAST(NULL AS TEXT) as "employeeName",
+        CAST(NULL AS TEXT) as "labourId",
+        CAST(NULL AS TEXT) as "labourName",
         i.account_id as "accountId",
         a.account_name as "accountName",
         a.account_no as "accountNo",
@@ -292,7 +292,7 @@ export const getPaymentSummary = asyncHandler(async (req: Request, res: Response
 
   const baseQuery = Prisma.sql`
     WITH AllPayments AS (
-      SELECT 'INFLOW' as direction, amount, 'COMPLETED' as status, payment_date as "paymentDate" FROM incomes
+      SELECT CAST('INFLOW' AS TEXT) as direction, amount, CAST('COMPLETED' AS TEXT) as status, payment_date as "paymentDate" FROM incomes
       UNION ALL
       SELECT 'OUTFLOW' as direction, amount, 'COMPLETED' as status, payment_date as "paymentDate" FROM expenses
       UNION ALL

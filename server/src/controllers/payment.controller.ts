@@ -319,12 +319,12 @@ export const getPaymentSummary = asyncHandler(async (req: Request, res: Response
 
   res.json({
     success: true,
-    data: result[0] || {
-      todayInflow: 0,
-      todayOutflow: 0,
-      pendingPayments: 0,
-      completedPayments: 0,
-      cancelledPayments: 0
+    data: {
+      todayInflow: Number(result[0]?.todayInflow || 0),
+      todayOutflow: Number(result[0]?.todayOutflow || 0),
+      pendingPayments: Number(result[0]?.pendingPayments || 0),
+      completedPayments: Number(result[0]?.completedPayments || 0),
+      cancelledPayments: Number(result[0]?.cancelledPayments || 0)
     }
   });
 });

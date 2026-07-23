@@ -71,8 +71,8 @@ export default function PaymentHistoryPage() {
       });
 
       const [historyRes, summaryRes] = await Promise.all([
-        api.get(`/api/payments/history?${params.toString()}`),
-        api.get('/api/payments/summary')
+        api.get('/payments/history', { params }),
+        api.get('/payments/summary', { params })
       ]);
 
       if (historyRes.data.success) {

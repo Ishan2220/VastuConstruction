@@ -564,63 +564,29 @@ export default function DashboardPage() {
       </div>
 
       {/* =========================================== */}
-      {/* ANALYTICS ROW: Alerts + Outstanding */}
+      {/* ANALYTICS ROW: Outstanding Ledgers */}
       {/* =========================================== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        {/* Critical Alerts */}
-        <div className="xl:col-span-3 clay-card p-5 border-l-4 border-l-[#E5636C]">
-          <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
-            <h3 className="text-base font-bold text-slate-800 font-heading flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-[#E5636C]" /> Critical Alerts
-            </h3>
-            <Link to="/reports" className="text-xs font-bold text-[#E5636C] hover:underline">View All</Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            <div className="p-4 rounded-xl bg-clay-amber border border-amber-200/40 flex items-start gap-3">
-              <PackageCheck className="w-5 h-5 text-[#F2A65A] mt-0.5 shrink-0" />
-              <div>
-                <h4 className="text-sm font-bold text-amber-900">Material Shortage</h4>
-                <p className="text-xs text-amber-700 mt-1">Cement stock is critically low.</p>
-                <button className="mt-2 text-[10px] font-bold px-2 py-1 bg-amber-200/60 text-amber-800 rounded-lg hover:bg-amber-200">REVIEW</button>
-              </div>
-            </div>
-            <div className="p-4 rounded-xl bg-clay-rose border border-rose-200/40 flex items-start gap-3">
-              <IndianRupee className="w-5 h-5 text-[#E5636C] mt-0.5 shrink-0" />
-              <div>
-                <h4 className="text-sm font-bold text-rose-900">Payment Dues</h4>
-                <p className="text-xs text-rose-700 mt-1">₹5,00,000 pending since 15 days.</p>
-                <button className="mt-2 text-[10px] font-bold px-2 py-1 bg-rose-200/60 text-rose-800 rounded-lg hover:bg-rose-200">REMIND</button>
-              </div>
-            </div>
-            <div className="p-4 rounded-xl bg-clay-rose border border-rose-200/40 flex items-start gap-3">
-              <Users className="w-5 h-5 text-[#E5636C] mt-0.5 shrink-0" />
-              <div>
-                <h4 className="text-sm font-bold text-rose-900">Labour Payments</h4>
-                <p className="text-xs text-rose-700 mt-1">Weekly payout pending for 45 workers.</p>
-                <button className="mt-2 text-[10px] font-bold px-2 py-1 bg-rose-200/60 text-rose-800 rounded-lg hover:bg-rose-200">PROCESS</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
+      {user?.role !== 'ENGINEER' && (
+      <div className="grid grid-cols-1 gap-4">
         {/* Outstanding Ledgers */}
-        <div className="xl:col-span-1 clay-card p-5 border-l-4 border-l-[#7C6EF0] flex flex-col">
+        <div className="clay-card p-5 border-l-4 border-l-[#7C6EF0] flex flex-col">
           <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
-            <h3 className="text-base font-bold text-slate-800 font-heading">Outstanding</h3>
-            <Link to="/clients" className="text-xs font-bold text-[#7C6EF0] hover:underline">All</Link>
+            <h3 className="text-base font-bold text-slate-800 font-heading">Outstanding Ledgers</h3>
+            <Link to="/clients" className="text-xs font-bold text-[#7C6EF0] hover:underline">View All Clients</Link>
           </div>
-          <div className="space-y-2.5 flex-1 overflow-y-auto pr-1 scrollbar-hide">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[300px] overflow-y-auto scrollbar-hide pr-1">
             {topOutstandingClients.length === 0 ? (
-              <div className="py-8 text-center text-slate-400 text-xs">No outstanding balances.</div>
+              <div className="py-8 text-center text-slate-400 text-xs col-span-full">No outstanding balances.</div>
             ) : (
               topOutstandingClients.map((client: any) => (
-                <div key={client.id} className="p-3 rounded-xl bg-white/60 border border-violet-100/40 flex items-center justify-between gap-2">
+                <div key={client.id} className="p-4 rounded-xl bg-white/60 border border-violet-100/40 flex flex-col justify-between gap-2 shadow-xs hover:border-[#7C6EF0]/30 transition-all cursor-pointer" onClick={() => navigate(`/clients`)}>
                   <div className="min-w-0">
                     <div className="text-sm font-bold text-slate-800 truncate font-heading">{client.name}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{client.companyName || 'Private Client'}</div>
+                    <div className="text-[10px] text-slate-500 truncate">{client.companyName || 'Private Client'}</div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-xs font-bold text-[#E5636C] font-heading">
+                  <div className="text-left mt-2 border-t border-slate-100/60 pt-2">
+                    <div className="text-xs text-slate-400 font-medium mb-0.5">Pending Amount</div>
+                    <div className="text-sm font-bold text-[#E5636C] font-heading">
                       ₹{(client.outstanding || 0).toLocaleString()}
                     </div>
                   </div>
@@ -630,6 +596,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      )}
 
       {/* =========================================== */}
       {/* CHARTS ROW: Expenses + Payment Mode + Site P/L */}

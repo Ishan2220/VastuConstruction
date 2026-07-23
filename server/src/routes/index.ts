@@ -29,6 +29,7 @@ import searchRoutes from './search.routes.js';
 import milestoneRoutes from './milestone.routes.js';
 import approvalRoutes from './approval.routes.js';
 import attendanceRoutes from './attendance.routes.js';
+import paymentRoutes from './payment.routes.js';
 
 const router = Router();
 
@@ -66,5 +67,6 @@ router.use('/search', searchRoutes);
 router.use('/milestones', milestoneRoutes);
 router.use('/approvals', approvalRoutes);
 router.use('/attendance', attendanceRoutes);
+router.use('/payments', paymentRoutes);
 
 export default router;

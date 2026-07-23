@@ -682,3 +682,42 @@ export interface ReportParams {
   projectId?: string;
   siteId?: string;
 }
+
+// ---- Payment History ----
+
+export interface PaymentHistoryRecord {
+  id: string;
+  direction: 'INFLOW' | 'OUTFLOW';
+  paymentType: string;
+  paymentDate: string;
+  amount: number;
+  paymentMethod: PaymentMode;
+  reference?: string;
+  remarks?: string;
+  status: PaymentStatus;
+  createdAt: string;
+  source: string;
+  clientId?: string;
+  clientName?: string;
+  projectId?: string;
+  projectName?: string;
+  vendorId?: string;
+  vendorName?: string;
+  employeeId?: string;
+  employeeName?: string;
+  labourId?: string;
+  labourName?: string;
+  accountId?: string;
+  accountName?: string;
+  accountNo?: string;
+  createdById?: string;
+  createdByName?: string;
+}
+
+export interface PaymentHistorySummary {
+  todayInflow: number;
+  todayOutflow: number;
+  pendingPayments: number;
+  completedPayments: number;
+  cancelledPayments: number;
+}

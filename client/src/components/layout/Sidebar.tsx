@@ -24,7 +24,8 @@ import {
   X,
   ClipboardList,
   Database,
-  Wallet
+  Wallet,
+  History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/store/uiStore';
@@ -46,6 +47,7 @@ const navItems: NavItem[] = [
   { label: 'Sites', icon: Building2, href: '/sites' },
   { label: 'Expenses', icon: Receipt, href: '/expenses', roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'] },
   { label: 'Income / Payments', icon: IndianRupee, href: '/income', roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'] },
+  { label: 'Payment History', icon: History, href: '/payment-history', roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT', 'ENGINEER'] },
   { label: 'Accounts', icon: Landmark, href: '/accounts', roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'] },
   { label: 'Invoices', icon: FileText, href: '/invoices', roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'] },
   { label: 'Vendors', icon: Truck, href: '/vendors', roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT', 'ENGINEER'] },

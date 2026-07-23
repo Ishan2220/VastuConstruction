@@ -32,6 +32,7 @@ import InvoicesPage from '@/pages/InvoicesPage';
 import UsersPage from '@/pages/settings/UsersPage';
 import AccountPage from '@/pages/settings/AccountPage';
 import NotFoundPage from '@/pages/NotFoundPage';
+import PaymentHistoryPage from '@/pages/PaymentHistoryPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -129,6 +130,7 @@ export default function App() {
           <Route path="site-profit-loss" element={<SiteProfitLossPage />} />
           <Route path="expenses" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'ACCOUNTANT']} pageName="Expenses"><ExpensesPage /></RoleRoute>} />
           <Route path="income" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'ACCOUNTANT']} pageName="Income / Payments"><IncomePage /></RoleRoute>} />
+          <Route path="payment-history" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'ACCOUNTANT', 'ENGINEER']} pageName="Payment History"><PaymentHistoryPage /></RoleRoute>} />
           <Route path="accounts" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'ACCOUNTANT']} pageName="Accounts"><AccountsPage /></RoleRoute>} />
           <Route path="vendors" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'ACCOUNTANT', 'ENGINEER']} pageName="Vendors"><VendorsPage /></RoleRoute>} />
           <Route path="vendors/:id" element={<RoleRoute allowedRoles={['ADMIN', 'MANAGER', 'ACCOUNTANT', 'ENGINEER']} pageName="Vendors"><VendorDetailsPage /></RoleRoute>} />

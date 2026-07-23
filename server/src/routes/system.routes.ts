@@ -12,7 +12,7 @@ router.get('/versioning', getVersioning);
 router.get('/health-score', getHealthScore);
 
 // Maintenance & Diagnostics (Admin only)
-router.use(authenticate, authorize('ADMIN'));
+router.use(authenticate, authorize('ADMIN', { page: 'Settings' }));
 router.get('/consistency', checkConsistency);
 router.get('/audit-logs/export', exportAuditLogs);
 router.post('/storage-cleanup', cleanupStorage);

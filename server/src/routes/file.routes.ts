@@ -35,6 +35,6 @@ router.post('/upload', authenticate, authorize('ADMIN', 'ACCOUNTANT', 'ENGINEER'
 router.get('/', authenticate, authorize('ADMIN', 'ACCOUNTANT', 'ENGINEER'), fileController.getFiles);
 router.get('/:id/download', authenticate, authorize('ADMIN', 'ACCOUNTANT', 'ENGINEER'), fileController.getFileDownloadUrl);
 router.delete('/:id', authenticate, authorize('ADMIN', 'ACCOUNTANT', 'ENGINEER'), fileController.softDeleteFile);
-router.get('/dashboard/stats', authenticate, authorize('ADMIN'), fileController.getStorageDashboardStats);
+router.get('/dashboard/stats', authenticate, authorize('ADMIN', { page: 'Storage Analytics' }), fileController.getStorageDashboardStats);
 
 export default router;

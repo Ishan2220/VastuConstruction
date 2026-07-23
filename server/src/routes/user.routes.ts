@@ -7,7 +7,7 @@ import { validate } from '../middleware/validate.js';
 
 const router = Router();
 
-router.use(authenticate, authorize('ADMIN'));
+router.use(authenticate, authorize('ADMIN', { page: 'Settings' }));
 
 const createUserSchema = z.object({
   body: z.object({

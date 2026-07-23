@@ -5,7 +5,7 @@ import { authorize } from '../middleware/rbac.js';
 
 const router = Router();
 
-router.use(authenticate, authorize('ADMIN'));
+router.use(authenticate, authorize('ADMIN', { page: 'Audit Logs' }));
 
 router.get('/', ctrl.list);
 

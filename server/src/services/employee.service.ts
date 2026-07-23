@@ -2,7 +2,8 @@ import crypto from 'crypto';
 import { prisma } from '../config/database.js';
 import { ApiError } from '../utils/ApiError.js';
 import { eventBus } from '../events/EventBus.js';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, Role } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 export const list = async () => {
   const employees = await prisma.employee.findMany({
@@ -30,9 +31,35 @@ export const getById = async (id: string) => {
   return employee;
 };
 
-export const create = async (payload: Prisma.EmployeeUncheckedCreateInput & { idempotencyKey?: string }, userId: string) => {
-  const { idempotencyKey, ...data } = payload;
-  const employee = await prisma.employee.create({ data });
+export const create = async (payload: any, userId: string) => {
+  const { idempotencyKey, name, email, phone, role, department } = payload;
+  
+  const hashedPassword = await bcrypt.hash('Vastu@123', 12);
+  
+  let userRole: Role = 'ENGINEER';
+  if (role === 'ACCOUNTANT') userRole = 'ACCOUNTANT';
+  if (role === 'ADMIN') userRole = 'ADMIN';
+
+  const employee = await prisma.employee.create({
+    data: {
+      department: department || 'Operations',
+      designation: role || 'Staff',
+      user: {
+        create: {
+          name,
+          email,
+          phone,
+          password: hashedPassword,
+          role: userRole,
+          forcePasswordChange: true
+        }
+      }
+    },
+    include: {
+      user: true
+    }
+  });
+
   eventBus.publishMutation('Employee', 'CREATE', userId, employee.id, idempotencyKey || crypto.randomUUID(), employee, null);
   return employee;
 };

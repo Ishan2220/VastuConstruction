@@ -200,7 +200,7 @@ export default function ExpensesPage() {
                     <td className="p-4 text-slate-500">{formatDate(exp.paymentDate)}</td>
                     <td className="p-4 text-slate-600 max-w-xs truncate">{exp.description || 'Routine site expenditure'}</td>
                     <td className="p-4 font-mono font-extrabold text-[#E5636C]">
-                      {formatCurrency(Number(exp.totalAmount || exp.amount))}
+                      {formatCurrency(Number(exp.totalAmount) || Number(exp.amount))}
                       {Number(exp.gstAmount) > 0 && <span className="block text-[10px] text-slate-400 font-sans font-normal">incl. {formatCurrency(Number(exp.gstAmount))} GST</span>}
                     </td>
                     <td className="p-4 text-center">
@@ -238,7 +238,7 @@ export default function ExpensesPage() {
                     <div className="font-bold text-slate-800 mt-2">{exp.vendor?.name || 'Direct Disburse'}</div>
                   </div>
                   <div className="font-mono font-extrabold text-[#E5636C] text-lg text-right">
-                    {formatCurrency(Number(exp.totalAmount || exp.amount))}
+                    {formatCurrency(Number(exp.totalAmount) || Number(exp.amount))}
                     {Number(exp.gstAmount) > 0 && <span className="block text-[10px] text-slate-400 font-sans font-normal mt-0.5">incl. {formatCurrency(Number(exp.gstAmount))} GST</span>}
                   </div>
                 </div>

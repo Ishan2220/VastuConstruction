@@ -193,7 +193,7 @@ export default function IncomePage() {
                     <td className="p-4 text-slate-500">{formatDate(inc.paymentDate)}</td>
                     <td className="p-4 font-mono text-xs uppercase bg-[#7C6EF0]/10 text-[#7C6EF0] px-2 py-0.5 rounded-md w-fit">{inc.paymentMethod}</td>
                     <td className="p-4 font-mono font-extrabold text-[#5CB77E]">
-                      {formatCurrency(Number(inc.totalAmount || inc.amount))}
+                      {formatCurrency(Number(inc.totalAmount) || Number(inc.amount))}
                       {Number(inc.gstAmount) > 0 && <span className="block text-[10px] text-slate-400 font-sans font-normal">incl. {formatCurrency(Number(inc.gstAmount))} GST</span>}
                     </td>
                     <td className="p-4 text-center">
@@ -229,7 +229,7 @@ export default function IncomePage() {
                     <div className="font-bold text-slate-800 mt-1">{inc.client?.name || 'Corporate Client'}</div>
                   </div>
                   <div className="font-mono font-extrabold text-[#5CB77E] text-lg text-right">
-                    {formatCurrency(Number(inc.totalAmount || inc.amount))}
+                    {formatCurrency(Number(inc.totalAmount) || Number(inc.amount))}
                     {Number(inc.gstAmount) > 0 && <span className="block text-[10px] text-slate-400 font-sans font-normal mt-0.5">incl. {formatCurrency(Number(inc.gstAmount))} GST</span>}
                   </div>
                 </div>

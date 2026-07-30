@@ -197,10 +197,13 @@ export class PayrollEngine {
       }
     }
 
-    // Fetch any manual adjustments for this month
-    const adjustments = await prisma.payrollAdjustment.findMany({
+    // Fetch any manual adjustments for this month via the payroll record
+    const existingPayroll = await prisma.payroll.findFirst({
       where: { employeeId, month, year }
     });
+    const adjustments = existingPayroll ? await prisma.payrollAdjustment.findMany({
+      where: { payrollId: existingPayroll.id }
+    }) : [];
 
     const totalAdjustments = adjustments.reduce((sum, adj) => {
       if (adj.type === 'BONUS' || adj.type === 'INCENTIVE' || adj.type === 'ARREARS') return sum + Number(adj.amount);

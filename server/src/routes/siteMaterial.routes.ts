@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as siteMaterialController from '../controllers/siteMaterial.controller.js';
 import { authenticate } from '../middleware/auth.js';
-import { authorize } from '../middleware/auth.js';
+import { authorize } from '../middleware/rbac.js';
 
 const router = Router({ mergeParams: true });
 

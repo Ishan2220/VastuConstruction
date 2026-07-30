@@ -24,11 +24,11 @@ export const create = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const update = asyncHandler(async (req: Request, res: Response) => {
-  const event = await calendarService.update(req.params.id as string, req.body);
+  const event = await calendarService.update(req.params.id as string, req.user!.userId, req.body);
   res.json(new ApiResponse(200, event, 'Calendar event updated successfully'));
 });
 
 export const remove = asyncHandler(async (req: Request, res: Response) => {
-  await calendarService.remove(req.params.id as string);
+  await calendarService.remove(req.params.id as string, req.user!.userId);
   res.json(new ApiResponse(200, null, 'Calendar event deleted successfully'));
 });

@@ -231,7 +231,7 @@ export const remove = async (id: string, userId?: string) => {
   if (oldInvoice.status === 'PAID') {
     if (oldInvoice.type === 'CLIENT' && oldInvoice.clientId) {
       const income = await prisma.income.findFirst({ where: { invoiceNo: oldInvoice.invoiceNumber } });
-      if (income) await incomeService.remove(income.id, userId);
+      if (income) await incomeService.remove(income.id, userId as string);
     } else if (oldInvoice.type === 'VENDOR' && oldInvoice.vendorId) {
       await prisma.expense.deleteMany({
         where: {

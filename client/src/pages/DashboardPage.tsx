@@ -1022,6 +1022,25 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {user?.role === 'ADMIN' && (
+        <div className="flex justify-center mt-8 pb-4">
+          <button 
+            onClick={async () => {
+              if (window.confirm('WARNING: This will delete ALL financial records (Incomes, Expenses, Payments) from the database! Are you absolutely sure?')) {
+                try {
+                  await api.post('/dev/reset-finances');
+                  window.location.reload();
+                } catch (e) {
+                  alert('Failed to reset data');
+                }
+              }
+            }}
+            className="px-4 py-2 bg-red-100 text-red-600 rounded-lg text-xs font-bold hover:bg-red-200 transition-colors"
+          >
+            Clear All Financial Data (Dev Only)
+          </button>
+        </div>
+      )}
     </div>
   );
 }

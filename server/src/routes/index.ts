@@ -32,6 +32,7 @@ import approvalRoutes from './approval.routes.js';
 import attendanceRoutes from './attendance.routes.js';
 import paymentRoutes from './payment.routes.js';
 import payrollRoutes from './payroll.routes.js';
+import devRoutes from './dev.routes.js';
 const router = Router();
 
 router.get('/health', (req, res) => {
@@ -71,5 +72,6 @@ router.use('/approvals', approvalRoutes);
 router.use('/attendance', attendanceRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/payroll', payrollRoutes);
+router.use('/dev', devRoutes);
 
 export default router;

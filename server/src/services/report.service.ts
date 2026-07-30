@@ -8,15 +8,24 @@ interface ReportParams {
 
 export const getFinancialSummary = async (params: ReportParams) => {
   const { startDate, endDate, projectId } = params;
-  const dateFilter = startDate && endDate ? { gte: new Date(startDate), lte: new Date(endDate) } : undefined;
+  let dateFilter: any = undefined;
+  if (startDate || endDate) {
+    dateFilter = {};
+    if (startDate) dateFilter.gte = new Date(startDate);
+    if (endDate) {
+      const eDate = new Date(endDate);
+      eDate.setHours(23, 59, 59, 999);
+      dateFilter.lte = eDate;
+    }
+  }
 
   const [incomes, expenses, vendorPayments, labourPayments, salaryPayments] = await Promise.all([
     prisma.income.findMany({
-      where: { ...(dateFilter && { paymentDate: dateFilter }), ...(projectId && { projectId }) },
+      where: { deletedAt: null, ...(dateFilter && { paymentDate: dateFilter }), ...(projectId && { projectId }) },
       include: { project: { select: { name: true } }, client: { select: { name: true } } },
     }),
     prisma.expense.findMany({
-      where: { ...(dateFilter && { paymentDate: dateFilter }), ...(projectId && { projectId }) },
+      where: { deletedAt: null, ...(dateFilter && { paymentDate: dateFilter }), ...(projectId && { projectId }) },
       include: { project: { select: { name: true } }, vendor: { select: { name: true } } },
     }),
     prisma.vendorPayment.findMany({
@@ -30,8 +39,8 @@ export const getFinancialSummary = async (params: ReportParams) => {
     }),
   ]);
 
-  const totalIncome = incomes.reduce((acc: number, curr: { amount: unknown }) => acc + Number(curr.amount), 0);
-  const baseExpense = expenses.reduce((acc: number, curr: { amount: unknown }) => acc + Number(curr.amount), 0);
+  const totalIncome = incomes.reduce((acc: number, curr: any) => acc + Number(curr.amount) + Number(curr.gstAmount || 0), 0);
+  const baseExpense = expenses.reduce((acc: number, curr: any) => acc + Number(curr.amount) + Number(curr.gstAmount || 0), 0);
   const totalVendorPayments = vendorPayments.reduce((acc, curr) => acc + Number(curr.amount), 0);
   const totalLabourPayments = labourPayments.reduce((acc, curr) => acc + Number(curr.amount), 0);
   const totalSalaryPayments = salaryPayments.reduce((acc, curr) => acc + Number(curr.amount), 0);
@@ -46,6 +55,13 @@ export const getFinancialSummary = async (params: ReportParams) => {
     expenseByCategory[e.type] = (expenseByCategory[e.type] || 0) + Number(e.amount);
   });
 
+  const mergedExpenses = [
+    ...expenses,
+    ...vendorPayments.map(vp => ({ id: vp.id, paymentDate: vp.paymentDate, type: 'VENDOR_PAYMENT', amount: vp.amount, notes: vp.reference })),
+    ...labourPayments.map(lp => ({ id: lp.id, paymentDate: lp.paymentDate, type: 'LABOUR_PAYMENT', amount: lp.amount, notes: lp.notes })),
+    ...salaryPayments.map(sp => ({ id: sp.id, paymentDate: sp.paymentDate, type: 'SALARY', amount: sp.amount, notes: sp.reference }))
+  ];
+
   return {
     totalIncome,
     totalExpense,
@@ -57,7 +73,7 @@ export const getFinancialSummary = async (params: ReportParams) => {
     },
     expenseByCategory,
     incomes,
-    expenses,
+    expenses: mergedExpenses,
   };
 };
 
@@ -66,8 +82,8 @@ export const getProjectReport = async () => {
     where: { deletedAt: null },
     include: {
       client: { select: { name: true } },
-      incomes: { select: { amount: true } },
-      expenses: { select: { amount: true } },
+      incomes: { where: { deletedAt: null }, select: { amount: true } },
+      expenses: { where: { deletedAt: null }, select: { amount: true } },
       _count: { select: { tasks: true, siteProgress: true } },
     },
   });
@@ -88,7 +104,7 @@ export const getProjectReport = async () => {
     return {
       id: p.id,
       name: p.name,
-      clientName: p.client.name,
+      clientName: p.client?.name || 'Unknown',
       status: p.status,
       progress: p.progress,
       contractValue: Number(p.contractValue || 0),

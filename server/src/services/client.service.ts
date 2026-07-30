@@ -43,7 +43,7 @@ export const list = async (params: ListParams) => {
         _count: { select: { projects: true } },
         createdBy: { select: { name: true } },
         invoices: { where: { status: { not: 'CANCELLED' } }, select: { totalAmount: true } },
-        incomes: { select: { amount: true } }
+        incomes: { where: { deletedAt: null }, select: { amount: true } }
       },
     }),
     prisma.client.count({ where }),
@@ -77,6 +77,7 @@ export const getById = async (id: string) => {
         select: { id: true, name: true, status: true, progress: true, contractValue: true },
       },
       incomes: {
+        where: { deletedAt: null },
         select: { id: true, amount: true, paymentDate: true, paymentMethod: true, type: true },
         orderBy: { paymentDate: 'desc' },
         take: 10,

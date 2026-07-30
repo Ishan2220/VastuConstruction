@@ -147,30 +147,13 @@ export default function DocumentsPage() {
       window.open(doc.fileUrl, '_blank');
       return;
     }
-    try {
-      const res = await api.get(`/files/${doc.id}/download`);
-      if (res.data?.data?.downloadUrl) {
-        let downloadUrl = res.data.data.downloadUrl;
-        
-        if (!downloadUrl.startsWith('http')) {
-          const backendUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '';
-          downloadUrl = backendUrl + downloadUrl;
-        }
-
-        window.open(downloadUrl, '_blank');
-      } else {
-        // Fallback
-        let fallbackUrl = doc.fileUrl;
-        if (!fallbackUrl.startsWith('http')) {
-          const backendUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '';
-          fallbackUrl = backendUrl + fallbackUrl;
-        }
-        window.open(fallbackUrl, '_blank');
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error('Failed to download document.');
+    
+    let downloadUrl = doc.fileUrl;
+    if (downloadUrl && !downloadUrl.startsWith('http')) {
+      const backendUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '';
+      downloadUrl = backendUrl + (downloadUrl.startsWith('/') ? '' : '/') + downloadUrl;
     }
+    window.open(downloadUrl, '_blank');
   };
 
   const filteredDocs = documents.filter((d: any) => {

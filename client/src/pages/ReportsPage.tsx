@@ -49,8 +49,8 @@ export default function ReportsPage() {
 
   const ledgerEntries = useMemo(() => {
     const entries: any[] = [];
-    if (finSummary?.incomeSources) {
-      finSummary.incomeSources.forEach((i: any) => entries.push({
+    if (finSummary?.incomes) {
+      finSummary.incomes.forEach((i: any) => entries.push({
         id: i.id, date: new Date(i.paymentDate), type: 'INCOME', desc: i.notes || i.project?.name || 'General Income', amount: Number(i.amount)
       }));
     }

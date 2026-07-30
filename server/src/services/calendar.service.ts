@@ -26,11 +26,15 @@ export const create = async (data: Prisma.CalendarEventUncheckedCreateInput) => 
   return prisma.calendarEvent.create({ data });
 };
 
-export const update = async (id: string, data: Prisma.CalendarEventUpdateInput) => {
+export const update = async (id: string, userId: string, data: Prisma.CalendarEventUpdateInput) => {
+  const event = await prisma.calendarEvent.findUnique({ where: { id } });
+  if (!event || event.userId !== userId) throw new ApiError(403, 'Unauthorized');
   return prisma.calendarEvent.update({ where: { id }, data });
 };
 
-export const remove = async (id: string) => {
+export const remove = async (id: string, userId: string) => {
+  const event = await prisma.calendarEvent.findUnique({ where: { id } });
+  if (!event || event.userId !== userId) throw new ApiError(403, 'Unauthorized');
   await prisma.calendarEvent.delete({ where: { id } });
   return { success: true };
 };

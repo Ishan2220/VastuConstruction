@@ -32,8 +32,22 @@ export const uploadFile = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const getFiles = asyncHandler(async (req: Request, res: Response) => {
+  const { category, projectId, search } = req.query;
+  const user = req.user as any;
+  const where: any = { deletedAt: null };
+  
+  if (category) where.category = category as string;
+  if (projectId) where.projectId = projectId as string;
+  if (search) {
+    where.originalFileName = { contains: search as string, mode: 'insensitive' };
+  }
+  
+  if (user && user.role !== 'ADMIN') {
+    where.uploadedById = user.userId;
+  }
+
   const files = await prisma.file.findMany({
-    where: { deletedAt: null },
+    where,
     orderBy: { uploadedAt: 'desc' },
     include: {
       uploadedBy: { select: { name: true, email: true } },
@@ -45,7 +59,17 @@ export const getFiles = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const getFileDownloadUrl = asyncHandler(async (req: Request, res: Response) => {
-  const url = await FileService.getDownloadUrl(req.params.id as string);
+  const id = req.params.id as string;
+  const file = await prisma.file.findUnique({ where: { id } });
+  
+  if (!file) throw new ApiError(404, 'File not found');
+  
+  const user = req.user as any;
+  if (user && file.uploadedById !== user.userId && user.role !== 'ADMIN') {
+      throw new ApiError(403, 'Unauthorized access to file');
+  }
+
+  const url = await FileService.getDownloadUrl(id);
   res.status(200).json(new ApiResponse(200, { downloadUrl: url }, 'URL generated successfully'));
 });
 
@@ -53,6 +77,11 @@ export const softDeleteFile = asyncHandler(async (req: Request, res: Response) =
   const id = req.params.id as string;
   const file = await prisma.file.findUnique({ where: { id } });
   if (!file) throw new ApiError(404, 'File not found');
+
+  const user = req.user as any;
+  if (user && file.uploadedById !== user.userId && user.role !== 'ADMIN') {
+    throw new ApiError(403, 'You do not have permission to delete this file');
+  }
 
   await prisma.file.update({
     where: { id },
@@ -85,10 +114,15 @@ export const getStorageDashboardStats = asyncHandler(async (req: Request, res: R
   let other = 0;
   
   let duplicateFilesPrevented = 0;
+  const uniquePhysicalFiles = new Set<string>();
 
   files.forEach(f => {
     totalOriginalSize += f.fileSizeOriginal;
-    totalCompressedSize += (f.fileSizeCompressed || f.fileSizeOriginal);
+    
+    if (!uniquePhysicalFiles.has(f.checksum)) {
+      totalCompressedSize += (f.fileSizeCompressed || f.fileSizeOriginal);
+      uniquePhysicalFiles.add(f.checksum);
+    }
     
     if (f.referenceCount > 1) {
       // For every reference > 1, we saved original size

@@ -117,7 +117,7 @@ export default function PurchaseOrdersPage() {
   const fetchPOs = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get('/purchase-orders');
+      const res = await api.get('/purchase-orders?limit=1000');
       if (res.data?.success) {
         setPos(res.data.data.purchaseOrders);
       }

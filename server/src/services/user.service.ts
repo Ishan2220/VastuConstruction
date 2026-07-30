@@ -42,13 +42,9 @@ export const createUser = async (data: any, adminId: string) => {
     select: { id: true, name: true, email: true, role: true },
   });
 
-  eventBus.emit('audit.log', {
-    userId: adminId,
-    action: 'CREATE',
-    entity: 'User',
-    entityId: user.id,
-    details: { name: user.name, role: user.role, email: user.email },
-  });
+  eventBus.publishMutation('User', 'CREATE', adminId, user.id, crypto.randomUUID(), user, null);
+
+  return user;
 
   return user;
 };
@@ -62,10 +58,11 @@ export const updateUserEmail = async (userId: string, newEmail: string) => {
     throw new ApiError(400, 'Email is already in use by another account');
   }
 
-  await prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: { email: newEmail },
   });
+  eventBus.publishMutation('User', 'UPDATE', userId, updatedUser.id, crypto.randomUUID(), updatedUser, user);
 };
 
 export const resetUserPassword = async (userId: string, newPassword: string) => {
@@ -74,20 +71,23 @@ export const resetUserPassword = async (userId: string, newPassword: string) => 
 
   const hashedPassword = await bcrypt.hash(newPassword, 12);
   
-  await prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: { password: hashedPassword },
   });
+  eventBus.publishMutation('User', 'UPDATE', userId, updatedUser.id, crypto.randomUUID(), { password: '***' }, { password: '***' });
 };
 
 export const deleteUser = async (userId: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } });
   if (!user) throw new ApiError(404, 'User not found');
 
-  await prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: { deletedAt: new Date(), isActive: false },
   });
+  
+  eventBus.publishMutation('User', 'DELETE', userId, updatedUser.id, crypto.randomUUID(), null, user);
   
   // also delete their refresh tokens
   await prisma.refreshToken.deleteMany({
@@ -102,11 +102,13 @@ export const grantTempAdmin = async (userId: string, pages: string[], durationHo
   const until = new Date();
   until.setHours(until.getHours() + durationHours);
 
-  await prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {
       tempAdminUntil: until,
       tempAdminPages: pages,
     },
   });
+  
+  eventBus.publishMutation('User', 'UPDATE', userId, updatedUser.id, crypto.randomUUID(), updatedUser, user);
 };

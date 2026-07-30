@@ -161,7 +161,7 @@ export default function ClientsPage() {
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold px-2.5 py-1 rounded bg-[#7C6EF0]/10 text-[#7C6EF0]">
-                        {client.companyName || 'Private Client'}
+                        {client.name}
                       </span>
                       <span className="text-[11px] font-mono text-slate-400">{client.gst || client.gstin || 'No GSTIN'}</span>
                     </div>
@@ -244,9 +244,6 @@ export default function ClientsPage() {
                     <td className="p-4">
                       <div className="font-bold text-slate-800">{client.name}</div>
                       <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
-                        <span className="font-bold text-[#7C6EF0] bg-[#7C6EF0]/10 px-2 py-0.5 rounded">
-                          {client.companyName || 'Private Client'}
-                        </span>
                         <span className="font-mono">{client.gst || client.gstin || 'No GSTIN'}</span>
                       </div>
                     </td>
@@ -315,13 +312,7 @@ export default function ClientsPage() {
                 onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
                 className="w-full clay-input text-sm"
               />
-              <input
-                type="text"
-                placeholder="Company / Enterprise Name"
-                value={newClient.companyName}
-                onChange={(e) => setNewClient({ ...newClient, companyName: e.target.value })}
-                className="w-full clay-input text-sm"
-              />
+
               <input
                 type="text"
                 required
@@ -353,13 +344,7 @@ export default function ClientsPage() {
                   className="w-full clay-input text-sm"
                 />
               </div>
-              <input
-                type="number"
-                placeholder="Opening Balance / Initial Due (₹)"
-                value={newClient.openingBalance}
-                onChange={(e) => setNewClient({ ...newClient, openingBalance: e.target.value })}
-                className="w-full clay-input text-sm font-mono text-rose-600"
-              />
+
               <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
                 <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-slate-100">Cancel</button>
                 <button type="submit" disabled={createMutation.isPending} className="clay-btn px-5 py-2">Register Client</button>
@@ -386,13 +371,7 @@ export default function ClientsPage() {
                 onChange={(e) => setEditingClient({ ...editingClient, name: e.target.value })}
                 className="w-full clay-input text-sm font-semibold"
               />
-              <input
-                type="text"
-                placeholder="Company / Firm Name"
-                value={editingClient.companyName || ''}
-                onChange={(e) => setEditingClient({ ...editingClient, companyName: e.target.value })}
-                className="w-full clay-input text-sm"
-              />
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input
                   type="tel"
@@ -426,13 +405,7 @@ export default function ClientsPage() {
                   className="w-full clay-input text-sm"
                 />
               </div>
-              <input
-                type="number"
-                placeholder="Opening Balance / Initial Due (₹)"
-                value={editingClient.openingBalance || ''}
-                onChange={(e) => setEditingClient({ ...editingClient, openingBalance: e.target.value })}
-                className="w-full clay-input text-sm font-mono text-rose-600"
-              />
+
               <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
                 <button type="button" onClick={() => setEditingClient(null)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-slate-100">Cancel</button>
                 <button type="submit" disabled={updateMutation.isPending} className="clay-btn px-5 py-2">Save Updates</button>

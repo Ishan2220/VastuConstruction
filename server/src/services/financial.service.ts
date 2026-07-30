@@ -38,7 +38,7 @@ export class FinancialService {
   static async calculateClientReceivable(): Promise<number> {
     const projects = await prisma.project.findMany({
       where: { deletedAt: null },
-      select: { contractValue: true, incomes: { select: { amount: true, gstAmount: true } } }
+      select: { contractValue: true, incomes: { where: { deletedAt: null }, select: { amount: true, gstAmount: true } } }
     });
     let receivable = 0;
     for (const p of projects) {
@@ -66,6 +66,7 @@ export class FinancialService {
     const agg = await prisma.income.aggregate({
       _sum: { amount: true, gstAmount: true },
       where: {
+        deletedAt: null,
         ...(startDate && endDate && { paymentDate: { gte: startDate, lte: endDate } })
       }
     });
@@ -78,7 +79,7 @@ export class FinancialService {
     const [expenseAgg] = await Promise.all([
       prisma.expense.aggregate({
         _sum: { amount: true, gstAmount: true },
-        where: dateFilter
+        where: { deletedAt: null, ...dateFilter }
       })
     ]);
 

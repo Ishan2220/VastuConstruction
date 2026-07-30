@@ -109,12 +109,12 @@ export default function EmployeesPage() {
     updateMutation.mutate({
       name: editingEmp.name || editingEmp.user?.name,
       email: editingEmp.email || editingEmp.user?.email,
-      phone: editingEmp.phone,
+      phone: editingEmp.phone ?? editingEmp.user?.phone,
       designation: editingEmp.designation || editingEmp.role,
       department: editingEmp.department,
       salary: editingEmp.salary ? Number(editingEmp.salary) : undefined,
       dailyRate: editingEmp.dailyRate ? Number(editingEmp.dailyRate) : undefined,
-      status: editingEmp.status,
+      status: editingEmp.status || (editingEmp.user?.isActive === false ? 'INACTIVE' : 'ACTIVE'),
     });
   };
 

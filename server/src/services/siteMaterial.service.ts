@@ -78,7 +78,7 @@ export const receiveMaterial = async (projectId: string, data: any, userId: stri
     data: {
       projectId,
       materialId,
-      action: 'PURCHASED',
+      action: 'RECEIVED',
       quantity,
       reference,
       notes,
@@ -93,6 +93,7 @@ export const receiveMaterial = async (projectId: string, data: any, userId: stri
       vendorId: material.vendorId,
       type: 'MATERIAL',
       amount,
+      totalAmount: amount,
       paymentDate: new Date(),
       paymentMethod: paymentMethod || 'CASH',
       accountId: accountId || null,
@@ -142,8 +143,16 @@ export const consumeMaterial = async (projectId: string, data: any, userId: stri
     where: { projectId, materialId }
   });
 
-  if (!stock || Number(stock.quantity) < quantity) {
-    throw new ApiError(400, 'Insufficient stock to consume');
+  const consumptions = await prisma.materialConsumption.aggregate({
+    where: { projectId, materialId, action: 'CONSUMED' },
+    _sum: { quantity: true }
+  });
+
+  const totalConsumed = Number(consumptions._sum.quantity || 0);
+  const remainingStock = stock ? Number(stock.quantity) - totalConsumed : 0;
+
+  if (!stock || remainingStock < quantity) {
+    throw new ApiError(400, `Insufficient stock to consume. Only ${remainingStock} left.`);
   }
 
   // Log consumption
@@ -170,4 +179,46 @@ export const getMaterialHistory = async (projectId: string, materialId: string) 
     include: { createdBy: { select: { name: true } } }
   });
   return history;
+};
+
+export const updateConsumption = async (id: string, data: any, userId: string) => {
+  const { quantity, notes } = data;
+  
+  const existing = await prisma.materialConsumption.findUnique({ where: { id } });
+  if (!existing) throw new ApiError(404, 'Consumption record not found');
+  
+  // Calculate new stock requirement
+  if (quantity) {
+    const diff = Number(quantity) - Number(existing.quantity);
+    if (diff > 0) {
+      const stock = await prisma.stock.findFirst({ where: { projectId: existing.projectId, materialId: existing.materialId } });
+      const consumptions = await prisma.materialConsumption.aggregate({
+        where: { projectId: existing.projectId, materialId: existing.materialId, action: 'CONSUMED' },
+        _sum: { quantity: true }
+      });
+      const totalConsumed = Number(consumptions._sum.quantity || 0);
+      const remainingStock = stock ? Number(stock.quantity) - totalConsumed : 0;
+      
+      if (!stock || remainingStock < diff) {
+        throw new ApiError(400, `Insufficient stock to increase consumption. Only ${remainingStock} left.`);
+      }
+    }
+  }
+
+  const consumption = await prisma.materialConsumption.update({
+    where: { id },
+    data: { quantity, notes }
+  });
+
+  eventBus.publishMutation('MaterialConsumption', 'UPDATE', userId, id, crypto.randomUUID(), consumption, existing);
+  return consumption;
+};
+
+export const deleteConsumption = async (id: string, userId: string) => {
+  const existing = await prisma.materialConsumption.findUnique({ where: { id } });
+  if (!existing) throw new ApiError(404, 'Consumption record not found');
+
+  await prisma.materialConsumption.delete({ where: { id } });
+  eventBus.publishMutation('MaterialConsumption', 'DELETE', userId, id, crypto.randomUUID(), null, existing);
+  return { success: true };
 };

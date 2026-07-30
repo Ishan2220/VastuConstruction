@@ -78,7 +78,7 @@ export default function FinancialSettingsPage() {
         }
       };
       
-      await api.patch('/settings', payload);
+      await api.put('/settings', payload);
       toast.success('Financial settings updated successfully');
     } catch (error) {
       toast.error('Failed to update settings');

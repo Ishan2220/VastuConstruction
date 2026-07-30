@@ -36,7 +36,6 @@ export default function LabourPage() {
     name: '',
     phone: '',
     skill: 'MASON',
-    dailyWage: '',
   });
 
   const { data: laboursList = [], isLoading } = useQuery({
@@ -57,7 +56,7 @@ export default function LabourPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       toast.success('Site worker registered successfully');
       setIsCreateOpen(false);
-      setNewLabour({ name: '', phone: '', skill: 'MASON', dailyWage: '' });
+      setNewLabour({ name: '', phone: '', skill: 'MASON' });
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Failed to register worker');
@@ -101,7 +100,6 @@ export default function LabourPage() {
       name: editingLabour.name,
       phone: editingLabour.phone,
       skill: editingLabour.skill,
-      dailyWage: Number(editingLabour.dailyWage),
     });
   };
 
@@ -109,13 +107,12 @@ export default function LabourPage() {
 
   const handleCreateLabour = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newLabour.name || !newLabour.dailyWage) {
-      toast.error('Please provide worker name and daily wage rate');
+    if (!newLabour.name) {
+      toast.error('Please provide worker name');
       return;
     }
     createLabourMutation.mutate({
       ...newLabour,
-      dailyWage: Number(newLabour.dailyWage) || 600,
     });
   };
 
@@ -255,17 +252,6 @@ export default function LabourPage() {
                     placeholder="Select Trade/Skill..."
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Daily Wage (₹) *</label>
-                  <input
-                    type="number"
-                    required
-                    placeholder="e.g. 950"
-                    value={newLabour.dailyWage}
-                    onChange={(e) => setNewLabour({ ...newLabour, dailyWage: e.target.value })}
-                    className="clay-input w-full text-sm font-mono"
-                  />
-                </div>
               </div>
 
               <div className="space-y-1">
@@ -336,16 +322,7 @@ export default function LabourPage() {
                   placeholder="Select Trade/Skill..."
                 />
               </div>
-              <div>
-                <input
-                  type="number"
-                  required
-                  placeholder="Daily Wage (₹) *"
-                  value={editingLabour.dailyWage || ''}
-                  onChange={(e) => setEditingLabour({ ...editingLabour, dailyWage: e.target.value })}
-                  className="clay-input w-full text-sm font-mono font-bold text-[#5CB77E]"
-                />
-              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
                 <button type="button" onClick={() => setEditingLabour(null)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-violet-50 transition-colors">Cancel</button>
                 <button type="submit" disabled={updateLabourMutation.isPending} className="clay-btn px-5 py-2 text-white text-sm font-semibold">Save Updates</button>

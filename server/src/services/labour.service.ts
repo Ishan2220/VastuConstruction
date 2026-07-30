@@ -67,16 +67,26 @@ export const getById = async (id: string) => {
 };
 
 export const create = async (data: Prisma.LabourCreateInput & { idempotencyKey?: string }, userId: string) => {
-  const { idempotencyKey, ...rest } = data;
-  const labour = await prisma.labour.create({ data: rest });
+  const { name, phone, skill, address, idProof, isActive, idempotencyKey } = data as any;
+  const safeData = { name, phone, skill, address, idProof, isActive };
+  
+  // Clean undefined
+  Object.keys(safeData).forEach(key => (safeData as any)[key] === undefined && delete (safeData as any)[key]);
+
+  const labour = await prisma.labour.create({ data: safeData as any });
   eventBus.publishMutation('Labour', 'CREATE', userId, labour.id, idempotencyKey || crypto.randomUUID(), labour, null);
   return labour;
 };
 
 export const update = async (id: string, data: Prisma.LabourUpdateInput & { idempotencyKey?: string }, userId: string) => {
   const oldLabour = await getById(id);
-  const { idempotencyKey, ...rest } = data;
-  const labour = await prisma.labour.update({ where: { id }, data: rest });
+  const { name, phone, skill, address, idProof, isActive, idempotencyKey } = data as any;
+  const safeData = { name, phone, skill, address, idProof, isActive };
+  
+  // Clean undefined
+  Object.keys(safeData).forEach(key => (safeData as any)[key] === undefined && delete (safeData as any)[key]);
+
+  const labour = await prisma.labour.update({ where: { id }, data: safeData as any });
   eventBus.publishMutation('Labour', 'UPDATE', userId, id, idempotencyKey || crypto.randomUUID(), labour, oldLabour);
   return labour;
 };

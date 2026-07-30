@@ -172,9 +172,38 @@ export const login = async (
   };
 };
 
+// Memory cache for recently rotated refresh tokens to handle concurrency / race conditions (e.g. multi-tab)
+const recentlyRotatedTokens = new Map<string, {
+  accessToken: string;
+  refreshToken: string;
+  rotatedAt: number;
+}>();
+
+// Clean up expired items from memory cache periodically
+const cleanupInterval = setInterval(() => {
+  const now = Date.now();
+  for (const [token, data] of recentlyRotatedTokens.entries()) {
+    if (now - data.rotatedAt > 30000) { // 30 seconds grace period
+      recentlyRotatedTokens.delete(token);
+    }
+  }
+}, 60000);
+if (typeof cleanupInterval.unref === 'function') {
+  cleanupInterval.unref();
+}
+
 export const refreshAccessToken = async (token: string) => {
   if (!token) {
     throw new ApiError(401, 'Refresh token is required');
+  }
+
+  // Check if token was recently rotated (race condition / concurrent request / multi-tab)
+  const cachedRotation = recentlyRotatedTokens.get(token);
+  if (cachedRotation && (Date.now() - cachedRotation.rotatedAt <= 30000)) {
+    return {
+      accessToken: cachedRotation.accessToken,
+      refreshToken: cachedRotation.refreshToken,
+    };
   }
 
   // Verify the refresh token exists in DB
@@ -227,6 +256,13 @@ export const refreshAccessToken = async (token: string) => {
     },
   });
 
+  // Store in cache for concurrent requests
+  recentlyRotatedTokens.set(token, {
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+    rotatedAt: Date.now(),
+  });
+
   return {
     accessToken: newAccessToken,
     refreshToken: newRefreshToken,
@@ -239,6 +275,9 @@ export const logout = async (
   userAgent?: string
 ) => {
   if (!token) return;
+
+  // Clean up from memory cache
+  recentlyRotatedTokens.delete(token);
   
   let userId: string | undefined;
   

@@ -197,14 +197,26 @@ export class PayrollEngine {
       }
     }
 
-    const grossSalary = baseSalary + overtimeEarnings;
+    // Fetch any manual adjustments for this month
+    const adjustments = await prisma.payrollAdjustment.findMany({
+      where: { employeeId, month, year }
+    });
 
-    // TODO: Apply adjustments if any
-    const netSalary = grossSalary; // Minus deductions (added in adjustments)
+    const totalAdjustments = adjustments.reduce((sum, adj) => {
+      if (adj.type === 'BONUS' || adj.type === 'INCENTIVE' || adj.type === 'ARREARS') return sum + Number(adj.amount);
+      if (adj.type === 'DEDUCTION' || adj.type === 'PENALTY' || adj.type === 'ADVANCE_DEDUCTION') return sum - Number(adj.amount);
+      return sum;
+    }, 0);
+
+    const grossSalary = baseSalary + overtimeEarnings;
+    const netSalary = grossSalary + totalAdjustments;
 
     const dailySalary = dailySalaryBase;
-
     const monthlySalaryValue = employee.salary ? employee.salary : dailySalaryBase * workingDays;
+    
+    // Auto-calculate attendance deductions
+    const theoreticalFullSalary = employee.salary ? Number(employee.salary) : dailySalaryBase * workingDays;
+    const attendanceDeductions = Math.max(0, theoreticalFullSalary - baseSalary - overtimeEarnings);
 
     const payroll = await prisma.payroll.upsert({
       where: { employeeId_month_year: { employeeId, month, year } },
@@ -219,7 +231,7 @@ export class PayrollEngine {
         totalOvertimeHours,
         overtimeEarnings,
         baseSalary,
-        attendanceDeductions: 0,
+        attendanceDeductions,
         grossSalary,
         netSalary,
       },
@@ -237,7 +249,7 @@ export class PayrollEngine {
         totalOvertimeHours,
         overtimeEarnings,
         baseSalary,
-        attendanceDeductions: 0,
+        attendanceDeductions,
         grossSalary,
         netSalary,
         status: 'CALCULATED'
@@ -334,14 +346,14 @@ export class PayrollEngine {
     if (!payroll) throw new ApiError(404, 'Payroll not found');
     if (payroll.status !== 'APPROVED' && payroll.status !== 'LOCKED') throw new ApiError(400, 'Only APPROVED or LOCKED payrolls can be paid');
     
-    const account = await prisma.bankAccount.findUnique({ where: { id: accountId } });
-    if (!account) throw new ApiError(404, 'Bank account not found');
-
-    if (account.balance < payroll.netSalary) {
-      throw new ApiError(400, 'Insufficient balance in selected account');
-    }
-
     const result = await prisma.$transaction(async (tx) => {
+      const account = await tx.bankAccount.findUnique({ where: { id: accountId } });
+      if (!account) throw new ApiError(404, 'Bank account not found');
+
+      if (account.balance < payroll.netSalary) {
+        throw new ApiError(400, 'Insufficient balance in selected account');
+      }
+
       const updatedPayroll = await tx.payroll.update({
         where: { id: payrollId },
         data: { status: 'PAID' }

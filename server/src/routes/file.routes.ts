@@ -25,9 +25,20 @@ const storage = multer.diskStorage({
   }
 });
 
+const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.csv', '.xlsx', '.doc', '.docx'];
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (allowedExtensions.includes(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error(`Invalid file extension. Allowed: ${allowedExtensions.join(', ')}`));
+  }
+};
+
 const upload = multer({
   storage,
   limits: { fileSize: env.FMS_MAX_UPLOAD_SIZE },
+  fileFilter
 });
 
 // Routes

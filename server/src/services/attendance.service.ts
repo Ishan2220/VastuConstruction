@@ -9,8 +9,8 @@ export const getAttendanceByDate = async (date: string, type: 'EMPLOYEE' | 'LABO
   targetDate.setUTCHours(0, 0, 0, 0); // Strip time
   
   const now = new Date();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  const isLocked = date !== todayStr;
+  const diffHours = Math.abs(targetDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+  const isLocked = diffHours > 48; // Lock if trying to modify more than 48 hours in past/future
 
   let activePeople: any[] = [];
 
@@ -78,10 +78,10 @@ export const upsertAttendance = async (
   targetDate.setUTCHours(0, 0, 0, 0);
 
   const now = new Date();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const diffHours = Math.abs(targetDate.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-  if (date !== todayStr) {
-    throw new ApiError(403, 'Cannot modify attendance for past or future dates');
+  if (diffHours > 48) {
+    throw new ApiError(403, 'Cannot modify attendance beyond a 48-hour window from today');
   }
   
   if (personType === 'EMPLOYEE') {
@@ -118,7 +118,7 @@ export const upsertAttendance = async (
 
   if (personType === 'EMPLOYEE') {
     const employee = await prisma.employee.findUnique({ where: { id: personId } });
-    if (employee && employee.salary) {
+    if (employee && (employee.salary || employee.dailyRate)) {
       const settings = await getSettings();
       const stdHours = employee.workingHoursOverride || settings.standardWorkingHours;
       let workingHours = 0;
@@ -152,10 +152,10 @@ export const bulkMarkPresent = async (
   targetDate.setUTCHours(0, 0, 0, 0);
 
   const now = new Date();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const diffHours = Math.abs(targetDate.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-  if (date !== todayStr) {
-    throw new ApiError(403, 'Cannot modify attendance for past or future dates');
+  if (diffHours > 48) {
+    throw new ApiError(403, 'Cannot modify attendance beyond a 48-hour window from today');
   }
 
   // Step 1: Pre-Validation
@@ -199,7 +199,7 @@ export const bulkMarkPresent = async (
 
       if (personType === 'EMPLOYEE') {
         const employee = await tx.employee.findUnique({ where: { id: update.personId } });
-        if (employee && employee.salary) {
+        if (employee && (employee.salary || employee.dailyRate)) {
           const settings = await tx.payrollSettings.findFirst() || await getSettings();
           const stdHours = employee.workingHoursOverride || settings.standardWorkingHours;
           let workingHours = 0;

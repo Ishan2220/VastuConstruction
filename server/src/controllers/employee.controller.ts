@@ -23,6 +23,17 @@ export const update = asyncHandler(async (req: Request, res: Response) => {
   res.json(new ApiResponse(200, employee, 'Employee profile updated successfully'));
 });
 
+export const remove = asyncHandler(async (req: Request, res: Response) => {
+  await empService.remove(req.params.id as string, req.user!.userId);
+  res.json(new ApiResponse(200, null, 'Employee removed successfully'));
+});
+
+export const getAttendance = asyncHandler(async (req: Request, res: Response) => {
+  const month = req.query.month as string;
+  const attendance = await empService.getAttendance(req.params.id as string, month);
+  res.json(new ApiResponse(200, attendance, 'Attendance fetched successfully'));
+});
+
 export const grantTempAdmin = asyncHandler(async (req: Request, res: Response) => {
   const { durationHours, pages, userId } = req.body;
   const result = await empService.grantTempAdmin(userId, Number(durationHours) || 0, pages || []);

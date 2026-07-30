@@ -24,6 +24,8 @@ router.post('/temp-admin', authorize('ADMIN', { page: 'Employees' }), ctrl.grant
 // ID-based routes (MUST BE LAST)
 router.get('/:id', authorize('ADMIN', 'ACCOUNTANT', { page: 'Employees' }), ctrl.getById);
 router.put('/:id', authorize('ADMIN', { page: 'Employees' }), ctrl.update);
+router.delete('/:id', authorize('ADMIN', { page: 'Employees' }), ctrl.remove);
+router.get('/:id/attendance', authorize('ADMIN', 'ACCOUNTANT', { page: 'Employees' }), ctrl.getAttendance);
 router.patch('/leaves/:id/status', authorize('ADMIN', { page: 'Employees' }), ctrl.updateLeaveStatus);
 
 

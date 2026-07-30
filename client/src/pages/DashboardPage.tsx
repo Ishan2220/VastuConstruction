@@ -336,7 +336,7 @@ export default function DashboardPage() {
 
   const toggleTaskComplete = (id: string, e: React.MouseEvent, currentCompleted: boolean) => {
     e.stopPropagation();
-    updateTaskStatusMutation.mutate({ id, status: currentCompleted ? 'PENDING' : 'COMPLETED' });
+    updateTaskStatusMutation.mutate({ id, status: currentCompleted ? 'TODO' : 'COMPLETED' });
   };
 
   // ---- Create Project Modal (API) ----

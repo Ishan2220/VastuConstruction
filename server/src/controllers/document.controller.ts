@@ -17,6 +17,10 @@ export const create = asyncHandler(async (req: Request, res: Response) => {
   const doc = await docService.create(req.body, req.user!.userId);
   res.status(201).json(new ApiResponse(201, doc, 'Document uploaded successfully'));
 });
+export const update = asyncHandler(async (req: Request, res: Response) => {
+  const doc = await docService.update(req.params.id as string, req.body, req.user!.userId);
+  res.json(new ApiResponse(200, doc, 'Document updated successfully'));
+});
 
 export const remove = asyncHandler(async (req: Request, res: Response) => {
   await docService.remove(req.params.id as string, req.user!.userId);

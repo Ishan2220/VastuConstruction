@@ -112,7 +112,7 @@ export const create = async (
       projectId: data.projectId || null,
       subtotal: numSubtotal,
       gstMode: data.gstMode || 'NONE',
-      gstPercentage: data.gstPercentage ? Number(data.gstPercentage) : null,
+      gstPercentage: data.gstPercentage !== undefined && data.gstPercentage !== null ? Number(data.gstPercentage) : null,
       taxAmount: numTax,
       totalAmount: numTotal,
       status: data.status || 'UNPAID',
@@ -122,8 +122,8 @@ export const create = async (
           quantity: Number(item.quantity),
           rate: Number(item.rate),
           amount: Number(item.amount),
-          gstRate: item.gstRate ? Number(item.gstRate) : null,
-          gstAmount: item.gstAmount ? Number(item.gstAmount) : null
+          gstRate: item.gstRate !== undefined && item.gstRate !== null ? Number(item.gstRate) : null,
+          gstAmount: item.gstAmount !== undefined && item.gstAmount !== null ? Number(item.gstAmount) : null
         })) || []
       }
     },
@@ -173,7 +173,7 @@ export const updateStatus = async (invoiceId: string, status: string, paymentMet
         projectId: existingInvoice.projectId,
         amount: Number(existingInvoice.subtotal),
         gstMode: (existingInvoice as any).gstMode || 'NONE',
-        gstPercentage: (existingInvoice as any).gstPercentage ? Number((existingInvoice as any).gstPercentage) : null,
+        gstPercentage: (existingInvoice as any).gstPercentage !== undefined && (existingInvoice as any).gstPercentage !== null ? Number((existingInvoice as any).gstPercentage) : null,
         gstAmount: Number(existingInvoice.taxAmount || 0),
         totalAmount: Number(existingInvoice.totalAmount),
         paymentDate: new Date(),
@@ -190,7 +190,7 @@ export const updateStatus = async (invoiceId: string, status: string, paymentMet
         vendorId: existingInvoice.vendorId as string,
         amount: Number(existingInvoice.subtotal),
         gstMode: (existingInvoice as any).gstMode || 'NONE',
-        gstPercentage: (existingInvoice as any).gstPercentage ? Number((existingInvoice as any).gstPercentage) : null,
+        gstPercentage: (existingInvoice as any).gstPercentage !== undefined && (existingInvoice as any).gstPercentage !== null ? Number((existingInvoice as any).gstPercentage) : null,
         gstAmount: Number(existingInvoice.taxAmount || 0),
         totalAmount: Number(existingInvoice.totalAmount),
         paymentDate: new Date(),
@@ -199,6 +199,21 @@ export const updateStatus = async (invoiceId: string, status: string, paymentMet
         type: 'Vendor Payment',
         description: `Payment for Vendor Invoice ${existingInvoice.invoiceNumber}`,
       }, userId);
+    }
+  } else if (status !== 'PAID' && existingInvoice.status === 'PAID' && userId) {
+    if (existingInvoice.type === 'CLIENT' && existingInvoice.clientId) {
+      const income = await prisma.income.findFirst({ where: { invoiceNo: existingInvoice.invoiceNumber } });
+      if (income) await incomeService.remove(income.id, userId);
+    } else if (existingInvoice.type === 'VENDOR' && existingInvoice.vendorId) {
+      // Find expense by description or exact reference. Let's just find by type and projectId? 
+      // It's safer to add an 'invoiceNo' to Expense, but since it doesn't exist, we can use Prisma deleteMany with description match
+      await prisma.expense.deleteMany({
+        where: {
+          vendorId: existingInvoice.vendorId,
+          type: 'Vendor Payment',
+          description: `Payment for Vendor Invoice ${existingInvoice.invoiceNumber}`
+        }
+      });
     }
   }
 
@@ -212,6 +227,22 @@ export const updateStatus = async (invoiceId: string, status: string, paymentMet
 export const remove = async (id: string, userId?: string) => {
   const oldInvoice = await getById(id);
   await checkFinancialLock(oldInvoice.issueDate);
+  
+  if (oldInvoice.status === 'PAID') {
+    if (oldInvoice.type === 'CLIENT' && oldInvoice.clientId) {
+      const income = await prisma.income.findFirst({ where: { invoiceNo: oldInvoice.invoiceNumber } });
+      if (income) await incomeService.remove(income.id, userId);
+    } else if (oldInvoice.type === 'VENDOR' && oldInvoice.vendorId) {
+      await prisma.expense.deleteMany({
+        where: {
+          vendorId: oldInvoice.vendorId,
+          type: 'Vendor Payment',
+          description: `Payment for Vendor Invoice ${oldInvoice.invoiceNumber}`
+        }
+      });
+    }
+  }
+
   await prisma.invoice.delete({ where: { id } });
   if (userId) {
     eventBus.publishMutation('Invoice', 'DELETE', userId, id, randomUUID(), null, oldInvoice);

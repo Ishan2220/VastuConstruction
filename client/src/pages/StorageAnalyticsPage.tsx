@@ -34,6 +34,16 @@ export default function StorageAnalyticsPage() {
   if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
   if (!stats) return null;
 
+  if (stats.totalFiles === 0) {
+    return (
+      <div className="p-8 text-center flex flex-col items-center justify-center min-h-[50vh]">
+        <HardDrive className="w-16 h-16 text-slate-300 mb-4" />
+        <h2 className="text-2xl font-bold text-slate-600">No Storage Data</h2>
+        <p className="text-slate-500 mt-2">Upload some files to see analytics.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

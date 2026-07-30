@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs';
 
 export const list = async () => {
   const employees = await prisma.employee.findMany({
+    where: { isArchived: false, user: { deletedAt: null } },
     include: {
       user: {
         select: { id: true, name: true, email: true, phone: true, role: true, isActive: true },
@@ -27,16 +28,26 @@ export const getById = async (id: string) => {
     },
   });
   if (!employee) throw new ApiError(404, 'Employee profile not found');
-  return employee;
+
+  const attendance = await prisma.unifiedAttendance.findMany({
+    where: { personType: 'EMPLOYEE', personId: id },
+    take: 30,
+    orderBy: { date: 'desc' }
+  });
+
+  return { ...employee, attendance };
 };
 
 export const create = async (payload: any, userId: string) => {
   const { idempotencyKey, name, email, phone, role, department, salary, dailyRate, payrollType, workingDaysOverride, workingHoursOverride, payrollStartDate, overtimeEligible } = payload;
   
+  const existingUser = await prisma.user.findUnique({ where: { email } });
+  if (existingUser) throw new ApiError(400, 'User with this email already exists');
+
   const hashedPassword = await bcrypt.hash('Vastu@123', 12);
   
   let userRole: Role = 'ENGINEER';
-  if (role === 'ACCOUNTANT') userRole = 'ACCOUNTANT';
+  if (role === 'ACCOUNTANT' || role === 'FINANCE_MANAGER') userRole = 'ACCOUNTANT';
   if (role === 'ADMIN') userRole = 'ADMIN';
 
   const employee = await prisma.employee.create({
@@ -94,6 +105,38 @@ export const update = async (id: string, payload: any, userId: string) => {
   const employee = await prisma.employee.update({ where: { id }, data: updateData });
   eventBus.publishMutation('Employee', 'UPDATE', userId, id, idempotencyKey || crypto.randomUUID(), employee, oldEmployee);
   return employee;
+};
+
+export const remove = async (id: string, userId: string, idempotencyKey?: string) => {
+  const oldEmployee = await getById(id);
+  
+  await prisma.$transaction(async (tx) => {
+    await tx.employee.update({
+      where: { id },
+      data: { isArchived: true }
+    });
+    if (oldEmployee.userId) {
+      await tx.user.update({
+        where: { id: oldEmployee.userId },
+        data: { isActive: false, deletedAt: new Date() }
+      });
+    }
+  });
+
+  eventBus.publishMutation('Employee', 'DELETE', userId, id, idempotencyKey || crypto.randomUUID(), null, oldEmployee);
+  return { success: true };
+};
+
+export const getAttendance = async (id: string, month: string) => {
+  const dateFilter = month ? {
+    gte: new Date(`${month}-01T00:00:00.000Z`),
+    lte: new Date(new Date(`${month}-01T00:00:00.000Z`).getFullYear(), new Date(`${month}-01T00:00:00.000Z`).getMonth() + 1, 0, 23, 59, 59, 999)
+  } : undefined;
+
+  return prisma.unifiedAttendance.findMany({
+    where: { personType: 'EMPLOYEE', personId: id, ...(dateFilter && { date: dateFilter }) },
+    orderBy: { date: 'asc' }
+  });
 };
 
 export const grantTempAdmin = async (userId: string, durationHours: number, pages: string[]) => {

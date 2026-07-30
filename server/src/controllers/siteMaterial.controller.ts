@@ -22,3 +22,13 @@ export const getMaterialHistory = asyncHandler(async (req: Request, res: Respons
   const history = await siteMaterialService.getMaterialHistory(req.params.projectId as string, req.params.materialId as string);
   res.json(new ApiResponse(200, history, 'Material history fetched successfully'));
 });
+
+export const updateConsumption = asyncHandler(async (req: Request, res: Response) => {
+  const result = await siteMaterialService.updateConsumption(req.params.id as string, req.body, req.user!.userId);
+  res.json(new ApiResponse(200, result, 'Consumption updated successfully'));
+});
+
+export const deleteConsumption = asyncHandler(async (req: Request, res: Response) => {
+  await siteMaterialService.deleteConsumption(req.params.id as string, req.user!.userId);
+  res.json(new ApiResponse(200, null, 'Consumption deleted successfully'));
+});

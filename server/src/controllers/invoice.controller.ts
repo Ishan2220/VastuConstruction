@@ -24,6 +24,6 @@ export const updateInvoiceStatus = async (req: Request, res: Response) => {
 };
 
 export const deleteInvoice = async (req: Request, res: Response) => {
-  await invoiceService.remove(req.params.id as string);
+  await invoiceService.remove(req.params.id as string, req.user!.userId);
   res.json(new ApiResponse(200, null, 'Invoice deleted successfully'));
 };

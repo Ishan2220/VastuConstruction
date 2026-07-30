@@ -174,7 +174,7 @@ export const convertToClient = async (id: string, userId: string) => {
         address: existing.plotAddress,
         leadId: existing.id,
         notes: {
-          create: [{ content: `Converted from lead ${existing.id}`, createdById: userId }]
+          create: [{ content: `Converted from lead ${existing.id}`, userId: userId }]
         },
         createdById: userId,
       }

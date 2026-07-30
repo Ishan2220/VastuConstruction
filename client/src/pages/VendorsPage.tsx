@@ -45,7 +45,7 @@ export default function VendorsPage() {
   const { data: vendors = [], isLoading } = useQuery({
     queryKey: ['vendors-list'],
     queryFn: async () => {
-      const { data } = await api.get('/vendors');
+      const { data } = await api.get('/vendors?limit=1000');
       return data.data?.data || [];
     },
   });
@@ -399,6 +399,45 @@ export default function VendorsPage() {
                 onChange={(e) => setNewVendor({ ...newVendor, gstin: e.target.value.toUpperCase() })}
                 className="w-full clay-input text-sm font-mono"
               />
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="email"
+                  placeholder="Email Address"
+                  value={newVendor.email}
+                  onChange={(e) => setNewVendor({ ...newVendor, email: e.target.value })}
+                  className="w-full clay-input text-sm"
+                />
+                <input
+                  type="text"
+                  placeholder="Alternate Phone"
+                  value={(newVendor as any).altPhone || ''}
+                  onChange={(e) => setNewVendor({ ...newVendor, altPhone: e.target.value } as any)}
+                  className="w-full clay-input text-sm font-mono"
+                />
+              </div>
+              <input
+                type="text"
+                placeholder="Complete Address"
+                value={newVendor.address}
+                onChange={(e) => setNewVendor({ ...newVendor, address: e.target.value })}
+                className="w-full clay-input text-sm"
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="PAN Number"
+                  value={(newVendor as any).pan || ''}
+                  onChange={(e) => setNewVendor({ ...newVendor, pan: e.target.value.toUpperCase() } as any)}
+                  className="w-full clay-input text-sm font-mono uppercase"
+                />
+                <input
+                  type="number"
+                  placeholder="Opening Balance (₹)"
+                  value={newVendor.openingBalance}
+                  onChange={(e) => setNewVendor({ ...newVendor, openingBalance: e.target.value })}
+                  className="w-full clay-input text-sm font-mono text-rose-600"
+                />
+              </div>
               <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
                 <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-slate-100">Cancel</button>
                 <button type="submit" disabled={createMutation.isPending} className="clay-btn px-5 py-2">Onboard</button>
@@ -470,6 +509,45 @@ export default function VendorsPage() {
                 onChange={(e) => setEditingVendor({ ...editingVendor, gst: e.target.value.toUpperCase() })}
                 className="w-full clay-input text-sm font-mono uppercase"
               />
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="email"
+                  placeholder="Email Address"
+                  value={editingVendor.email || ''}
+                  onChange={(e) => setEditingVendor({ ...editingVendor, email: e.target.value })}
+                  className="w-full clay-input text-sm"
+                />
+                <input
+                  type="text"
+                  placeholder="Alternate Phone"
+                  value={editingVendor.altPhone || ''}
+                  onChange={(e) => setEditingVendor({ ...editingVendor, altPhone: e.target.value })}
+                  className="w-full clay-input text-sm font-mono"
+                />
+              </div>
+              <input
+                type="text"
+                placeholder="Complete Address"
+                value={editingVendor.address || ''}
+                onChange={(e) => setEditingVendor({ ...editingVendor, address: e.target.value })}
+                className="w-full clay-input text-sm"
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="PAN Number"
+                  value={editingVendor.pan || ''}
+                  onChange={(e) => setEditingVendor({ ...editingVendor, pan: e.target.value.toUpperCase() })}
+                  className="w-full clay-input text-sm font-mono uppercase"
+                />
+                <input
+                  type="number"
+                  placeholder="Opening Balance (₹)"
+                  value={editingVendor.openingBalance || ''}
+                  onChange={(e) => setEditingVendor({ ...editingVendor, openingBalance: e.target.value })}
+                  className="w-full clay-input text-sm font-mono text-rose-600"
+                />
+              </div>
               <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
                 <button type="button" onClick={() => setEditingVendor(null)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-slate-100">Cancel</button>
                 <button type="submit" disabled={updateMutation.isPending} className="clay-btn px-5 py-2">Save Updates</button>

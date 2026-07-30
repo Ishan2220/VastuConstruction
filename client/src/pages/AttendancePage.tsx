@@ -442,10 +442,10 @@ export default function AttendancePage() {
                           </div>
 
                           {/* Right: Controls */}
-                          <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                          <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
                             
-                            {/* Status Switcher */}
-                            <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5" style={{ opacity: isLocked ? 0.7 : 1 }}>
+                            {/* Actions Group */}
+                            <div className="flex items-center gap-1.5 p-1 bg-gray-50/80 rounded-[20px] border border-gray-100/50" style={{ opacity: isLocked ? 0.7 : 1 }}>
                               <button
                                 disabled={isLocked}
                                 onClick={() => handleStatusChange(person.personId, 'PRESENT')}
@@ -476,7 +476,7 @@ export default function AttendancePage() {
                             </div>
 
                             {/* Overtime */}
-                            <div className={`flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center transition-opacity ${showOt ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                            <div className={`flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] transition-opacity ${showOt ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                               <span className="text-[10px] text-gray-400 font-medium">OT</span>
                               <input
                                 type="number"

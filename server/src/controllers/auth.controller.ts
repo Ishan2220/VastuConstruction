@@ -18,10 +18,11 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const result = await authService.login(email, password, ipAddress, userAgent);
 
   // Set refresh token in HttpOnly cookie
+  const isProd = env.NODE_ENV === 'production';
   res.cookie('refreshToken', result.refreshToken, {
     httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     path: '/',
   });
@@ -42,10 +43,11 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
 
   const result = await authService.refreshAccessToken(token);
 
+  const isProd = env.NODE_ENV === 'production';
   res.cookie('refreshToken', result.refreshToken, {
     httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     path: '/',
   });
@@ -62,7 +64,12 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 
   await authService.logout(token, ipAddress, userAgent);
 
-  res.clearCookie('refreshToken', { path: '/' });
+  const isProd = env.NODE_ENV === 'production';
+  res.clearCookie('refreshToken', {
+    path: '/',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+  });
   res.json(new ApiResponse(200, null, 'Logged out successfully'));
 });
 

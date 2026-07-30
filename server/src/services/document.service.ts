@@ -63,9 +63,39 @@ export const create = async (data: Prisma.DocumentUncheckedCreateInput & { idemp
   return doc;
 };
 
+export const update = async (id: string, data: Prisma.DocumentUpdateInput, userId: string, idempotencyKey?: string) => {
+  const oldDoc = await getById(id);
+  const doc = await prisma.document.update({
+    where: { id },
+    data,
+  });
+  eventBus.publishMutation('Document', 'UPDATE', userId, id, idempotencyKey || crypto.randomUUID(), doc, oldDoc);
+  return doc;
+};
+
 export const remove = async (id: string, userId: string, idempotencyKey?: string) => {
   const oldDoc = await getById(id);
+  
+  // Check if ADMIN or uploader
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (user?.role !== 'ADMIN' && oldDoc.uploadedById !== userId) {
+    throw new ApiError(403, 'Unauthorized to delete this document');
+  }
+
   await prisma.document.delete({ where: { id } });
+
+  if (oldDoc.fileUrl) {
+    const file = await prisma.file.findFirst({
+      where: { publicUrl: oldDoc.fileUrl, deletedAt: null }
+    });
+    if (file) {
+      await prisma.file.update({
+        where: { id: file.id },
+        data: { deletedAt: new Date(), status: 'DELETED' }
+      });
+    }
+  }
+
   eventBus.publishMutation('Document', 'DELETE', userId, id, idempotencyKey || crypto.randomUUID(), null, oldDoc);
   return { success: true };
 };

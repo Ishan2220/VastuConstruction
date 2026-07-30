@@ -23,11 +23,14 @@ export const create = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const update = asyncHandler(async (req: Request, res: Response) => {
-  const data = {
-    ...req.body,
-    ...(req.body.dueDate && { dueDate: new Date(req.body.dueDate) }),
-    ...(req.body.status === 'COMPLETED' && { completedAt: new Date() }),
-  };
+  const data: any = { ...req.body };
+  if (req.body.dueDate !== undefined) {
+    data.dueDate = req.body.dueDate ? new Date(req.body.dueDate) : null;
+  }
+  if (req.body.status) {
+    data.completedAt = req.body.status === 'COMPLETED' ? new Date() : null;
+  }
+  
   const task = await taskService.update(req.params.id as string, data, req.user!.userId);
   res.json(new ApiResponse(200, task, 'Task updated successfully'));
 });
@@ -36,7 +39,7 @@ export const updateStatus = asyncHandler(async (req: Request, res: Response) => 
   const { status } = req.body;
   const data = {
     status,
-    ...(status === 'COMPLETED' && { completedAt: new Date() }),
+    completedAt: status === 'COMPLETED' ? new Date() : null,
   };
   const task = await taskService.update(req.params.id as string, data, req.user!.userId);
   res.json(new ApiResponse(200, task, 'Task status updated successfully'));

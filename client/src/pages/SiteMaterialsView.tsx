@@ -13,12 +13,13 @@ import {
 import { formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { ErrorState } from '@/components/ui/ErrorState';
 
-interface Props {
-  projectId: string;
-}
+import { useParams } from 'react-router';
 
-export default function SiteMaterialsView({ projectId }: Props) {
+export default function SiteMaterialsView({ projectId: propProjectId }: { projectId?: string }) {
+  const { id } = useParams();
+  const projectId = propProjectId || id || '';
   const queryClient = useQueryClient();
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
   
@@ -31,7 +32,7 @@ export default function SiteMaterialsView({ projectId }: Props) {
   const [consumeData, setConsumeData] = useState({ quantity: '', notes: '' });
 
   // Data fetching
-  const { data: summary, isLoading } = useQuery({
+  const { data: summary, isLoading, error, refetch } = useQuery({
     queryKey: ['site-materials-summary', projectId],
     queryFn: async () => {
       const { data } = await api.get(`/projects/${projectId}/materials`);
@@ -92,6 +93,10 @@ export default function SiteMaterialsView({ projectId }: Props) {
 
   if (isLoading) {
     return <div className="flex h-full items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7C6EF0]" /></div>;
+  }
+
+  if (error) {
+    return <ErrorState error={error} onRetry={refetch} />;
   }
 
   const materials = summary?.materials || [];

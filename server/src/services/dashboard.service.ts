@@ -120,6 +120,7 @@ export const getAdminDashboard = async () => {
       by: ['type'],
       _sum: { amount: true },
       where: {
+        deletedAt: null,
         paymentDate: { gte: monthStart, lte: monthEnd },
       },
     }),
@@ -143,6 +144,7 @@ export const getAdminDashboard = async () => {
       by: ['paymentMethod'],
       _sum: { amount: true },
       _count: true,
+      where: { deletedAt: null },
     }),
 
     // Recent business activities
@@ -392,12 +394,12 @@ export const getTodayActivities = async () => {
 
   const [expenses, incomes, clients, leads, tasks] = await Promise.all([
     prisma.expense.findMany({
-      where: { createdAt: { gte: today } },
+      where: { deletedAt: null, createdAt: { gte: today } },
       include: { vendor: { select: { name: true } } },
       orderBy: { createdAt: 'desc' }
     }),
     prisma.income.findMany({
-      where: { createdAt: { gte: today } },
+      where: { deletedAt: null, createdAt: { gte: today } },
       include: { client: { select: { name: true } } },
       orderBy: { createdAt: 'desc' }
     }),

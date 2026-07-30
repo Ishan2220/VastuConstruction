@@ -31,6 +31,7 @@ export const list = async (params: ListParams) => {
       ],
     }),
     ...(city && { city: { contains: city, mode: 'insensitive' } }),
+    ...(category && category !== 'ALL' && { category }),
   };
 
   const [rawData, total] = await Promise.all([

@@ -505,7 +505,19 @@ export default function ProjectDetailsPage() {
                     <div className="text-sm font-bold text-slate-800 font-heading">{t.title}</div>
                     <div className="text-xs text-slate-500 font-medium">Assignee: <strong className="text-[#7C6EF0]">{t.assignee?.name || 'Engineer'}</strong></div>
                   </div>
-                  <CheckCircle2 className="w-5 h-5 text-slate-300 hover:text-[#5CB77E] cursor-pointer transition-colors" onClick={() => toast.success('Task checked off')} />
+                  <CheckCircle2 
+                    className={`w-5 h-5 cursor-pointer transition-colors ${t.status === 'COMPLETED' ? 'text-[#5CB77E]' : 'text-slate-300 hover:text-[#5CB77E]'}`}
+                    onClick={async () => {
+                      try {
+                        const newStatus = t.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
+                        await api.patch(`/tasks/${t.id}/status`, { status: newStatus });
+                        toast.success('Task status updated');
+                        queryClient.invalidateQueries({ queryKey: ['project-details', id] });
+                      } catch (err) {
+                        toast.error('Failed to update task');
+                      }
+                    }} 
+                  />
                 </div>
               ))
             )}

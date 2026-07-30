@@ -153,6 +153,26 @@ export default function VendorDetailsPage() {
               )}
             </div>
           </div>
+          
+          <div className="clay-card p-6 space-y-4 bg-slate-900 text-white">
+            <h3 className="font-bold border-b border-white/20 pb-3 font-heading text-white">Account Summary</h3>
+            <div className="space-y-4 mt-2">
+              <div className="flex justify-between">
+                <span className="text-white/70 text-sm font-medium">Total Purchased</span>
+                <span className="font-bold text-white text-sm">{formatCurrency(globalTotalPO)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/70 text-sm font-medium">Total Paid</span>
+                <span className="font-bold text-emerald-400 text-sm">{formatCurrency(globalTotalPaid)}</span>
+              </div>
+              <div className="flex justify-between border-t border-white/20 pt-3">
+                <span className="text-white text-sm font-bold uppercase tracking-wider">Outstanding</span>
+                <span className={`font-bold text-lg ${globalRemaining > 0 ? 'text-rose-400' : 'text-white'}`}>
+                  {formatCurrency(globalRemaining)}
+                </span>
+              </div>
+            </div>
+          </div>
 
         </div>
 
@@ -181,8 +201,13 @@ export default function VendorDetailsPage() {
                   <div className="space-y-3 text-sm font-medium">
 
                     <div className="flex justify-between items-center bg-white/50 p-2 rounded-xl border border-violet-100/30">
-                      <span className="text-slate-600 flex items-center gap-2"><PackageCheck className="w-4 h-4 text-[#E5636C]"/> Payment Paid</span>
-                      <span className="font-mono font-bold text-[#E5636C]">{formatCurrency(site.totalPaid)}</span>
+                      <span className="text-slate-600 flex items-center gap-2"><FileText className="w-4 h-4 text-[#7C6EF0]"/> Total Purchases</span>
+                      <span className="font-mono font-bold text-[#7C6EF0]">{formatCurrency(site.totalPO)}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/50 p-2 rounded-xl border border-violet-100/30">
+                      <span className="text-slate-600 flex items-center gap-2"><PackageCheck className="w-4 h-4 text-[#5CB77E]"/> Payment Paid</span>
+                      <span className="font-mono font-bold text-[#5CB77E]">{formatCurrency(site.totalPaid)}</span>
                     </div>
 
                     <div className="pt-2">

@@ -179,7 +179,7 @@ export default function TasksPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-          {['ALL', 'TODO', 'IN_PROGRESS', 'COMPLETED'].map((st) => (
+          {['ALL', 'TODO', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'].map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
@@ -506,8 +506,15 @@ export default function TasksPage() {
                   <option value="TODO">To Do</option>
                   <option value="IN_PROGRESS">In Progress</option>
                   <option value="COMPLETED">Completed</option>
+                  <option value="CANCELLED">Cancelled</option>
                 </select>
               </div>
+              <input
+                type="date"
+                value={editingTask.dueDate ? new Date(editingTask.dueDate).toISOString().split('T')[0] : ''}
+                onChange={(e) => setEditingTask({ ...editingTask, dueDate: e.target.value })}
+                className="clay-input w-full px-3 py-2 text-sm font-semibold"
+              />
               <textarea
                 rows={3}
                 placeholder="Specific instructions, checklist items, and safety standards..."

@@ -282,19 +282,26 @@ export default function InvoicesPage() {
             i.description || 'Item', 
             i.quantity || '1', 
             Number(i.rate || 0).toLocaleString('en-IN'),
-            i.gstRate ? `${i.gstRate}%` : '0%',
-            Number(Number(i.amount || 0) + Number(i.gstAmount || 0)).toLocaleString('en-IN')
+            Number(i.amount || 0).toLocaleString('en-IN')
           ])
-        : [['Consulting, Labour & Material Services', '1', Number(invoice.totalAmount).toLocaleString('en-IN'), '0%', Number(invoice.totalAmount).toLocaleString('en-IN')]];
+        : [['Consulting, Labour & Material Services', '1', Number(invoice.subtotal).toLocaleString('en-IN'), Number(invoice.subtotal).toLocaleString('en-IN')]];
+
+      const gstText = invoice.gstMode === 'PERCENTAGE' 
+        ? `GST (${invoice.gstPercentage}%)`
+        : invoice.gstMode === 'AMOUNT' ? 'GST' : 'GST (0%)';
 
       autoTable(doc, {
         startY: 120,
         headStyles: { fillColor: [124, 110, 240], textColor: [255, 255, 255], fontStyle: 'bold' },
         bodyStyles: { textColor: [50, 50, 50] },
         alternateRowStyles: { fillColor: [250, 249, 255] },
-        head: [['Description', 'Qty', 'Rate', 'GST', 'Total (INR)']],
+        head: [['Description', 'Qty', 'Rate (INR)', 'Total (INR)']],
         body: tableBody,
-        foot: [['', '', '', 'Total Due', `Rs. ${Number(invoice.totalAmount).toLocaleString('en-IN')}`]],
+        foot: [
+          ['', '', 'Subtotal', `Rs. ${Number(invoice.subtotal).toLocaleString('en-IN')}`],
+          ['', '', gstText, `Rs. ${Number(invoice.taxAmount).toLocaleString('en-IN')}`],
+          ['', '', 'Total Due', `Rs. ${Number(invoice.totalAmount).toLocaleString('en-IN')}`]
+        ],
         footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
         theme: 'striped',
         margin: { top: 10, left: 14, right: 14 }

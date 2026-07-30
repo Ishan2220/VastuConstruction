@@ -28,6 +28,9 @@ export const list = async (params: ListParams) => {
   const skip = (pageNum - 1) * limitNum;
 
   const where: Prisma.MaterialOrderWhereInput = {
+    project: {
+      deletedAt: null,
+    },
     ...(search && {
       OR: [
         { orderNumber: { contains: search, mode: 'insensitive' } },
@@ -60,8 +63,13 @@ export const list = async (params: ListParams) => {
 };
 
 export const getById = async (id: string) => {
-  const order = await prisma.materialOrder.findUnique({
-    where: { id },
+  const order = await prisma.materialOrder.findFirst({
+    where: {
+      id,
+      project: {
+        deletedAt: null,
+      },
+    },
     include: {
       vendor: { select: { id: true, name: true, phone: true, email: true } },
       project: { select: { id: true, name: true } },

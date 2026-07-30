@@ -18,10 +18,14 @@ interface CalendarEvent {
 
 export default function CalendarPage() {
     const confirmDialog = useConfirm();
-  const [todayStr, setTodayStr] = useState(() => new Date().toISOString().split('T')[0]);
+  const [todayStr, setTodayStr] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
   useEffect(() => {
     const timer = setInterval(() => {
-      const nowStr = new Date().toISOString().split('T')[0];
+      const d = new Date();
+      const nowStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       if (nowStr !== todayStr) setTodayStr(nowStr);
     }, 60000); // Check every minute
     return () => clearInterval(timer);
@@ -161,9 +165,9 @@ export default function CalendarPage() {
   const { data: dailyActivities = [], isLoading: loadingActivities } = useQuery({
     queryKey: ['daily-activities', selectedDateStr],
     queryFn: async () => {
-      const d = new Date(selectedDateStr);
-      const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
-      const endOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+      const [y, m, d] = selectedDateStr.split('-').map(Number);
+      const startOfDay = new Date(y, m - 1, d, 0, 0, 0);
+      const endOfDay = new Date(y, m - 1, d, 23, 59, 59, 999);
       const { data } = await api.get(`/activities?startDate=${startOfDay.toISOString()}&endDate=${endOfDay.toISOString()}`);
       return data.data?.activities || [];
     }

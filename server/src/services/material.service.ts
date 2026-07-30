@@ -52,9 +52,21 @@ export const getById = async (id: string) => {
     include: {
       vendor: { select: { id: true, name: true, phone: true } },
       stock: {
+        where: {
+          project: {
+            deletedAt: null,
+          },
+        },
         include: { project: { select: { id: true, name: true } } },
       },
       orderItems: {
+        where: {
+          order: {
+            project: {
+              deletedAt: null,
+            },
+          },
+        },
         take: 10,
         orderBy: { order: { orderDate: 'desc' } },
         include: {
@@ -108,7 +120,12 @@ export const remove = async (id: string, userId: string, idempotencyKey?: string
 };
 
 export const getStock = async (projectId?: string) => {
-  const where = projectId ? { projectId } : {};
+  const where = {
+    project: {
+      deletedAt: null,
+    },
+    ...(projectId && { projectId }),
+  };
   const stocks = await prisma.stock.findMany({
     where,
     include: {

@@ -80,6 +80,7 @@ export const getPaymentHistory = asyncHandler(async (req: Request, res: Response
       LEFT JOIN projects p ON i.project_id = p.id
       LEFT JOIN bank_accounts a ON i.account_id = a.id
       LEFT JOIN users u ON i.created_by_id = u.id
+      WHERE i.deleted_at IS NULL
 
       UNION ALL
 
@@ -115,6 +116,7 @@ export const getPaymentHistory = asyncHandler(async (req: Request, res: Response
       LEFT JOIN vendors v ON e.vendor_id = v.id
       LEFT JOIN bank_accounts a ON e.account_id = a.id
       LEFT JOIN users u ON e.created_by_id = u.id
+      WHERE e.deleted_at IS NULL
 
       UNION ALL
 
@@ -320,9 +322,9 @@ export const getPaymentSummary = asyncHandler(async (req: Request, res: Response
 
   const baseQuery = Prisma.sql`
     WITH AllPayments AS (
-      SELECT CAST('INFLOW' AS TEXT) as direction, amount, CAST('COMPLETED' AS TEXT) as status, payment_date as "paymentDate" FROM incomes
+      SELECT CAST('INFLOW' AS TEXT) as direction, amount, CAST('COMPLETED' AS TEXT) as status, payment_date as "paymentDate" FROM incomes WHERE deleted_at IS NULL
       UNION ALL
-      SELECT CAST('OUTFLOW' AS TEXT) as direction, amount, CAST('COMPLETED' AS TEXT) as status, payment_date as "paymentDate" FROM expenses
+      SELECT CAST('OUTFLOW' AS TEXT) as direction, amount, CAST('COMPLETED' AS TEXT) as status, payment_date as "paymentDate" FROM expenses WHERE deleted_at IS NULL
       UNION ALL
       SELECT CAST('OUTFLOW' AS TEXT) as direction, amount, CAST('COMPLETED' AS TEXT) as status, payment_date as "paymentDate" FROM vendor_payments
       UNION ALL

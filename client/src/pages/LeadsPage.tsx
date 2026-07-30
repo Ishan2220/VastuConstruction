@@ -15,19 +15,26 @@ import {
   Calendar,
   Edit3,
   Trash2,
+  Download,
+  Building2,
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { CategorySelect } from '@/components/common/CategorySelect';
 import { useQuickAddListener } from '@/hooks/useQuickAddListener';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 export default function LeadsPage() {
+    const confirmDialog = useConfirm();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   useQuickAddListener('lead', () => setIsCreateOpen(true));
   const [editingLead, setEditingLead] = useState<any>(null);
+  const [filterStatus, setFilterStatus] = useState('');
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [sortBy, setSortBy] = useState('createdAt');
   const [newLead, setNewLead] = useState({
     name: '',
     phone: '',
@@ -38,12 +45,22 @@ export default function LeadsPage() {
     requiredService: 'Full Residential G+10 Construction',
     requirement: '',
     remarks: '',
+    captureDate: new Date().toISOString(),
+    plotAddress: '',
+    plotArea: '',
+    plotDescription: '',
   });
 
   const { data: leads = [], isLoading } = useQuery({
-    queryKey: ['leads-list'],
+    queryKey: ['leads-list', filterStatus, dateRange, sortBy],
     queryFn: async () => {
-      const { data } = await api.get('/leads');
+      const params: any = {};
+      if (filterStatus) params.status = filterStatus;
+      if (dateRange.start) params.captureDateStart = dateRange.start;
+      if (dateRange.end) params.captureDateEnd = dateRange.end;
+      if (sortBy) params.sortBy = sortBy;
+      
+      const { data } = await api.get('/leads', { params });
       return data.data?.data || [];
     },
   });
@@ -107,6 +124,21 @@ export default function LeadsPage() {
     },
   });
 
+  const convertMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.post(`/leads/${id}/convert`);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads-list'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+      toast.success('Lead converted to Client successfully!');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Failed to convert lead');
+    },
+  });
+
   const handleUpdateLead = (e: React.FormEvent) => {
     e.preventDefault();
     updateMutation.mutate({
@@ -130,8 +162,10 @@ export default function LeadsPage() {
   const filteredLeads = leads.filter((l: any) =>
     l.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     l.phone?.includes(searchTerm) ||
-    l.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    l.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    l.plotAddress?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
 
   return (
     <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans">
@@ -161,10 +195,36 @@ export default function LeadsPage() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search leads by client name, phone, or email..."
+            placeholder="Search leads by client name, phone, or plot address..."
             className="w-full pl-10 pr-4 py-2.5 clay-input text-sm focus:outline-none"
           />
         </div>
+        
+        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="clay-input py-2.5 text-sm w-full md:w-auto">
+          <option value="">All Statuses</option>
+          <option value="NEW">New</option>
+          <option value="CONTACTED">Contacted</option>
+          <option value="SITE_VISIT">Site Visit</option>
+          <option value="PROPOSAL_SENT">Proposal</option>
+          <option value="NEGOTIATION">Negotiation</option>
+          <option value="WON">Won</option>
+          <option value="LOST">Lost</option>
+        </select>
+
+        <div className="flex items-center gap-2">
+          <input type="date" value={dateRange.start} onChange={(e) => setDateRange(prev => ({...prev, start: e.target.value}))} className="clay-input py-2 text-xs w-full md:w-auto" title="Start Capture Date" />
+          <span className="text-slate-400">-</span>
+          <input type="date" value={dateRange.end} onChange={(e) => setDateRange(prev => ({...prev, end: e.target.value}))} className="clay-input py-2 text-xs w-full md:w-auto" title="End Capture Date" />
+        </div>
+
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="clay-input py-2.5 text-sm w-full md:w-auto">
+          <option value="createdAt">Sort: Created Date</option>
+          <option value="captureDate">Sort: Capture Date</option>
+          <option value="budget">Sort: Budget</option>
+          <option value="plotArea">Sort: Plot Area</option>
+        </select>
+
+
       </div>
 
       {isLoading ? (
@@ -197,8 +257,8 @@ export default function LeadsPage() {
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm(`Are you sure you want to delete lead ${lead.name}?`)) {
+                        onClick={async () => {
+                          if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete lead ${lead.name}?` })) {
                             deleteMutation.mutate(lead.id);
                           }
                         }}
@@ -207,19 +267,34 @@ export default function LeadsPage() {
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
+                      {lead.status !== 'WON' && (
+                        <button
+                          onClick={async () => {
+                            if (await confirmDialog({ title: 'Convert Lead', message: `Convert ${lead.name} to a Client?` })) {
+                              convertMutation.mutate(lead.id);
+                            }
+                          }}
+                          className="p-1 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer ml-auto"
+                          title="Convert to Client"
+                        >
+                          <Building2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
-                    <select
-                      value={lead.status}
-                      onChange={(e) => updateStatusMutation.mutate({ id: lead.id, status: e.target.value })}
-                      className="text-xs font-bold uppercase px-2 py-1 clay-input text-slate-700 focus:outline-none w-28 sm:w-auto truncate"
-                    >
-                      <option value="NEW">New</option>
-                      <option value="CONTACTED">Contacted</option>
-                      <option value="SITE_VISIT_SCHEDULED">Site Visit</option>
-                      <option value="PROPOSAL_SENT">Proposal Sent</option>
-                      <option value="CONVERTED">Converted</option>
-                      <option value="LOST">Lost</option>
-                    </select>
+                      <select
+                        value={lead.status}
+                        onChange={(e) => updateStatusMutation.mutate({ id: lead.id, status: e.target.value })}
+                        className="text-xs font-bold uppercase px-2 py-1 clay-input text-slate-700 focus:outline-none w-28 sm:w-auto truncate"
+                      >
+                        <option value="NEW">New</option>
+                        <option value="CONTACTED">Contacted</option>
+                        <option value="SITE_VISIT">Site Visit</option>
+                        <option value="FOLLOW_UP">Follow Up</option>
+                        <option value="PROPOSAL_SENT">Proposal Sent</option>
+                        <option value="NEGOTIATION">Negotiation</option>
+                        <option value="WON">Won</option>
+                        <option value="LOST">Lost</option>
+                      </select>
                   </div>
 
                   <h3 className="text-lg font-bold text-slate-900 font-heading truncate">{lead.name}</h3>
@@ -253,6 +328,7 @@ export default function LeadsPage() {
                 <tr>
                   <th className="p-4 text-xs font-bold text-slate-500 uppercase">Lead Details</th>
                   <th className="p-4 text-xs font-bold text-slate-500 uppercase">Contact</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase">Project Details</th>
                   <th className="p-4 text-xs font-bold text-slate-500 uppercase">Budget & Req</th>
                   <th className="p-4 text-xs font-bold text-slate-500 uppercase">Status</th>
                   <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">Actions</th>
@@ -273,6 +349,12 @@ export default function LeadsPage() {
                         {lead.email && <div className="flex items-center gap-2 text-xs"><Mail className="w-3.5 h-3.5 text-slate-400" /> {lead.email}</div>}
                       </div>
                     </td>
+                    <td className="p-4">
+                      <div className="text-sm text-slate-600 space-y-1">
+                        {lead.captureDate && <div className="flex items-center gap-2 text-xs"><Calendar className="w-3.5 h-3.5 text-slate-400" /> {new Date(lead.captureDate).toLocaleDateString()}</div>}
+                        {lead.plotArea && <div className="flex items-center gap-2 text-xs"><MapPin className="w-3.5 h-3.5 text-slate-400" /> {lead.plotArea} sq ft</div>}
+                      </div>
+                    </td>
                     <td className="p-4 max-w-xs">
                       <div className="font-bold text-slate-900">{formatCurrency(Number(lead.budget || 0))}</div>
                       <div className="text-xs text-slate-500 truncate mt-1" title={lead.requirement || lead.requiredService}>{lead.requirement || lead.requiredService || 'Construction'}</div>
@@ -285,16 +367,18 @@ export default function LeadsPage() {
                       >
                         <option value="NEW">New</option>
                         <option value="CONTACTED">Contacted</option>
-                        <option value="SITE_VISIT_SCHEDULED">Site Visit</option>
+                        <option value="SITE_VISIT">Site Visit</option>
+                        <option value="FOLLOW_UP">Follow Up</option>
                         <option value="PROPOSAL_SENT">Proposal Sent</option>
-                        <option value="CONVERTED">Converted</option>
+                        <option value="NEGOTIATION">Negotiation</option>
+                        <option value="WON">Won</option>
                         <option value="LOST">Lost</option>
                       </select>
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => setEditingLead(lead)} className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors"><Edit3 className="w-4 h-4" /></button>
-                        <button onClick={() => { if (confirm(`Delete lead ${lead.name}?`)) deleteMutation.mutate(lead.id); }} className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => setEditingLead(lead)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors"><Edit3 className="w-4 h-4" /></button>
+                        <button onClick={async () => { if (await confirmDialog({ title: 'Confirm Action', message: `Delete lead ${lead.name}?` })) deleteMutation.mutate(lead.id); }} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>
@@ -354,8 +438,44 @@ export default function LeadsPage() {
                 placeholder="Detailed Requirement / Description"
                 value={newLead.requirement}
                 onChange={(e) => setNewLead({ ...newLead, requirement: e.target.value })}
-                className="w-full clay-input text-sm min-h-[80px]"
+                className="w-full clay-input text-sm min-h-[60px]"
               />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Capture Date</label>
+                  <input
+                    type="date"
+                    value={newLead.captureDate ? newLead.captureDate.split('T')[0] : ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setNewLead({ ...newLead, captureDate: val ? new Date(val).toISOString() : '' });
+                    }}
+                    className="w-full clay-input text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Plot Area (sq ft)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 1500"
+                    value={newLead.plotArea}
+                    onChange={(e) => setNewLead({ ...newLead, plotArea: e.target.value })}
+                    className="w-full clay-input text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Plot Address / Location"
+                  value={newLead.plotAddress}
+                  onChange={(e) => setNewLead({ ...newLead, plotAddress: e.target.value })}
+                  className="w-full clay-input text-sm"
+                />
+
+              </div>
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-700">Lead Source</label>
                 <CategorySelect
@@ -436,8 +556,51 @@ export default function LeadsPage() {
                 placeholder="Detailed Requirement / Description"
                 value={editingLead.requirement || ''}
                 onChange={(e) => setEditingLead({ ...editingLead, requirement: e.target.value })}
-                className="w-full clay-input text-sm min-h-[80px]"
+                className="w-full clay-input text-sm min-h-[60px]"
               />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Capture Date</label>
+                  <input
+                    type="date"
+                    value={editingLead.captureDate ? editingLead.captureDate.split('T')[0] : ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditingLead({ ...editingLead, captureDate: val ? new Date(val).toISOString() : '' });
+                    }}
+                    className="w-full clay-input text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Plot Area (sq ft)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 1500"
+                    value={editingLead.plotArea || ''}
+                    onChange={(e) => setEditingLead({ ...editingLead, plotArea: e.target.value })}
+                    className="w-full clay-input text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Plot Address / Location"
+                  value={editingLead.plotAddress || ''}
+                  onChange={(e) => setEditingLead({ ...editingLead, plotAddress: e.target.value })}
+                  className="w-full clay-input text-sm"
+                />
+                <input
+                  type="text"
+                  placeholder="Client Address (Home/Office)"
+                  value={editingLead.address || ''}
+                  onChange={(e) => setEditingLead({ ...editingLead, address: e.target.value })}
+                  className="w-full clay-input text-sm"
+                />
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
                 <button type="button" onClick={() => setEditingLead(null)} className="px-4 py-2 rounded-xl border border-violet-100/40 hover:bg-violet-50 text-slate-600 text-sm font-semibold">Cancel</button>
                 <button type="submit" disabled={updateMutation.isPending} className="px-5 py-2 clay-btn text-white text-sm font-semibold">Save Updates</button>

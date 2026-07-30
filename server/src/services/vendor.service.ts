@@ -42,19 +42,23 @@ export const list = async (params: ListParams) => {
       include: {
         _count: { select: { materials: true } },
         purchaseOrders: { select: { totalAmount: true } },
-        expenses: { select: { amount: true } }
+        expenses: { select: { amount: true } },
+        vendorAttendances: { select: { totalWage: true } }
       },
     }),
     prisma.vendor.count({ where }),
   ]);
 
   const data = rawData.map(vendor => {
-    const totalPurchased = vendor.purchaseOrders.reduce((sum, po) => sum + Number(po.totalAmount || 0), 0);
-    const totalPaid = vendor.expenses.reduce((sum, ex) => sum + Number(ex.amount || 0), 0);
+    const totalPurchased = vendor.purchaseOrders.reduce((sum, po) => sum + Number(po.totalAmount || 0), 0)
+      + vendor.vendorAttendances.reduce((sum, va) => sum + Number(va.totalWage || 0), 0);
+    const totalPaid = vendor.expenses
+      .filter(ex => (ex as any).paymentMethod !== 'ACCRUED')
+      .reduce((sum, ex) => sum + Number(ex.amount || 0), 0);
     const openingBal = Number(vendor.openingBalance || 0);
     const outstanding = openingBal + totalPurchased - totalPaid;
 
-    const { purchaseOrders, expenses, ...rest } = vendor;
+    const { purchaseOrders, expenses, vendorAttendances, ...rest } = vendor;
 
     return {
       ...rest,
@@ -90,8 +94,11 @@ export const getById = async (id: string) => {
         select: { id: true, totalAmount: true, projectId: true, project: { select: { id: true, name: true } } },
       },
       expenses: {
-        select: { id: true, amount: true, projectId: true, project: { select: { id: true, name: true } } },
+        select: { id: true, amount: true, projectId: true, paymentDate: true, remarks: true, description: true, project: { select: { id: true, name: true } } },
       },
+      vendorAttendances: {
+        select: { id: true, date: true, totalWage: true, projectId: true, project: { select: { id: true, name: true } } },
+      }
     },
   });
 
@@ -154,6 +161,21 @@ export const addPayment = async (vendorId: string, data: any, userId: string) =>
       },
     });
 
+    const expense = await tx.expense.create({
+      data: {
+        vendorId,
+        projectId: data.projectId || null,
+        type: vendor.category === 'LABOUR_CONTRACTOR' ? 'LABOUR' : 'VENDOR',
+        amount: paymentAmount,
+        paymentDate: payment.paymentDate,
+        paymentMethod: payment.paymentMethod,
+        accountId: data.accountId || null,
+        description: data.purpose ? `Payment for ${data.purpose} to ${vendor.name} (Ref: ${data.reference || 'N/A'})` : `Payment to ${vendor.name} (Ref: ${data.reference || 'N/A'})`,
+        remarks: data.notes,
+        createdById: userId,
+      }
+    });
+
     await postJournalEntry({
       entryDate: payment.paymentDate,
       description: `Vendor Payment to ${vendor.name} - ${data.notes || ''}`,
@@ -166,11 +188,46 @@ export const addPayment = async (vendorId: string, data: any, userId: string) =>
       ]
     }, tx);
 
-    return payment;
+    return { payment, expense };
   });
   
-  eventBus.publishMutation('VendorPayment', 'CREATE', userId, result.id, data.idempotencyKey || crypto.randomUUID(), result, null);
-  return result;
+  eventBus.publishMutation('VendorPayment', 'CREATE', userId, result.payment.id, data.idempotencyKey || crypto.randomUUID(), result.payment, null);
+  eventBus.publishMutation('Expense', 'CREATE', userId, result.expense.id, crypto.randomUUID(), result.expense, null);
+  return result.payment;
 };
 
 export const recordPayment = addPayment;
+
+export const getVendorsByProject = async (projectId: string) => {
+  const vendors = await prisma.vendor.findMany({
+    where: {
+      deletedAt: null,
+      OR: [
+        { expenses: { some: { projectId } } },
+        { purchaseOrders: { some: { projectId } } },
+        { materials: { some: { stock: { some: { projectId } } } } }
+      ]
+    },
+    include: {
+      purchaseOrders: { where: { projectId }, select: { totalAmount: true } },
+      expenses: { where: { projectId }, select: { amount: true } }
+    }
+  });
+
+  return vendors.map(vendor => {
+    const totalPurchased = vendor.purchaseOrders.reduce((sum, po) => sum + Number(po.totalAmount || 0), 0);
+    const totalPaid = vendor.expenses.reduce((sum, ex) => sum + Number(ex.amount || 0), 0);
+    
+    // For project-specific view, outstanding is just (Purchased - Paid) on that project
+    const outstanding = totalPurchased - totalPaid;
+    
+    const { purchaseOrders, expenses, ...rest } = vendor;
+    
+    return {
+      ...rest,
+      totalPurchased,
+      totalPaid,
+      outstanding
+    };
+  });
+};

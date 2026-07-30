@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Receipt,
@@ -17,8 +17,12 @@ import api from '@/lib/api';
 import { toast } from 'sonner';
 import { CategorySelect } from '@/components/common/CategorySelect';
 import { useQuickAddListener } from '@/hooks/useQuickAddListener';
+import { useAuthStore } from '@/store/authStore';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 export default function ExpensesPage() {
+    const confirmDialog = useConfirm();
+  const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -32,8 +36,27 @@ export default function ExpensesPage() {
     paymentMethod: 'BANK_TRANSFER',
     accountId: '',
     description: '',
+    gstMode: 'NONE',
+    gstPercentage: 18,
+    gstAmount: '',
   });
 
+  const { data: settings } = useQuery({
+    queryKey: ['financial-settings'],
+    queryFn: async () => {
+      const { data } = await api.get('/settings');
+      return data?.data?.settings || {};
+    },
+  });
+
+  // Update defaults when settings load
+  useEffect(() => {
+    if (settings && isAddOpen) {
+      if (settings.defaultGstMode && newExpense.gstMode === 'NONE') {
+        setNewExpense(prev => ({ ...prev, gstMode: settings.defaultGstMode, gstPercentage: settings.defaultGstPercentage || 18 }));
+      }
+    }
+  }, [settings, isAddOpen]);
   const { data: expenses = [], isLoading } = useQuery({
     queryKey: ['expenses-list'],
     queryFn: async () => {
@@ -71,7 +94,9 @@ export default function ExpensesPage() {
 
   const createMutation = useMutation({
     mutationFn: async (payload: any) => {
-      const { data } = await api.post('/expenses', payload);
+      const isPersonal = payload.type === 'PERSONAL';
+      const submitPayload = { ...payload, isPersonal };
+      const { data } = await api.post('/expenses', submitPayload);
       return data.data;
     },
     onSuccess: () => {
@@ -104,9 +129,20 @@ export default function ExpensesPage() {
       toast.error('Project Site and Amount are required');
       return;
     }
+    const baseAmount = Number(newExpense.amount);
+    let finalGstAmount = 0;
+    
+    if (newExpense.gstMode === 'PERCENTAGE') {
+      finalGstAmount = (baseAmount * Number(newExpense.gstPercentage)) / 100;
+    } else if (newExpense.gstMode === 'AMOUNT') {
+      finalGstAmount = Number(newExpense.gstAmount);
+    }
+
     createMutation.mutate({
       ...newExpense,
-      amount: Number(newExpense.amount),
+      amount: baseAmount,
+      gstAmount: finalGstAmount,
+      totalAmount: baseAmount + finalGstAmount,
     });
   };
 
@@ -163,15 +199,18 @@ export default function ExpensesPage() {
                     <td className="p-4 font-semibold text-slate-600">{exp.vendor?.name || 'Direct Disburse'}</td>
                     <td className="p-4 text-slate-500">{formatDate(exp.paymentDate)}</td>
                     <td className="p-4 text-slate-600 max-w-xs truncate">{exp.description || 'Routine site expenditure'}</td>
-                    <td className="p-4 font-mono font-extrabold text-[#E5636C]">{formatCurrency(Number(exp.amount))}</td>
+                    <td className="p-4 font-mono font-extrabold text-[#E5636C]">
+                      {formatCurrency(Number(exp.totalAmount || exp.amount))}
+                      {Number(exp.gstAmount) > 0 && <span className="block text-[10px] text-slate-400 font-sans font-normal">incl. {formatCurrency(Number(exp.gstAmount))} GST</span>}
+                    </td>
                     <td className="p-4 text-center">
                       <button
-                        onClick={() => {
-                          if (confirm('Are you sure you want to delete this expense record?')) {
+                        onClick={async () => {
+                          if (await confirmDialog({ title: 'Confirm Action', message: 'Are you sure you want to delete this expense record?' })) {
                             deleteMutation.mutate(exp.id);
                           }
                         }}
-                        className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                         title="Delete Expense Record"
                       >
                         <Trash2 className="w-4 h-4 mx-auto" />
@@ -218,8 +257,8 @@ export default function ExpensesPage() {
                     {exp.paymentMethod || 'CASH'}
                   </span>
                   <button
-                    onClick={() => {
-                      if (confirm('Are you sure you want to delete this expense record?')) {
+                    onClick={async () => {
+                      if (await confirmDialog({ title: 'Confirm Action', message: 'Are you sure you want to delete this expense record?' })) {
                         deleteMutation.mutate(exp.id);
                       }
                     }}
@@ -243,12 +282,12 @@ export default function ExpensesPage() {
             </div>
             <form onSubmit={handleCreate} className="space-y-4">
               <select
-                required
+                required={newExpense.type !== 'PERSONAL'}
                 value={newExpense.projectId}
                 onChange={(e) => setNewExpense({ ...newExpense, projectId: e.target.value })}
                 className="clay-input w-full text-sm"
               >
-                <option value="">Select Project Site *</option>
+                <option value="">{newExpense.type === 'PERSONAL' ? 'No Project (Personal)' : 'Select Project Site *'}</option>
                 {projects.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
 
@@ -264,8 +303,12 @@ export default function ExpensesPage() {
               <CategorySelect
                 module="expenses"
                 value={newExpense.type}
-                onChange={(val) => setNewExpense({ ...newExpense, type: val })}
-                defaultOptions={['MATERIAL', 'LABOUR', 'EQUIPMENT', 'SUBCONTRACTOR', 'TRANSPORT', 'UTILITY', 'OFFICE', 'OTHER']}
+                onChange={(val) => setNewExpense({ ...newExpense, type: val, projectId: val === 'PERSONAL' ? '' : newExpense.projectId })}
+                defaultOptions={
+                  user?.role === 'ADMIN' 
+                    ? ['MATERIAL', 'LABOUR', 'EQUIPMENT', 'SUBCONTRACTOR', 'TRANSPORT', 'UTILITY', 'OFFICE', 'PERSONAL', 'OTHER'] 
+                    : ['MATERIAL', 'LABOUR', 'EQUIPMENT', 'SUBCONTRACTOR', 'TRANSPORT', 'UTILITY', 'OFFICE', 'OTHER']
+                }
                 placeholder="Select Expense Type/Category..."
               />
 
@@ -295,11 +338,60 @@ export default function ExpensesPage() {
                 <input
                   type="number"
                   required
-                  placeholder="Amount (₹) *"
+                  placeholder="Base Amount (₹) *"
                   value={newExpense.amount}
                   onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
                   className="clay-input w-full text-sm font-mono"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <select
+                  value={newExpense.gstMode}
+                  onChange={(e) => setNewExpense({ ...newExpense, gstMode: e.target.value })}
+                  className="clay-input w-full text-sm"
+                  disabled={settings?.allowOperatorOverride === false}
+                >
+                  {!settings?.gstMandatory && <option value="NONE">No GST</option>}
+                  <option value="PERCENTAGE">GST %</option>
+                  {settings?.allowManualGstAmount !== false && <option value="AMOUNT">Manual GST (₹)</option>}
+                </select>
+
+                {newExpense.gstMode === 'PERCENTAGE' && (
+                  <select
+                    value={newExpense.gstPercentage}
+                    onChange={(e) => setNewExpense({ ...newExpense, gstPercentage: Number(e.target.value) })}
+                    className="clay-input w-full text-sm"
+                    disabled={settings?.allowOperatorOverride === false}
+                  >
+                    <option value="0">0%</option>
+                    <option value="5">5%</option>
+                    <option value="12">12%</option>
+                    <option value="18">18%</option>
+                    <option value="28">28%</option>
+                  </select>
+                )}
+
+                {newExpense.gstMode === 'AMOUNT' && (
+                  <input
+                    type="number"
+                    placeholder="GST Amount (₹)"
+                    value={newExpense.gstAmount}
+                    onChange={(e) => setNewExpense({ ...newExpense, gstAmount: e.target.value })}
+                    className="clay-input w-full text-sm font-mono"
+                  />
+                )}
+              </div>
+
+              <div className="bg-rose-50 p-3 rounded-xl border border-rose-100 flex justify-between items-center text-rose-800">
+                <span className="text-sm font-semibold">Total Amount:</span>
+                <span className="font-mono font-bold">
+                  {formatCurrency(
+                    Number(newExpense.amount) + 
+                    (newExpense.gstMode === 'PERCENTAGE' ? (Number(newExpense.amount) * newExpense.gstPercentage) / 100 : 
+                     newExpense.gstMode === 'AMOUNT' ? Number(newExpense.gstAmount) : 0)
+                  )}
+                </span>
               </div>
 
               <textarea

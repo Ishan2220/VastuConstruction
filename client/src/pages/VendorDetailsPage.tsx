@@ -1,12 +1,17 @@
 import { useParams, useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, MapPin, Phone, Mail, Building2, PackageCheck, Banknote, FileText } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Mail, Building2, PackageCheck, Banknote, FileText, Plus } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
+import PageHeader from '@/components/layout/PageHeader';
+import { VendorPaymentModal } from './VendorPaymentModal';
+import { useState } from 'react';
 
 export default function VendorDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
 
   const { data: vendor, isLoading } = useQuery({
     queryKey: ['vendor-details', id],
@@ -32,27 +37,52 @@ export default function VendorDetailsPage() {
     );
   }
 
-  // Aggregate site-wise financial data
-  const siteMap = new Map<string, { projectName: string; projectId: string; totalPO: number; totalPaid: number }>();
+  const siteMap = new Map<string, any>();
 
   // 1. Add POs
   vendor.purchaseOrders?.forEach((po: any) => {
-    if (!po.project) return;
-    const pId = po.projectId;
+    const pId = po.projectId || 'global';
+    const pName = po.project?.name || 'Global / No Specific Site';
     if (!siteMap.has(pId)) {
-      siteMap.set(pId, { projectName: po.project.name, projectId: pId, totalPO: 0, totalPaid: 0 });
+      siteMap.set(pId, { projectName: pName, projectId: pId, totalPO: 0, totalPaid: 0, expenses: [] });
     }
-    siteMap.get(pId)!.totalPO += Number(po.totalAmount || 0);
+    const site = siteMap.get(pId)!;
+    site.totalPO += Number(po.totalAmount || 0);
+  });
+
+  // 1.5 Add Labour Attendances to total value
+  vendor.vendorAttendances?.forEach((va: any) => {
+    const pId = va.projectId || 'global';
+    const pName = va.project?.name || 'Global / No Specific Site';
+    if (!siteMap.has(pId)) {
+      siteMap.set(pId, { projectName: pName, projectId: pId, totalPO: 0, totalPaid: 0, expenses: [] });
+    }
+    const site = siteMap.get(pId)!;
+    site.totalPO += Number(va.totalWage || 0);
   });
 
   // 2. Add Expenses (Payments)
   vendor.expenses?.forEach((exp: any) => {
-    if (!exp.project) return;
-    const pId = exp.projectId;
+    const pId = exp.projectId || 'global';
+    const pName = exp.project?.name || 'Global / No Specific Site';
     if (!siteMap.has(pId)) {
-      siteMap.set(pId, { projectName: exp.project.name, projectId: pId, totalPO: 0, totalPaid: 0 });
+      siteMap.set(pId, { projectName: pName, projectId: pId, totalPO: 0, totalPaid: 0, expenses: [] });
     }
-    siteMap.get(pId)!.totalPaid += Number(exp.amount || 0);
+    
+    // Parse payment details if present
+    let details = [];
+    if (exp.remarks && exp.remarks.includes(' | DETAILS:')) {
+      try {
+        const parts = exp.remarks.split(' | DETAILS:');
+        exp.remarks = parts[0];
+        details = JSON.parse(parts[1]);
+      } catch (e) {}
+    }
+    exp.paymentDetails = details;
+
+    const site = siteMap.get(pId)!;
+    site.totalPaid += Number(exp.amount || 0);
+    site.expenses.push(exp);
   });
 
   const siteStats = Array.from(siteMap.values());
@@ -62,24 +92,23 @@ export default function VendorDetailsPage() {
 
   return (
     <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans pb-24">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate('/vendors')}
-          className="p-2 -ml-2 text-slate-400 hover:text-slate-700 hover:bg-white/50 rounded-xl transition-colors shadow-sm bg-white"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight font-heading flex items-center gap-3">
-            {vendor.name}
-            <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-clay-violet/10 text-[#7C6EF0] border border-violet-100/40 uppercase align-middle">
-              {vendor.category || 'General'}
-            </span>
-          </h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Vendor Agency Details & Site Ledgers</p>
-        </div>
-      </div>
+      <PageHeader
+        title={vendor.name}
+        description={`${vendor.category || 'Vendor Agency'} • ${vendor.city || 'Mumbai'}`}
+        showBack={false}
+        breadcrumbs={[
+          { label: 'Vendors', href: '/vendors' },
+          { label: vendor.name }
+        ]}
+        action={{
+          label: 'Record Payment',
+          icon: Banknote,
+          onClick: () => {
+            setSelectedProjectId('');
+            setIsPaymentOpen(true);
+          }
+        }}
+      />
 
       {/* Info Card */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -125,24 +154,6 @@ export default function VendorDetailsPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-[#7C6EF0] to-[#5c4ce0] rounded-3xl p-6 text-white shadow-lg shadow-[#7C6EF0]/30 space-y-4 relative overflow-hidden border border-white/20">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
-            <h3 className="font-bold border-b border-white/20 pb-3 text-indigo-50 font-heading">Global Ledger</h3>
-            <div className="space-y-4 mt-2">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-indigo-100 font-medium">Total Order Value</span>
-                <span className="font-mono font-bold text-white bg-black/10 px-2 py-0.5 rounded-lg">{formatCurrency(globalTotalPO)}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-[#5CB77E] bg-white/10 px-2 py-0.5 rounded-lg font-bold">Total Paid</span>
-                <span className="font-mono font-bold text-white">{formatCurrency(globalTotalPaid)}</span>
-              </div>
-              <div className="pt-3 border-t border-white/20 flex justify-between items-center">
-                <span className="font-bold text-[#F2A65A] text-sm uppercase tracking-wider">Net Payable</span>
-                <span className="font-mono font-extrabold text-xl text-white">{formatCurrency(globalRemaining)}</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Site Tracking */}
@@ -168,19 +179,55 @@ export default function VendorDetailsPage() {
                   </div>
                   
                   <div className="space-y-3 text-sm font-medium">
+
                     <div className="flex justify-between items-center bg-white/50 p-2 rounded-xl border border-violet-100/30">
-                      <span className="text-slate-600 flex items-center gap-2"><FileText className="w-4 h-4 text-[#7C6EF0]"/> PO Amount</span>
-                      <span className="font-mono font-bold text-slate-800">{formatCurrency(site.totalPO)}</span>
+                      <span className="text-slate-600 flex items-center gap-2"><PackageCheck className="w-4 h-4 text-[#E5636C]"/> Payment Paid</span>
+                      <span className="font-mono font-bold text-[#E5636C]">{formatCurrency(site.totalPaid)}</span>
                     </div>
-                    <div className="flex justify-between items-center bg-white/50 p-2 rounded-xl border border-violet-100/30">
-                      <span className="text-slate-600 flex items-center gap-2"><PackageCheck className="w-4 h-4 text-[#5CB77E]"/> Payment Paid</span>
-                      <span className="font-mono font-bold text-[#5CB77E]">{formatCurrency(site.totalPaid)}</span>
+
+                    <div className="pt-2">
+                      <button
+                        onClick={() => {
+                          setSelectedProjectId(site.projectId);
+                          setIsPaymentOpen(true);
+                        }}
+                        className="w-full py-2 bg-white border border-violet-100/50 hover:bg-slate-50 text-slate-600 rounded-xl text-sm font-bold flex justify-center items-center gap-2 transition-colors mb-4"
+                      >
+                        <Plus className="w-4 h-4" /> Pay for Site
+                      </button>
                     </div>
-                    <div className="pt-3 flex justify-between items-center">
-                      <span className="font-bold text-slate-800 uppercase tracking-wider text-xs">Remaining</span>
-                      <span className={`font-mono font-extrabold text-lg ${site.totalPO - site.totalPaid > 0 ? 'text-[#E5636C]' : 'text-slate-400'}`}>
-                        {formatCurrency(site.totalPO - site.totalPaid)}
-                      </span>
+
+                    <div className="pt-2 border-t border-violet-100/30">
+                      <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Recent Payments</h4>
+                      {site.expenses && site.expenses.length > 0 ? (
+                        <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                          {site.expenses.sort((a: any,b: any) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()).map((exp: any, i: number) => (
+                            <div key={i} className="bg-white/60 p-3 rounded-xl border border-violet-100/50 shadow-sm">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-xs font-bold text-slate-500">{formatDate(exp.paymentDate)}</span>
+                                <span className="text-sm font-bold text-[#E5636C]">{formatCurrency(exp.amount)}</span>
+                              </div>
+                              {exp.paymentDetails && exp.paymentDetails.length > 0 ? (
+                                <div className="space-y-1.5 mt-2 border-t border-slate-100 pt-2">
+                                  {exp.paymentDetails.map((det: any, j: number) => (
+                                    <div key={j} className="flex justify-between items-start text-xs">
+                                      <div className="flex flex-col">
+                                        <span className="font-semibold text-slate-700">{det.description}</span>
+                                        <span className="text-[10px] text-slate-400">Qty: {det.quantity} @ ₹{det.rate}</span>
+                                      </div>
+                                      <span className="font-bold text-slate-600">{formatCurrency(det.amount)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{exp.description}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400">No payments recorded for this site yet.</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -189,6 +236,15 @@ export default function VendorDetailsPage() {
           )}
         </div>
       </div>
+
+      <VendorPaymentModal
+        isOpen={isPaymentOpen}
+        onClose={() => setIsPaymentOpen(false)}
+        vendorId={vendor.id}
+        vendorName={vendor.name}
+        vendorCategory={vendor.category}
+        defaultProjectId={selectedProjectId}
+      />
     </div>
   );
 }

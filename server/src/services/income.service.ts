@@ -5,6 +5,7 @@ import { normalizePaymentMethod, cleanRelationId } from '../utils/normalizers.js
 import { eventBus } from '../events/EventBus.js';
 import { postJournalEntry, reverseJournalEntry } from './journal.service.js';
 import { randomUUID } from 'crypto';
+import { checkFinancialLock } from '../utils/financialLock.js';
 
 interface ListParams {
   page?: number;
@@ -35,6 +36,7 @@ export const list = async (params: ListParams) => {
         lte: new Date(endDate),
       },
     }),
+    deletedAt: null,
   };
 
   const [data, total] = await Promise.all([
@@ -66,7 +68,7 @@ export const getById = async (id: string) => {
       createdBy: { select: { id: true, name: true, email: true } },
     },
   });
-  if (!income) throw new ApiError(404, 'Income record not found');
+  if (!income || income.deletedAt) throw new ApiError(404, 'Income record not found');
   return income;
 };
 
@@ -75,7 +77,10 @@ export const create = async (
     clientId: string;
     projectId?: string | null;
     amount: number;
+    gstMode?: 'NONE' | 'PERCENTAGE' | 'AMOUNT';
+    gstPercentage?: number | null;
     gstAmount?: number;
+    totalAmount?: number;
     paymentDate: Date;
     paymentMethod?: string;
     accountId?: string | null;
@@ -88,13 +93,21 @@ export const create = async (
   userId: string
 ) => {
   const { idempotencyKey, ...restData } = data as any;
+  const gstMode = data.gstMode || 'NONE';
+  const gstAmount = Number(data.gstAmount) || 0;
+  const amount = Number(data.amount) || 0;
+  let totalAmount = Number(data.totalAmount) || (amount + gstAmount);
+  
   const cleanedData = {
     ...restData,
     clientId: data.clientId,
     projectId: cleanRelationId(data.projectId) || null,
     accountId: cleanRelationId(data.accountId) || null,
-    amount: Number(data.amount) || 0,
-    gstAmount: Number(data.gstAmount) || 0,
+    amount,
+    gstMode,
+    gstPercentage: data.gstPercentage ? Number(data.gstPercentage) : null,
+    gstAmount,
+    totalAmount,
     paymentDate: data.paymentDate ? new Date(data.paymentDate) : new Date(),
     paymentMethod: normalizePaymentMethod(data.paymentMethod),
     invoiceNo: cleanRelationId(data.invoiceNo) || null,
@@ -102,6 +115,12 @@ export const create = async (
     notes: cleanRelationId(data.notes) || null,
     receiptUrl: cleanRelationId(data.receiptUrl) || null,
   };
+
+  if (!cleanedData.accountId) {
+    throw new ApiError(400, 'Account ID is required for logging income');
+  }
+
+  await checkFinancialLock(cleanedData.paymentDate);
 
   const income = await prisma.$transaction(async (tx) => {
     const created = await tx.income.create({
@@ -111,18 +130,24 @@ export const create = async (
       },
     });
 
-    // Double-Entry Ledger
-    const totalAmt = Number(cleanedData.amount) + Number(cleanedData.gstAmount);
+    // Double-Entry Ledger with Flexible GST split
+    const lines = [];
+    // 1. Bank Account receives the Total Amount (Base + GST)
+    lines.push({ accountId: cleanedData.accountId, debitAmount: cleanedData.totalAmount, creditAmount: 0, description: 'Income deposit (Total)' });
+    // 2. Revenue Account (Null for now) receives the Base Amount
+    lines.push({ accountId: null, debitAmount: 0, creditAmount: cleanedData.amount, description: 'Revenue recognition (Base)' });
+    // 3. Tax Account (Null for now) receives the GST Amount if any
+    if (cleanedData.gstAmount > 0) {
+      lines.push({ accountId: null, debitAmount: 0, creditAmount: cleanedData.gstAmount, description: 'GST Collected' });
+    }
+
     await postJournalEntry({
       entryDate: cleanedData.paymentDate,
       description: `Income: ${cleanedData.notes || cleanedData.type}`,
       referenceId: created.id,
       referenceType: 'INCOME',
       createdById: userId,
-      lines: [
-        { accountId: cleanedData.accountId, debitAmount: totalAmt, creditAmount: 0, description: 'Income deposit' },
-        { accountId: null, debitAmount: 0, creditAmount: totalAmt, description: 'Revenue recognition' }
-      ]
+      lines
     }, tx);
 
     return created;
@@ -134,14 +159,19 @@ export const create = async (
 
 export const remove = async (id: string, userId: string, idempotencyKey?: string) => {
   const oldIncome = await getById(id);
+  await checkFinancialLock(oldIncome.paymentDate);
 
   await prisma.$transaction(async (tx) => {
     await reverseJournalEntry(id, userId, 'Income deletion reversal', tx);
     
-    // Instead of actual deleting, since schema has no deletedAt, we delete the row but the Journal Entry remains
-    await tx.income.delete({ where: { id } });
+    await tx.income.update({ where: { id }, data: { deletedAt: new Date() } });
   });
 
   eventBus.publishMutation('Income', 'DELETE', userId, id, idempotencyKey || randomUUID(), null, oldIncome);
+  
+  if (oldIncome.accountId) {
+    eventBus.publishMutation('BankAccount', 'UPDATE', userId, oldIncome.accountId, randomUUID(), { id: oldIncome.accountId }, null);
+  }
+  eventBus.publishMutation('DashboardStats', 'UPDATE', userId, 'dashboard', randomUUID(), null, null);
   return { success: true };
 };

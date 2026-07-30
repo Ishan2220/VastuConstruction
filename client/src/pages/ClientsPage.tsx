@@ -3,8 +3,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, Plus, Search, Phone, Mail, Building2, MapPin, Edit3, Trash2 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 export default function ClientsPage() {
+    const confirmDialog = useConfirm();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -166,18 +168,18 @@ export default function ClientsPage() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => setEditingClient(client)}
-                        className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
+                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
                         title="Edit Client Details"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm(`Are you sure you want to delete client ${client.name}?`)) {
+                        onClick={async () => {
+                          if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete client ${client.name}?` })) {
                             deleteMutation.mutate(client.id);
                           }
                         }}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                         title="Delete Client Profile"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -201,16 +203,16 @@ export default function ClientsPage() {
                 <div className="space-y-2 mt-2 pt-4 border-t border-violet-100/30">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-500 font-medium">Total Billed</span>
-                    <span className="font-bold text-slate-700">₹{(client.totalBilled || 0).toLocaleString()}</span>
+                    <span className="font-bold text-slate-700">₹{(client.totalBilled || 0).toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-500 font-medium">Total Paid</span>
-                    <span className="font-bold text-emerald-600">₹{(client.totalPaid || 0).toLocaleString()}</span>
+                    <span className="font-bold text-emerald-600">₹{(client.totalPaid || 0).toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm font-bold pt-2 border-t border-violet-100/30">
                     <span className="text-slate-800">Outstanding</span>
                     <span className={(client.outstanding || 0) > 0 ? 'text-rose-600' : 'text-slate-500'}>
-                      ₹{(client.outstanding || 0).toLocaleString()}
+                      ₹{(client.outstanding || 0).toLocaleString('en-IN')}
                     </span>
                   </div>
                 </div>
@@ -257,12 +259,12 @@ export default function ClientsPage() {
                     </td>
                     <td className="p-4">
                       <div className="text-xs space-y-1">
-                        <div className="flex justify-between gap-4"><span className="text-slate-500">Billed:</span> <span className="font-bold">₹{(client.totalBilled || 0).toLocaleString()}</span></div>
-                        <div className="flex justify-between gap-4"><span className="text-slate-500">Paid:</span> <span className="font-bold text-emerald-600">₹{(client.totalPaid || 0).toLocaleString()}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-slate-500">Billed:</span> <span className="font-bold">₹{(client.totalBilled || 0).toLocaleString('en-IN')}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-slate-500">Paid:</span> <span className="font-bold text-emerald-600">₹{(client.totalPaid || 0).toLocaleString('en-IN')}</span></div>
                         <div className="flex justify-between gap-4 border-t pt-1 mt-1">
                           <span className="text-slate-500">Due:</span> 
                           <span className={(client.outstanding || 0) > 0 ? 'text-rose-600 font-bold' : 'text-slate-500 font-bold'}>
-                            ₹{(client.outstanding || 0).toLocaleString()}
+                            ₹{(client.outstanding || 0).toLocaleString('en-IN')}
                           </span>
                         </div>
                       </div>
@@ -271,18 +273,18 @@ export default function ClientsPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => setEditingClient(client)}
-                          className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
+                          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
                           title="Edit Client Details"
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => {
-                            if (confirm(`Are you sure you want to delete client ${client.name}?`)) {
+                          onClick={async () => {
+                            if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete client ${client.name}?` })) {
                               deleteMutation.mutate(client.id);
                             }
                           }}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                           title="Delete Client Profile"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -335,14 +337,7 @@ export default function ClientsPage() {
                 onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
                 className="w-full clay-input text-sm"
               />
-              <input
-                type="text"
-                placeholder="GSTIN Number (Optional)"
-                value={newClient.gstin}
-                onChange={(e) => setNewClient({ ...newClient, gstin: e.target.value.toUpperCase() })}
-                className="w-full clay-input text-sm font-mono uppercase"
-              />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input
                   type="text"
                   placeholder="City"
@@ -360,10 +355,10 @@ export default function ClientsPage() {
               </div>
               <input
                 type="number"
-                placeholder="Opening Balance (Optional)"
+                placeholder="Opening Balance / Initial Due (₹)"
                 value={newClient.openingBalance}
                 onChange={(e) => setNewClient({ ...newClient, openingBalance: e.target.value })}
-                className="w-full clay-input text-sm"
+                className="w-full clay-input text-sm font-mono text-rose-600"
               />
               <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
                 <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-slate-100">Cancel</button>
@@ -398,7 +393,7 @@ export default function ClientsPage() {
                 onChange={(e) => setEditingClient({ ...editingClient, companyName: e.target.value })}
                 className="w-full clay-input text-sm"
               />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input
                   type="tel"
                   required
@@ -415,14 +410,7 @@ export default function ClientsPage() {
                   className="w-full clay-input text-sm"
                 />
               </div>
-              <input
-                type="text"
-                placeholder="GSTIN Code (Optional)"
-                value={editingClient.gst || editingClient.gstin || ''}
-                onChange={(e) => setEditingClient({ ...editingClient, gst: e.target.value.toUpperCase() })}
-                className="w-full clay-input text-sm font-mono uppercase"
-              />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input
                   type="text"
                   placeholder="City"
@@ -440,10 +428,10 @@ export default function ClientsPage() {
               </div>
               <input
                 type="number"
-                placeholder="Opening Balance (Optional)"
+                placeholder="Opening Balance / Initial Due (₹)"
                 value={editingClient.openingBalance || ''}
                 onChange={(e) => setEditingClient({ ...editingClient, openingBalance: e.target.value })}
-                className="w-full clay-input text-sm"
+                className="w-full clay-input text-sm font-mono text-rose-600"
               />
               <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
                 <button type="button" onClick={() => setEditingClient(null)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-slate-100">Cancel</button>

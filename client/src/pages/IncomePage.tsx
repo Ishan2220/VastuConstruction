@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   IndianRupee,
@@ -16,8 +16,10 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { CategorySelect } from '@/components/common/CategorySelect';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 export default function IncomePage() {
+    const confirmDialog = useConfirm();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -31,7 +33,27 @@ export default function IncomePage() {
     type: 'MILESTONE_PAYMENT',
     invoiceNo: '',
     reference: '',
+    gstMode: 'NONE',
+    gstPercentage: 18,
+    gstAmount: '',
   });
+
+  const { data: settings } = useQuery({
+    queryKey: ['financial-settings'],
+    queryFn: async () => {
+      const { data } = await api.get('/settings');
+      return data?.data?.settings || {};
+    },
+  });
+
+  // Update defaults when settings load
+  useEffect(() => {
+    if (settings && isAddOpen) {
+      if (settings.defaultGstMode && newIncome.gstMode === 'NONE') {
+        setNewIncome(prev => ({ ...prev, gstMode: settings.defaultGstMode, gstPercentage: settings.defaultGstPercentage || 18 }));
+      }
+    }
+  }, [settings, isAddOpen]);
 
   const { data: incomes = [], isLoading } = useQuery({
     queryKey: ['incomes-list'],
@@ -104,9 +126,20 @@ export default function IncomePage() {
       toast.error('Client and Amount are required');
       return;
     }
+    const baseAmount = Number(newIncome.amount);
+    let finalGstAmount = 0;
+    
+    if (newIncome.gstMode === 'PERCENTAGE') {
+      finalGstAmount = (baseAmount * Number(newIncome.gstPercentage)) / 100;
+    } else if (newIncome.gstMode === 'AMOUNT') {
+      finalGstAmount = Number(newIncome.gstAmount);
+    }
+
     createMutation.mutate({
       ...newIncome,
-      amount: Number(newIncome.amount),
+      amount: baseAmount,
+      gstAmount: finalGstAmount,
+      totalAmount: baseAmount + finalGstAmount,
     });
   };
 
@@ -138,7 +171,7 @@ export default function IncomePage() {
             <thead>
               <tr className="border-b border-violet-100/30 text-xs font-bold uppercase text-slate-400">
                 <th className="p-4">Invoice / Ref</th>
-                <th className="p-4">Billed To (Client)</th>
+                <th className="p-4">Received From (Client)</th>
                 <th className="p-4">Project Contract</th>
                 <th className="p-4">Payment Date</th>
                 <th className="p-4">Method</th>
@@ -159,15 +192,18 @@ export default function IncomePage() {
                     <td className="p-4 font-semibold text-slate-600">{inc.project?.name || 'Main Site'}</td>
                     <td className="p-4 text-slate-500">{formatDate(inc.paymentDate)}</td>
                     <td className="p-4 font-mono text-xs uppercase bg-[#7C6EF0]/10 text-[#7C6EF0] px-2 py-0.5 rounded-md w-fit">{inc.paymentMethod}</td>
-                    <td className="p-4 font-mono font-extrabold text-[#5CB77E]">{formatCurrency(Number(inc.amount))}</td>
+                    <td className="p-4 font-mono font-extrabold text-[#5CB77E]">
+                      {formatCurrency(Number(inc.totalAmount || inc.amount))}
+                      {Number(inc.gstAmount) > 0 && <span className="block text-[10px] text-slate-400 font-sans font-normal">incl. {formatCurrency(Number(inc.gstAmount))} GST</span>}
+                    </td>
                     <td className="p-4 text-center">
                       <button
-                        onClick={() => {
-                          if (confirm('Are you sure you want to delete this income receipt?')) {
+                        onClick={async () => {
+                          if (await confirmDialog({ title: 'Confirm Action', message: 'Are you sure you want to delete this income receipt?' })) {
                             deleteMutation.mutate(inc.id);
                           }
                         }}
-                        className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                         title="Delete Income Record"
                       >
                         <Trash2 className="w-4 h-4 mx-auto" />
@@ -209,8 +245,8 @@ export default function IncomePage() {
                     {inc.paymentMethod}
                   </span>
                   <button
-                    onClick={() => {
-                      if (confirm('Are you sure you want to delete this income receipt?')) {
+                    onClick={async () => {
+                      if (await confirmDialog({ title: 'Confirm Action', message: 'Are you sure you want to delete this income receipt?' })) {
                         deleteMutation.mutate(inc.id);
                       }
                     }}
@@ -239,7 +275,7 @@ export default function IncomePage() {
                 onChange={(e) => setNewIncome({ ...newIncome, clientId: e.target.value })}
                 className="clay-input w-full text-sm"
               >
-                <option value="">Select Billed To (Client) *</option>
+                <option value="">Select Received From (Client) *</option>
                 {clients.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
 
@@ -256,11 +292,60 @@ export default function IncomePage() {
                 <input
                   type="number"
                   required
-                  placeholder="Amount (₹) *"
+                  placeholder="Base Amount (₹) *"
                   value={newIncome.amount}
                   onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })}
                   className="clay-input w-full text-sm font-mono"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <select
+                  value={newIncome.gstMode}
+                  onChange={(e) => setNewIncome({ ...newIncome, gstMode: e.target.value })}
+                  className="clay-input w-full text-sm"
+                  disabled={settings?.allowOperatorOverride === false}
+                >
+                  {!settings?.gstMandatory && <option value="NONE">No GST</option>}
+                  <option value="PERCENTAGE">GST %</option>
+                  {settings?.allowManualGstAmount !== false && <option value="AMOUNT">Manual GST (₹)</option>}
+                </select>
+
+                {newIncome.gstMode === 'PERCENTAGE' && (
+                  <select
+                    value={newIncome.gstPercentage}
+                    onChange={(e) => setNewIncome({ ...newIncome, gstPercentage: Number(e.target.value) })}
+                    className="clay-input w-full text-sm"
+                    disabled={settings?.allowOperatorOverride === false}
+                  >
+                    <option value="0">0%</option>
+                    <option value="5">5%</option>
+                    <option value="12">12%</option>
+                    <option value="18">18%</option>
+                    <option value="28">28%</option>
+                  </select>
+                )}
+
+                {newIncome.gstMode === 'AMOUNT' && (
+                  <input
+                    type="number"
+                    placeholder="GST Amount (₹)"
+                    value={newIncome.gstAmount}
+                    onChange={(e) => setNewIncome({ ...newIncome, gstAmount: e.target.value })}
+                    className="clay-input w-full text-sm font-mono"
+                  />
+                )}
+              </div>
+
+              <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100 flex justify-between items-center text-emerald-800">
+                <span className="text-sm font-semibold">Total Amount:</span>
+                <span className="font-mono font-bold">
+                  {formatCurrency(
+                    Number(newIncome.amount) + 
+                    (newIncome.gstMode === 'PERCENTAGE' ? (Number(newIncome.amount) * newIncome.gstPercentage) / 100 : 
+                     newIncome.gstMode === 'AMOUNT' ? Number(newIncome.gstAmount) : 0)
+                  )}
+                </span>
               </div>
 
               <input

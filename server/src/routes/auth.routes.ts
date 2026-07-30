@@ -41,8 +41,8 @@ const changeEmailSchema = z.object({
 router.post('/register', authenticate, authorize('ADMIN'), validate(registerSchema), authController.register);
 router.post('/login', authLimiter, validate(loginSchema), authController.login);
 router.post('/forgot-password', authLimiter, authController.forgotPassword);
-router.post('/refresh', authController.refresh);
-router.post('/logout', authenticate, authController.logout);
+router.post('/refresh', authLimiter, authController.refresh);
+router.post('/logout', authController.logout);
 router.get('/me', authenticate, authController.getMe);
 router.put('/change-password', authenticate, validate(changePasswordSchema), authController.changePassword);
 router.put('/change-email', authenticate, authorize('ADMIN'), validate(changeEmailSchema), authController.changeEmail);

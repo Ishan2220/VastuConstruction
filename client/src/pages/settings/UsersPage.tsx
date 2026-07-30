@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit2, Trash2, Key, Mail, X, Shield, Users, Search, MoreVertical, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 export default function UsersPage() {
+    const confirmDialog = useConfirm();
   const queryClient = useQueryClient();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null);
@@ -148,8 +151,8 @@ export default function UsersPage() {
                     <Key className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => {
-                      if (window.confirm(`Are you sure you want to delete ${user.name}? This action cannot be undone.`)) {
+                    onClick={async () => {
+                      if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete ${user.name}? This action cannot be undone.` })) {
                         deleteMutation.mutate(user.id);
                       }
                     }}
@@ -275,8 +278,7 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
           </div>
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-1.5">Initial Password</label>
-            <input
-              type="password"
+            <PasswordInput
               required
               placeholder="Minimum 8 characters"
               className="w-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 rounded-xl px-4 py-2.5 text-sm transition-all"
@@ -358,8 +360,7 @@ function ResetPasswordModal({ userId, onClose }: { userId: string; onClose: () =
         }} className="p-6 space-y-5">
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-1.5">New Password</label>
-            <input
-              type="password"
+            <PasswordInput
               required
               placeholder="Enter new password"
               className="w-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 rounded-xl px-4 py-2.5 text-sm transition-all"

@@ -3,23 +3,27 @@ import { FileText, Search, Plus, ChevronDown, Download, X, Trash2, Filter } from
 import api from '@/lib/api';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useAuthStore } from '@/store/authStore';
+import { AutocompleteInput } from '@/components/ui/AutocompleteInput';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 interface Invoice {
   id: string;
+  type: string;
   invoiceNumber: string;
-  client: { name: string, companyName?: string };
+  client?: { name: string, companyName?: string };
+  vendor?: { name: string };
   project?: { name: string };
   issueDate: string;
-  dueDate: string;
   status: string;
   totalAmount: number;
 }
 
 export default function InvoicesPage() {
+    const confirmDialog = useConfirm();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'ADMIN';
@@ -31,16 +35,37 @@ export default function InvoicesPage() {
 
   // Form State
   const [newInvoice, setNewInvoice] = useState({
+    type: 'CLIENT' as 'CLIENT' | 'VENDOR',
     clientId: '',
+    vendorId: '',
     projectId: '',
     issueDate: format(new Date(), 'yyyy-MM-dd'),
-    dueDate: format(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-    totalAmount: '',
     status: 'UNPAID',
-    items: [{ description: '', amount: '' }]
+    items: [{ description: '', quantity: '1', rate: '', amount: '' }],
+    gstMode: 'NONE',
+    gstPercentage: 18,
+    gstAmount: ''
   });
 
+  const { data: settings } = useQuery({
+    queryKey: ['financial-settings'],
+    queryFn: async () => {
+      const { data } = await api.get('/settings');
+      return data?.data?.settings || {};
+    },
+  });
+
+  // Update defaults when settings load
+  useEffect(() => {
+    if (settings && isCreateOpen) {
+      if (settings.defaultGstMode && newInvoice.gstMode === 'NONE') {
+        setNewInvoice(prev => ({ ...prev, gstMode: settings.defaultGstMode, gstPercentage: settings.defaultGstPercentage || 18 }));
+      }
+    }
+  }, [settings, isCreateOpen]);
+
   const [clients, setClients] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
 
   useEffect(() => {
@@ -50,12 +75,14 @@ export default function InvoicesPage() {
 
   const fetchDependencies = async () => {
     try {
-      const [cRes, pRes] = await Promise.all([
+      const [cRes, pRes, vRes] = await Promise.all([
         api.get('/clients'),
-        api.get('/projects')
+        api.get('/projects'),
+        api.get('/vendors')
       ]);
       setClients(cRes.data?.data?.data || cRes.data?.data || []);
       setProjects(pRes.data?.data?.data || pRes.data?.data || []);
+      setVendors(vRes.data?.data?.data || vRes.data?.data || []);
     } catch (e) {
       console.error(e);
     }
@@ -85,13 +112,16 @@ export default function InvoicesPage() {
       setIsCreateOpen(false);
       fetchInvoices();
       setNewInvoice({
+        type: 'CLIENT',
         clientId: '',
+        vendorId: '',
         projectId: '',
         issueDate: format(new Date(), 'yyyy-MM-dd'),
-        dueDate: format(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-        totalAmount: '',
         status: 'UNPAID',
-        items: [{ description: '', amount: '' }]
+        items: [{ description: '', quantity: '1', rate: '', amount: '' }],
+        gstMode: settings?.defaultGstMode || 'NONE',
+        gstPercentage: settings?.defaultGstPercentage || 18,
+        gstAmount: ''
       });
     },
     onError: (err: any) => {
@@ -138,17 +168,28 @@ export default function InvoicesPage() {
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newInvoice.clientId) {
+    if (newInvoice.type === 'CLIENT' && !newInvoice.clientId) {
       toast.error('Client is required');
       return;
     }
-    let amount = 0;
+    if (newInvoice.type === 'VENDOR' && !newInvoice.vendorId) {
+      toast.error('Vendor is required');
+      return;
+    }
+    let subtotal = 0;
     const hasValidItems = newInvoice.items.some(i => Number(i.amount) > 0);
     if (hasValidItems) {
-      amount = newInvoice.items.reduce((s, i) => s + (Number(i.amount) || 0), 0);
-    } else {
-      amount = Number(newInvoice.totalAmount) || 0;
+      subtotal = newInvoice.items.reduce((s, i) => s + (Number(i.amount) || 0), 0);
     }
+    
+    let taxAmount = 0;
+    if (newInvoice.gstMode === 'PERCENTAGE') {
+      taxAmount = (subtotal * Number(newInvoice.gstPercentage)) / 100;
+    } else if (newInvoice.gstMode === 'AMOUNT') {
+      taxAmount = Number(newInvoice.gstAmount);
+    }
+    
+    const amount = subtotal + taxAmount;
 
     if (!amount) {
       toast.error('Total amount must be greater than 0');
@@ -159,19 +200,26 @@ export default function InvoicesPage() {
     
     createMutation.mutate({
       invoiceNumber: generatedInvoiceNumber,
-      clientId: newInvoice.clientId,
+      type: newInvoice.type,
+      clientId: newInvoice.type === 'CLIENT' ? newInvoice.clientId : undefined,
+      vendorId: newInvoice.type === 'VENDOR' ? newInvoice.vendorId : undefined,
       projectId: newInvoice.projectId || undefined,
       issueDate: new Date(newInvoice.issueDate),
-      dueDate: new Date(newInvoice.dueDate),
       status: newInvoice.status,
-      subtotal: String(amount),
-      taxAmount: '0',
-      totalAmount: String(amount)
+      gstMode: newInvoice.gstMode,
+      gstPercentage: newInvoice.gstPercentage,
+      gstAmount: newInvoice.gstMode === 'AMOUNT' ? newInvoice.gstAmount : undefined,
+      items: newInvoice.items.map(i => ({
+        description: i.description,
+        quantity: i.quantity,
+        rate: i.rate,
+        amount: i.amount
+      }))
     });
   };
 
   const addItem = () => {
-    setNewInvoice({ ...newInvoice, items: [...newInvoice.items, { description: '', amount: '' }] });
+    setNewInvoice({ ...newInvoice, items: [...newInvoice.items, { description: '', quantity: '1', rate: '', amount: '' }] });
   };
 
   const handleDownloadPDF = (invoice: any) => {
@@ -207,22 +255,21 @@ export default function InvoicesPage() {
       doc.setTextColor(50, 50, 50);
       doc.text(`Invoice No: ${invoice.invoiceNumber}`, 150, 50);
       doc.text(`Issue Date: ${format(new Date(invoice.issueDate), 'dd MMM yyyy')}`, 150, 55);
-      if (invoice.dueDate) {
-        doc.text(`Due Date: ${format(new Date(invoice.dueDate), 'dd MMM yyyy')}`, 150, 60);
-      }
-      doc.text(`Status: ${invoice.status}`, 150, 65);
+      doc.text(`Status: ${invoice.status}`, 150, 60);
 
-      // Client Info Box
+      // Party Info Box
       doc.setFillColor(245, 244, 255);
       doc.rect(14, 75, 182, 35, 'F');
       doc.setFontSize(11);
       doc.setTextColor(124, 110, 240);
-      doc.text('INVOICE FOR CLIENT', 20, 85);
+      doc.text(`INVOICE ${invoice.type === 'CLIENT' ? 'FOR CLIENT' : 'FROM VENDOR'}`, 20, 85);
       
       doc.setFontSize(12);
       doc.setTextColor(40, 40, 40);
-      const clientName = invoice.client?.companyName || invoice.client?.name || 'Client';
-      doc.text(clientName, 20, 93);
+      const partyName = invoice.type === 'CLIENT' 
+        ? (invoice.client?.companyName || invoice.client?.name || 'Client')
+        : (invoice.vendor?.name || 'Vendor');
+      doc.text(partyName, 20, 93);
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
       if (invoice.project?.name) {
@@ -230,16 +277,24 @@ export default function InvoicesPage() {
       }
 
       // Items Table
+      const tableBody = invoice.items && invoice.items.length > 0 
+        ? invoice.items.map((i: any) => [
+            i.description || 'Item', 
+            i.quantity || '1', 
+            Number(i.rate || 0).toLocaleString('en-IN'),
+            i.gstRate ? `${i.gstRate}%` : '0%',
+            Number(Number(i.amount || 0) + Number(i.gstAmount || 0)).toLocaleString('en-IN')
+          ])
+        : [['Consulting, Labour & Material Services', '1', Number(invoice.totalAmount).toLocaleString('en-IN'), '0%', Number(invoice.totalAmount).toLocaleString('en-IN')]];
+
       autoTable(doc, {
         startY: 120,
         headStyles: { fillColor: [124, 110, 240], textColor: [255, 255, 255], fontStyle: 'bold' },
         bodyStyles: { textColor: [50, 50, 50] },
         alternateRowStyles: { fillColor: [250, 249, 255] },
-        head: [['Description', 'Unit', 'Rate', 'Amount (INR)']],
-        body: [
-          ['Consulting, Labour & Material Services', '1', Number(invoice.totalAmount).toLocaleString('en-IN'), Number(invoice.totalAmount).toLocaleString('en-IN')],
-        ],
-        foot: [['', '', 'Total Due', `Rs. ${Number(invoice.totalAmount).toLocaleString('en-IN')}`]],
+        head: [['Description', 'Qty', 'Rate', 'GST', 'Total (INR)']],
+        body: tableBody,
+        foot: [['', '', '', 'Total Due', `Rs. ${Number(invoice.totalAmount).toLocaleString('en-IN')}`]],
         footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
         theme: 'striped',
         margin: { top: 10, left: 14, right: 14 }
@@ -324,7 +379,8 @@ export default function InvoicesPage() {
             <thead>
               <tr className="border-b border-violet-100/40">
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Invoice No</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Billed To (Client)</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Party</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Project</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Issue Date</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
@@ -351,8 +407,13 @@ export default function InvoicesPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-bold text-[#7C6EF0] font-mono">{invoice.invoiceNumber}</span>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 rounded-md text-[10px] uppercase font-bold border ${invoice.type === 'CLIENT' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}>
+                        {invoice.type}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-800 font-bold">
-                      {invoice.client?.companyName || invoice.client?.name}
+                      {invoice.type === 'CLIENT' ? (invoice.client?.companyName || invoice.client?.name) : invoice.vendor?.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                       {invoice.project?.name || '-'}
@@ -381,16 +442,16 @@ export default function InvoicesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={(e) => { e.stopPropagation(); handleDownloadPDF(invoice); }} className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-clay-violet rounded-lg transition-all" title="Download PDF">
+                        <button onClick={(e) => { e.stopPropagation(); handleDownloadPDF(invoice); }} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-clay-violet rounded-lg transition-all" title="Download PDF">
                           <Download className="w-4 h-4" />
                         </button>
                         {isAdmin && (
                           <button 
-                            onClick={(e) => { 
+                            onClick={async (e) => { 
                               e.stopPropagation(); 
-                              if(window.confirm('Delete this invoice?')) deleteMutation.mutate(invoice.id); 
+                              if(await confirmDialog({ title: 'Confirm Action', message: 'Delete this invoice?' })) deleteMutation.mutate(invoice.id); 
                             }} 
-                            className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-clay-rose rounded-lg transition-all" 
+                            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#E5636C] hover:bg-clay-rose rounded-lg transition-all" 
                             title="Delete Invoice">
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -415,8 +476,15 @@ export default function InvoicesPage() {
               <div key={invoice.id} className="clay-card-sm p-4 flex flex-col gap-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="font-mono font-bold text-[#7C6EF0]">{invoice.invoiceNumber}</div>
-                    <div className="font-bold text-slate-800 mt-1">{invoice.client?.companyName || invoice.client?.name}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="font-mono font-bold text-[#7C6EF0]">{invoice.invoiceNumber}</div>
+                      <span className={`px-2 py-0.5 rounded-md text-[9px] uppercase font-bold border ${invoice.type === 'CLIENT' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}>
+                        {invoice.type}
+                      </span>
+                    </div>
+                    <div className="font-bold text-slate-800 mt-1">
+                      {invoice.type === 'CLIENT' ? (invoice.client?.companyName || invoice.client?.name) : invoice.vendor?.name}
+                    </div>
                   </div>
                   <div className="font-heading text-slate-800 text-xl">
                     ₹{Number(invoice.totalAmount).toLocaleString('en-IN')}
@@ -455,9 +523,9 @@ export default function InvoicesPage() {
                     </button>
                     {isAdmin && (
                       <button
-                        onClick={(e) => { 
+                        onClick={async (e) => { 
                           e.stopPropagation(); 
-                          if(window.confirm('Delete this invoice?')) deleteMutation.mutate(invoice.id); 
+                          if(await confirmDialog({ title: 'Confirm Action', message: 'Delete this invoice?' })) deleteMutation.mutate(invoice.id); 
                         }}
                         className="p-2 text-slate-400 hover:text-[#E5636C] hover:bg-clay-rose rounded-lg transition-all"
                         title="Delete Invoice"
@@ -485,107 +553,195 @@ export default function InvoicesPage() {
             </div>
 
             <form onSubmit={handleCreateSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Billed To (Client) *</label>
-                  <select
-                    required
-                    value={newInvoice.clientId}
-                    onChange={e => setNewInvoice({ ...newInvoice, clientId: e.target.value })}
-                    className="clay-input w-full"
-                  >
-                    <option value="">Select Client</option>
-                    {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Project (Optional)</label>
-                  <select
-                    value={newInvoice.projectId}
-                    onChange={e => setNewInvoice({ ...newInvoice, projectId: e.target.value })}
-                    className="clay-input w-full"
-                  >
-                    <option value="">Select Project</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                </div>
+              <div className="flex items-center gap-4 p-1 bg-slate-100/50 rounded-xl w-fit mx-auto mb-4 border border-slate-200/50">
+                <button
+                  type="button"
+                  onClick={() => setNewInvoice({ ...newInvoice, type: 'CLIENT', vendorId: '' })}
+                  className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${newInvoice.type === 'CLIENT' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  Client Invoice (Income)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewInvoice({ ...newInvoice, type: 'VENDOR', clientId: '' })}
+                  className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${newInvoice.type === 'VENDOR' ? 'bg-white text-orange-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  Vendor Invoice (Expense)
+                </button>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Issue Date *</label>
-                  <input
-                    type="date"
-                    required
-                    value={newInvoice.issueDate}
-                    onChange={e => setNewInvoice({ ...newInvoice, issueDate: e.target.value })}
-                    className="clay-input w-full"
-                  />
+                  <label className="text-xs font-semibold text-slate-700">{newInvoice.type === 'CLIENT' ? 'Billed By (Client)' : 'Billed To (Vendor)'} *</label>
+                  {newInvoice.type === 'CLIENT' ? (
+                    <AutocompleteInput
+                      value={newInvoice.clientId}
+                      onChange={(val) => setNewInvoice({ ...newInvoice, clientId: val })}
+                      options={clients.map(c => ({ id: c.id, name: c.name, companyName: c.companyName }))}
+                      renderOption={(c) => (
+                        <div>
+                          <div className="font-bold">{c.name}</div>
+                          {c.companyName && <div className="text-[10px] text-slate-500">{c.companyName}</div>}
+                        </div>
+                      )}
+                      placeholder="Search Client..."
+                    />
+                  ) : (
+                    <AutocompleteInput
+                      value={newInvoice.vendorId}
+                      onChange={(val) => setNewInvoice({ ...newInvoice, vendorId: val })}
+                      options={vendors.map(v => ({ id: v.id, name: v.name }))}
+                      placeholder="Search Vendor..."
+                    />
+                  )}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Due Date *</label>
-                  <input
-                    type="date"
-                    required
-                    value={newInvoice.dueDate}
-                    onChange={e => setNewInvoice({ ...newInvoice, dueDate: e.target.value })}
-                    className="clay-input w-full"
+                  <label className="text-xs font-semibold text-slate-700">Project (Optional)</label>
+                  <AutocompleteInput
+                    value={newInvoice.projectId}
+                    onChange={(val) => setNewInvoice({ ...newInvoice, projectId: val })}
+                    options={projects.map(p => ({ id: p.id, name: p.name }))}
+                    placeholder="Search Project..."
                   />
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Issue Date *</label>
+                <input
+                  type="date"
+                  required
+                  value={newInvoice.issueDate}
+                  onChange={e => setNewInvoice({ ...newInvoice, issueDate: e.target.value })}
+                  className="clay-input w-full"
+                />
               </div>
               
               <div className="pt-2">
                 <label className="text-sm font-semibold text-slate-800 block mb-2">Invoice Items</label>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {newInvoice.items.map((item, idx) => (
-                    <div key={idx} className="flex gap-2 items-center">
-                      <input
-                        type="text"
-                        placeholder="Description"
-                        value={item.description}
-                        onChange={(e) => {
-                          const items = [...newInvoice.items];
-                          items[idx].description = e.target.value;
-                          setNewInvoice({ ...newInvoice, items });
-                        }}
-                        className="clay-input flex-1"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Amount"
-                        value={item.amount}
-                        onChange={(e) => {
-                          const items = [...newInvoice.items];
-                          items[idx].amount = e.target.value;
-                          const hasValid = items.some(i => Number(i.amount) > 0);
-                          const newTotal = hasValid ? String(items.reduce((s, i) => s + (Number(i.amount) || 0), 0)) : newInvoice.totalAmount;
-                          setNewInvoice({ ...newInvoice, items, totalAmount: newTotal });
-                        }}
-                        className="clay-input w-32 font-mono"
-                      />
+                    <div key={idx} className="flex flex-col gap-2 p-3 bg-white/50 border border-violet-100 rounded-xl relative group">
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                        <div className="sm:col-span-5 space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase">Description</label>
+                          <input
+                            type="text"
+                            placeholder="Service/Product Name"
+                            value={item.description}
+                            onChange={(e) => {
+                              const items = [...newInvoice.items];
+                              items[idx].description = e.target.value;
+                              setNewInvoice({ ...newInvoice, items });
+                            }}
+                            className="clay-input w-full !text-sm !py-1.5"
+                          />
+                        </div>
+                        <div className="sm:col-span-4 space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase">Rate / Amount</label>
+                          <input
+                            type="number"
+                            placeholder="Rate"
+                            value={item.rate}
+                            onChange={(e) => {
+                              const items = [...newInvoice.items];
+                              items[idx].rate = e.target.value;
+                              items[idx].amount = String(Number(items[idx].rate) || 0);
+                              setNewInvoice({ ...newInvoice, items });
+                            }}
+                            className="clay-input w-full !text-sm !py-1.5 font-mono"
+                          />
+                        </div>
+                        <div className="sm:col-span-3 space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase">Total</label>
+                          <div className="w-full text-sm py-1.5 font-mono font-bold text-slate-800 bg-white/50 px-3 rounded-lg border border-slate-100 flex items-center justify-end">
+                            {Number(item.amount || 0).toLocaleString('en-IN')}
+                          </div>
+                        </div>
+                      </div>
+                      {newInvoice.items.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const items = newInvoice.items.filter((_, i) => i !== idx);
+                            setNewInvoice({ ...newInvoice, items });
+                          }}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-white border border-rose-100 rounded-full flex items-center justify-center text-rose-500 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-50 hover:scale-110"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
                   ))}
                   <button
                     type="button"
                     onClick={addItem}
-                    className="text-xs font-bold text-[#7C6EF0] hover:text-[#7C6EF0]/80 mt-2"
+                    className="text-xs font-bold text-[#7C6EF0] hover:text-[#7C6EF0]/80 mt-2 flex items-center gap-1 bg-white/50 px-3 py-1.5 rounded-lg border border-violet-100 hover:bg-white transition-colors"
                   >
-                    + Add Item
+                    <Plus className="w-3 h-3" /> Add Item
                   </button>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-violet-100/40">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Total Amount (₹) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={newInvoice.totalAmount}
-                    onChange={e => setNewInvoice({ ...newInvoice, totalAmount: e.target.value })}
-                    className="clay-input w-full font-mono font-bold"
-                  />
+                  <label className="text-xs font-semibold text-slate-700">GST Mode</label>
+                  <select
+                    value={newInvoice.gstMode}
+                    onChange={(e) => setNewInvoice({ ...newInvoice, gstMode: e.target.value })}
+                    className="clay-input w-full"
+                    disabled={settings?.allowOperatorOverride === false}
+                  >
+                    {!settings?.gstMandatory && <option value="NONE">No GST</option>}
+                    <option value="PERCENTAGE">GST %</option>
+                    {settings?.allowManualGstAmount !== false && <option value="AMOUNT">Manual GST (₹)</option>}
+                  </select>
                 </div>
+
+                {newInvoice.gstMode === 'PERCENTAGE' && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-700">GST %</label>
+                    <select
+                      value={newInvoice.gstPercentage}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, gstPercentage: Number(e.target.value) })}
+                      className="clay-input w-full"
+                      disabled={settings?.allowOperatorOverride === false}
+                    >
+                      <option value="0">0%</option>
+                      <option value="5">5%</option>
+                      <option value="12">12%</option>
+                      <option value="18">18%</option>
+                      <option value="28">28%</option>
+                    </select>
+                  </div>
+                )}
+
+                {newInvoice.gstMode === 'AMOUNT' && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-700">GST Amount</label>
+                    <input
+                      type="number"
+                      placeholder="GST Amount (₹)"
+                      value={newInvoice.gstAmount}
+                      onChange={(e) => setNewInvoice({ ...newInvoice, gstAmount: e.target.value })}
+                      className="clay-input w-full font-mono"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-[#7C6EF0]/10 p-3 rounded-xl border border-[#7C6EF0]/20 flex justify-between items-center text-[#7C6EF0] mt-4">
+                <span className="text-sm font-bold uppercase tracking-wider">Total Invoice Amount:</span>
+                <span className="font-mono font-bold text-lg">
+                  {(
+                    newInvoice.items.reduce((s, i) => s + (Number(i.amount) || 0), 0) + 
+                    (newInvoice.gstMode === 'PERCENTAGE' ? (newInvoice.items.reduce((s, i) => s + (Number(i.amount) || 0), 0) * newInvoice.gstPercentage) / 100 : 
+                     newInvoice.gstMode === 'AMOUNT' ? Number(newInvoice.gstAmount) : 0)
+                  ).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-violet-100/40">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700">Status</label>
                   <select

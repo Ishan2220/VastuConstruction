@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Home } from 'lucide-react';
 
 interface PageHeaderProps {
   title: string;
@@ -15,9 +15,10 @@ interface PageHeaderProps {
   };
   className?: string;
   showBack?: boolean;
+  breadcrumbs?: { label: string; href?: string }[];
 }
 
-export default function PageHeader({ title, description, children, action, className, showBack = true }: PageHeaderProps) {
+export default function PageHeader({ title, description, children, action, className, showBack = true, breadcrumbs }: PageHeaderProps) {
   const navigate = useNavigate();
   const isDashboard = title.toLowerCase().includes('dashboard');
 
@@ -34,6 +35,27 @@ export default function PageHeader({ title, description, children, action, class
             <span>Back to Previous Page</span>
           </button>
         )}
+        
+        {breadcrumbs && breadcrumbs.length > 0 && (
+          <nav className="flex items-center gap-1.5 text-xs text-slate-500 font-medium mb-2">
+            <Link to="/" className="text-slate-400 hover:text-indigo-600 transition-colors">
+              <Home className="w-3.5 h-3.5" />
+            </Link>
+            {breadcrumbs.map((crumb, idx) => (
+              <div key={idx} className="flex items-center gap-1.5">
+                <ChevronRight className="w-3 h-3 text-slate-300" />
+                {crumb.href ? (
+                  <Link to={crumb.href} className="hover:text-indigo-600 transition-colors">
+                    {crumb.label}
+                  </Link>
+                ) : (
+                  <span className="text-slate-800 font-bold">{crumb.label}</span>
+                )}
+              </div>
+            ))}
+          </nav>
+        )}
+        
         <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 font-heading">{title}</h1>
         {description && (
           <p className="text-sm text-slate-500">{description}</p>

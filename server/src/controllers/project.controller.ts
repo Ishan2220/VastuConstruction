@@ -34,3 +34,8 @@ export const remove = asyncHandler(async (req: Request, res: Response) => {
   await projectService.remove(req.params.id as string, req.user!.userId);
   res.json(new ApiResponse(200, null, 'Project deleted successfully'));
 });
+
+export const getDashboard = asyncHandler(async (req: Request, res: Response) => {
+  const dashboard = await projectService.getSiteDashboard(req.params.id as string, req.user!.userId, req.user!.role);
+  res.json(new ApiResponse(200, dashboard, 'Project dashboard fetched successfully'));
+});

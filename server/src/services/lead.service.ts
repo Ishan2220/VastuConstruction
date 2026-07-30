@@ -12,10 +12,12 @@ interface ListParams {
   source?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  captureDateStart?: string;
+  captureDateEnd?: string;
 }
 
 export const list = async (params: ListParams) => {
-  const { page = 1, limit = 10, search, status, source, sortBy = 'createdAt', sortOrder = 'desc' } = params;
+  const { page = 1, limit = 10, search, status, source, sortBy = 'createdAt', sortOrder = 'desc', captureDateStart, captureDateEnd } = params;
   const pageNum = Number(page) || 1;
   const limitNum = Number(limit) || 10;
   const skip = (pageNum - 1) * limitNum;
@@ -27,10 +29,18 @@ export const list = async (params: ListParams) => {
         { name: { contains: search, mode: 'insensitive' } },
         { phone: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
+        { plotAddress: { contains: search, mode: 'insensitive' } },
+        { plotDescription: { contains: search, mode: 'insensitive' } },
       ],
     }),
     ...(status && { status }),
     ...(source && { source }),
+    ...(captureDateStart && captureDateEnd && {
+      captureDate: {
+        gte: new Date(captureDateStart),
+        lte: new Date(captureDateEnd),
+      },
+    }),
   };
 
   const [data, total] = await Promise.all([
@@ -100,6 +110,16 @@ export const updateStatus = async (id: string, status: LeadStatus, userId: strin
   const existing = await prisma.lead.findFirst({ where: { id, deletedAt: null } });
   if (!existing) throw new ApiError(404, 'Lead not found');
 
+  // Lead status transition validation
+  const invalidTransitions: Record<string, string[]> = {
+    'CONVERTED': ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'LOST', 'ON_HOLD'], // From converted, you can't go anywhere else? Let's say can't go back to early stages
+    'LOST': ['NEW', 'CONTACTED', 'QUALIFIED'],
+  };
+  
+  if (invalidTransitions[existing.status] && invalidTransitions[existing.status].includes(status)) {
+    throw new ApiError(400, `Invalid lead status transition from ${existing.status} to ${status}`);
+  }
+
   const lead = await prisma.lead.update({
     where: { id },
     data: { status },
@@ -119,12 +139,47 @@ export const updateStatus = async (id: string, status: LeadStatus, userId: strin
 };
 
 export const getTimeline = async (id: string) => {
-  const lead = await prisma.lead.findFirst({ where: { id, deletedAt: null } });
-  if (!lead) throw new ApiError(404, 'Lead not found');
-
-  return prisma.leadTimeline.findMany({
+  return await prisma.leadTimeline.findMany({
     where: { leadId: id },
     orderBy: { createdAt: 'desc' },
+  });
+};
+
+export const convertToClient = async (id: string, userId: string) => {
+  const existing = await prisma.lead.findFirst({ where: { id, deletedAt: null } });
+  if (!existing) throw new ApiError(404, 'Lead not found');
+  if (existing.status === 'WON') throw new ApiError(400, 'Lead already converted');
+
+  return await prisma.$transaction(async (tx) => {
+    // 1. Update Lead Status
+    const lead = await tx.lead.update({
+      where: { id },
+      data: { status: 'WON' },
+    });
+
+    // 2. Add Timeline Entry
+    await tx.leadTimeline.create({
+      data: {
+        leadId: id,
+        action: 'Lead converted to Client',
+      },
+    });
+
+    // 3. Create Client
+    const client = await tx.client.create({
+      data: {
+        name: existing.name,
+        phone: existing.phone || '0000000000',
+        email: existing.email,
+        address: existing.plotAddress,
+        notes: {
+          create: [{ content: `Converted from lead ${existing.id}`, userId }]
+        },
+        createdById: userId,
+      }
+    });
+
+    return client;
   });
 };
 

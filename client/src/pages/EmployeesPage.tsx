@@ -4,8 +4,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, Plus, Search, Mail, Phone, Shield, Building2, Edit3, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 export default function EmployeesPage() {
+    const confirmDialog = useConfirm();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -38,6 +40,8 @@ export default function EmployeesPage() {
     phone: '',
     role: 'SITE_SUPERVISOR',
     department: 'Site Operations',
+    salary: '',
+    dailyRate: ''
   });
 
   const createMutation = useMutation({
@@ -50,7 +54,7 @@ export default function EmployeesPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       toast.success('Executive employee onboarded with ERP role access.');
       setIsAddOpen(false);
-      setNewEmp({ name: '', email: '', phone: '', role: 'SITE_SUPERVISOR', department: 'Site Operations' });
+      setNewEmp({ name: '', email: '', phone: '', role: 'SITE_SUPERVISOR', department: 'Site Operations', salary: '', dailyRate: '' });
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || 'Failed to onboard staff member');
@@ -108,6 +112,8 @@ export default function EmployeesPage() {
       phone: editingEmp.phone,
       designation: editingEmp.designation || editingEmp.role,
       department: editingEmp.department,
+      salary: editingEmp.salary ? Number(editingEmp.salary) : undefined,
+      dailyRate: editingEmp.dailyRate ? Number(editingEmp.dailyRate) : undefined,
       status: editingEmp.status,
     });
   };
@@ -196,7 +202,7 @@ export default function EmployeesPage() {
                       </div>
                       <div>
                         <h3 className="text-lg font-bold text-slate-800 font-heading">{nameStr}</h3>
-                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <div className="flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-xs text-slate-500">
                           <Building2 className="w-3.5 h-3.5 flex-shrink-0" /> <span className="truncate">{deptStr}</span>
                         </div>
                       </div>
@@ -222,19 +228,19 @@ export default function EmployeesPage() {
                       </span>
                       <button
                         onClick={(e) => { e.stopPropagation(); setEditingEmp(emp); }}
-                        className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
+                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
                         title="Edit Employee Role & Details"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.stopPropagation();
-                          if (confirm(`Remove staff member ${nameStr} from ERP access records?`)) {
+                          if (await confirmDialog({ title: 'Confirm Action', message: `Remove staff member ${nameStr} from ERP access records?` })) {
                             deleteMutation.mutate(emp.id);
                           }
                         }}
-                        className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-[#E5636C]/10 rounded-lg transition-colors cursor-pointer"
+                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#E5636C] hover:bg-[#E5636C]/10 rounded-lg transition-colors cursor-pointer"
                         title="Delete Employee Record"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -296,19 +302,19 @@ export default function EmployeesPage() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={(e) => { e.stopPropagation(); setEditingEmp(emp); }}
-                            className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors"
+                            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors"
                             title="Edit Employee"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.stopPropagation();
-                              if (confirm(`Remove staff member ${nameStr}?`)) {
+                              if (await confirmDialog({ title: 'Confirm Action', message: `Remove staff member ${nameStr}?` })) {
                                 deleteMutation.mutate(emp.id);
                               }
                             }}
-                            className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors"
+                            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors"
                             title="Delete Employee"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -378,6 +384,25 @@ export default function EmployeesPage() {
                   <option value="Vendor & Supply Chain">Supply Chain</option>
                 </select>
               </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="number"
+                  placeholder="Monthly Salary (₹)"
+                  value={newEmp.salary}
+                  onChange={(e) => setNewEmp({ ...newEmp, salary: e.target.value })}
+                  className="clay-input w-full px-3 py-2 text-sm font-semibold"
+                />
+                <input
+                  type="number"
+                  placeholder="Override Daily Rate (₹)"
+                  value={newEmp.dailyRate}
+                  onChange={(e) => setNewEmp({ ...newEmp, dailyRate: e.target.value })}
+                  className="clay-input w-full px-3 py-2 text-sm font-semibold"
+                  title="If set, this bypasses the Monthly Salary calculation for daily pay."
+                />
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
                 <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-white/40">Cancel</button>
                 <button type="submit" className="clay-btn px-5 py-2 text-white text-sm font-semibold">Onboard</button>
@@ -442,6 +467,25 @@ export default function EmployeesPage() {
                   <option value="Vendor & Supply Chain">Supply Chain</option>
                 </select>
               </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="number"
+                  placeholder="Monthly Salary (₹)"
+                  value={editingEmp.salary || ''}
+                  onChange={(e) => setEditingEmp({ ...editingEmp, salary: e.target.value })}
+                  className="clay-input w-full px-3 py-2 text-sm font-semibold"
+                />
+                <input
+                  type="number"
+                  placeholder="Override Daily Rate (₹)"
+                  value={editingEmp.dailyRate || ''}
+                  onChange={(e) => setEditingEmp({ ...editingEmp, dailyRate: e.target.value })}
+                  className="clay-input w-full px-3 py-2 text-sm font-semibold"
+                  title="If set, this bypasses the Monthly Salary calculation for daily pay."
+                />
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
                 <button type="button" onClick={() => setEditingEmp(null)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-white/40">Cancel</button>
                 <button type="submit" disabled={updateMutation.isPending} className="clay-btn px-5 py-2 text-white text-sm font-semibold">Save Updates</button>

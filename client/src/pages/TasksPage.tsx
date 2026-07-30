@@ -17,8 +17,10 @@ import { formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CategorySelect } from '@/components/common/CategorySelect';
 import { useQuickAddListener } from '@/hooks/useQuickAddListener';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 export default function TasksPage() {
+    const confirmDialog = useConfirm();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -29,6 +31,7 @@ export default function TasksPage() {
     title: '',
     description: '',
     projectId: '',
+    assigneeId: '',
     priority: 'HIGH',
     dueDate: new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString().split('T')[0],
   });
@@ -47,6 +50,14 @@ export default function TasksPage() {
     queryFn: async () => {
       const { data } = await api.get('/projects');
       return data.data?.data || [];
+    },
+  });
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees-select-tasks'],
+    queryFn: async () => {
+      const { data } = await api.get('/employees');
+      return data.data?.data || data.data || [];
     },
   });
 
@@ -116,13 +127,14 @@ export default function TasksPage() {
       description: editingTask.description,
       priority: editingTask.priority,
       status: editingTask.status,
+      assigneeId: editingTask.assigneeId || editingTask.assignee?.id,
     });
   };
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTask.title) {
-      toast.error('Task title is required');
+    if (!newTask.title || !newTask.assigneeId) {
+      toast.error('Task title and assignee are required');
       return;
     }
     createMutation.mutate(newTask);
@@ -256,7 +268,7 @@ export default function TasksPage() {
                       {task.status !== 'COMPLETED' && (
                         <button
                           onClick={() => updateStatusMutation.mutate({ id: task.id, status: 'COMPLETED' })}
-                          className="p-1.5 text-slate-400 hover:text-[#5CB77E] hover:bg-green-50 rounded-lg transition-colors cursor-pointer inline-block"
+                          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#5CB77E] hover:bg-green-50 rounded-lg transition-colors cursor-pointer inline-block"
                           title="Mark Complete"
                         >
                           <CheckCircle2 className="w-4 h-4" />
@@ -264,18 +276,18 @@ export default function TasksPage() {
                       )}
                       <button
                         onClick={() => setEditingTask(task)}
-                        className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer inline-block"
+                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer inline-block"
                         title="Edit Task Details"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm(`Are you sure you want to delete task "${task.title}"?`)) {
+                        onClick={async () => {
+                          if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete task "${task.title}"?` })) {
                             deleteMutation.mutate(task.id);
                           }
                         }}
-                        className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer inline-block"
+                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer inline-block"
                         title="Delete Task"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -342,18 +354,18 @@ export default function TasksPage() {
                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-violet-100/30">
                   <button
                     onClick={() => setEditingTask(task)}
-                    className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
+                    className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
                     title="Edit Task Details"
                   >
                     <Edit3 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => {
-                      if (confirm(`Are you sure you want to delete task "${task.title}"?`)) {
+                    onClick={async () => {
+                      if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete task "${task.title}"?` })) {
                         deleteMutation.mutate(task.id);
                       }
                     }}
-                    className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-[#E5636C]/10 rounded-lg transition-colors cursor-pointer"
+                    className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#E5636C] hover:bg-[#E5636C]/10 rounded-lg transition-colors cursor-pointer"
                     title="Delete Task"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -361,7 +373,7 @@ export default function TasksPage() {
                   {task.status !== 'COMPLETED' && (
                     <button
                       onClick={() => updateStatusMutation.mutate({ id: task.id, status: 'COMPLETED' })}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-clay-green text-[#5CB77E] text-[10px] font-bold transition-all hover:opacity-80"
+                      className="inline-flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center px-3 py-1.5 rounded-xl bg-clay-green text-[#5CB77E] text-[10px] font-bold transition-all hover:opacity-80"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       <span>Complete</span>
@@ -400,12 +412,26 @@ export default function TasksPage() {
                 {projects.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
 
+              <select
+                value={newTask.assigneeId}
+                onChange={(e) => setNewTask({ ...newTask, assigneeId: e.target.value })}
+                className="clay-input w-full px-3 py-2 text-sm font-semibold"
+                required
+              >
+                <option value="">Assign to Engineer / User *</option>
+                {employees.map((emp: any) => (
+                  <option key={emp.user?.id} value={emp.user?.id}>
+                    {emp.user?.name} ({emp.designation || emp.user?.role})
+                  </option>
+                ))}
+              </select>
+
               <div className="grid grid-cols-2 gap-4">
                 <CategorySelect
                   module="tasks"
                   value={newTask.priority}
                   onChange={(val) => setNewTask({ ...newTask, priority: val })}
-                  defaultOptions={['LOW', 'MEDIUM', 'HIGH', 'CRITICAL', 'URGENT']}
+                  defaultOptions={['LOW', 'MEDIUM', 'HIGH', 'URGENT']}
                   placeholder="Select Priority/Category..."
                 />
 
@@ -451,12 +477,25 @@ export default function TasksPage() {
                 onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
                 className="clay-input w-full px-3 py-2 text-sm font-semibold"
               />
+              <select
+                value={editingTask.assigneeId || editingTask.assignee?.id || ''}
+                onChange={(e) => setEditingTask({ ...editingTask, assigneeId: e.target.value })}
+                className="clay-input w-full px-3 py-2 text-sm font-semibold"
+                required
+              >
+                <option value="">Assign to Engineer / User *</option>
+                {employees.map((emp: any) => (
+                  <option key={emp.user?.id} value={emp.user?.id}>
+                    {emp.user?.name} ({emp.designation || emp.user?.role})
+                  </option>
+                ))}
+              </select>
               <div className="grid grid-cols-2 gap-4">
                 <CategorySelect
                   module="tasks"
                   value={editingTask.priority || 'HIGH'}
                   onChange={(val) => setEditingTask({ ...editingTask, priority: val })}
-                  defaultOptions={['LOW', 'MEDIUM', 'HIGH', 'CRITICAL', 'URGENT']}
+                  defaultOptions={['LOW', 'MEDIUM', 'HIGH', 'URGENT']}
                   placeholder="Select Priority/Category..."
                 />
                 <select

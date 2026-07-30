@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'framer-motion';
 import { Lock, Mail, ArrowRight, ShieldCheck, Building2, HardHat, Calculator } from 'lucide-react';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 import { toast } from 'sonner';
@@ -128,9 +129,8 @@ export default function LoginPage() {
                 <a href="#reset" onClick={(e) => { e.preventDefault(); setShowForgotModal(true); setForgotEmail(email); setTempPassword(''); }} className="text-xs text-[#7C6EF0] hover:text-[#5c4ce0] transition-colors font-bold">Forgot password?</a>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
-                <input
-                  type="password"
+                <Lock className="absolute left-3.5 top-3 w-4 h-4 text-slate-400 z-10" />
+                <PasswordInput
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

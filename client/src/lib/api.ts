@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '../store/authStore';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -25,13 +26,9 @@ const processQueue = (error: unknown, token: string | null = null) => {
 // Request interceptor - attach access token
 api.interceptors.request.use(
   (config) => {
-    // Dynamic import to avoid circular dependency
-    const token = localStorage.getItem('vastu-auth-token');
+    const token = useAuthStore.getState().accessToken;
     if (token) {
-      const parsed = JSON.parse(token);
-      if (parsed?.state?.accessToken) {
-        config.headers.Authorization = `Bearer ${parsed.state.accessToken}`;
-      }
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     // Attach Idempotency-Key for all mutating requests
@@ -88,18 +85,14 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const { data } = await axios.post('/api/auth/refresh', null, {
+        const { data } = await axios.post(`${api.defaults.baseURL}/auth/refresh`, null, {
           withCredentials: true,
         });
 
         const newToken = data?.data?.accessToken;
-
-        // Update local storage
-        const stored = localStorage.getItem('vastu-auth-token');
-        if (stored && newToken) {
-          const parsed = JSON.parse(stored);
-          parsed.state.accessToken = newToken;
-          localStorage.setItem('vastu-auth-token', JSON.stringify(parsed));
+        
+        if (newToken) {
+          useAuthStore.getState().setAccessToken(newToken);
         }
 
         processQueue(null, newToken);
@@ -107,7 +100,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        localStorage.removeItem('vastu-auth-token');
+        useAuthStore.getState().logout();
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }

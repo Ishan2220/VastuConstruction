@@ -17,3 +17,8 @@ export const getEngineerDashboard = asyncHandler(async (req: Request, res: Respo
   const data = await dashboardService.getEngineerDashboard(req.user!.userId);
   res.json(new ApiResponse(200, data, 'Engineer dashboard data fetched'));
 });
+
+export const getTodayActivities = asyncHandler(async (_req: Request, res: Response) => {
+  const data = await dashboardService.getTodayActivities();
+  res.json(new ApiResponse(200, data, 'Today activities fetched'));
+});

@@ -5,12 +5,16 @@ import { formatCurrency } from '@/lib/utils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { AccountDetailsModal } from './AccountDetailsModal';
 
 export default function AccountsPage() {
+    const confirmDialog = useConfirm();
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingAcc, setEditingAcc] = useState<any>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [newAcc, setNewAcc] = useState({
     bankName: '',
     accountNo: '',
@@ -151,7 +155,11 @@ export default function AccountsPage() {
               </thead>
               <tbody className="divide-y divide-violet-100/30 text-sm">
                 {accounts.map((acc: any) => (
-                  <tr key={acc.id} className="hover:bg-violet-50/50 transition-colors">
+                  <tr 
+                    key={acc.id} 
+                    className="hover:bg-violet-50/50 transition-colors cursor-pointer"
+                    onClick={() => setSelectedAccountId(acc.id)}
+                  >
                     <td className="p-4">
                       <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-[#7C6EF0]/10 text-[#7C6EF0] uppercase">
                         {acc.accountType}
@@ -166,19 +174,20 @@ export default function AccountsPage() {
                       {user?.role === 'ADMIN' ? (
                         <>
                           <button
-                            onClick={() => setEditingAcc(acc)}
-                            className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer inline-block"
+                            onClick={(e) => { e.stopPropagation(); setEditingAcc(acc); }}
+                            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer inline-block"
                             title="Edit Bank Account"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => {
-                              if (confirm(`Are you sure you want to unlink and remove ${acc.bankName} (${acc.accountNo})?`)) {
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to unlink and remove ${acc.bankName} (${acc.accountNo})?` })) {
                                 deleteMutation.mutate(acc.id);
                               }
                             }}
-                            className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer inline-block"
+                            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#E5636C] hover:bg-rose-50 rounded-lg transition-colors cursor-pointer inline-block"
                             title="Delete Bank Account"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -197,7 +206,11 @@ export default function AccountsPage() {
           {/* Mobile Card View */}
           <div className="md:hidden flex flex-col divide-y divide-violet-100/30">
             {accounts.map((acc: any) => (
-              <div key={acc.id} className="p-4 space-y-4 hover:bg-violet-50/50 transition-colors">
+              <div 
+                key={acc.id} 
+                className="p-4 space-y-4 hover:bg-violet-50/50 transition-colors cursor-pointer"
+                onClick={() => setSelectedAccountId(acc.id)}
+              >
                 <div className="space-y-3">
                   <div className="flex justify-between items-start gap-2">
                     <div className="flex items-center gap-2">
@@ -206,7 +219,7 @@ export default function AccountsPage() {
                       </span>
                       {user?.role === 'ADMIN' && (
                         <button
-                          onClick={() => setEditingAcc(acc)}
+                          onClick={(e) => { e.stopPropagation(); setEditingAcc(acc); }}
                           className="p-1 text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer"
                           title="Edit Bank Account"
                         >
@@ -215,8 +228,9 @@ export default function AccountsPage() {
                       )}
                       {user?.role === 'ADMIN' && (
                         <button
-                          onClick={() => {
-                            if (confirm(`Are you sure you want to unlink and remove ${acc.bankName} (${acc.accountNo})?`)) {
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to unlink and remove ${acc.bankName} (${acc.accountNo})?` })) {
                               deleteMutation.mutate(acc.id);
                             }
                           }}
@@ -351,6 +365,14 @@ export default function AccountsPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {selectedAccountId && (
+        <AccountDetailsModal
+          isOpen={!!selectedAccountId}
+          onClose={() => setSelectedAccountId(null)}
+          accountId={selectedAccountId}
+        />
       )}
     </div>
   );

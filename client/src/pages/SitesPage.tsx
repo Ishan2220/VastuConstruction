@@ -7,8 +7,10 @@ import api from '@/lib/api';
 import { toast } from 'sonner';
 import { Link } from 'react-router';
 import { useQuickAddListener } from '@/hooks/useQuickAddListener';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 export default function SitesPage() {
+    const confirmDialog = useConfirm();
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
   useQuickAddListener('project', () => setIsAddOpen(true));
@@ -167,25 +169,25 @@ export default function SitesPage() {
                     <span className="text-xs font-mono font-bold px-2.5 py-1 rounded bg-[#7C6EF0]/10 text-[#7C6EF0]">
                       {proj.code}
                     </span>
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="inline-flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" /> {proj.status}
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => setEditingSite(proj)}
-                      className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
+                      className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
                       title="Edit Site Details"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => {
-                        if (confirm(`Are you sure you want to delete ${proj.name}?`)) {
+                      onClick={async () => {
+                        if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete ${proj.name}?` })) {
                           deleteMutation.mutate(proj.id);
                         }
                       }}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                      className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                       title="Delete Site"
                     >
                       <Trash2 className="w-4 h-4" />

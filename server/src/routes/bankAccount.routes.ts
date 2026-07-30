@@ -15,5 +15,6 @@ router.get('/:id', ctrl.getById);
 router.post('/', authorize('ADMIN', 'ACCOUNTANT', { page: 'Accounts' }), ctrl.create);
 router.put('/:id', authorize('ADMIN', 'ACCOUNTANT', { page: 'Accounts' }), ctrl.update);
 router.delete('/:id', authorize('ADMIN', 'ACCOUNTANT', { page: 'Accounts' }), ctrl.remove);
+router.post('/:id/reconcile', authorize('ADMIN', 'ACCOUNTANT', { page: 'Accounts' }), ctrl.reconcile);
 
 export default router;

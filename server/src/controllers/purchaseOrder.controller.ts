@@ -65,10 +65,10 @@ export const getPurchaseOrderById = async (req: Request, res: Response) => {
 };
 
 export const createPurchaseOrder = async (req: Request, res: Response) => {
-  const { poNumber, vendorId, projectId, issueDate, expectedDate, status, items, notes } = req.body;
+  const { poNumber, vendorId, projectId, issueDate, expectedDate, status, items, notes, gstMode, gstPercentage, gstAmount } = req.body;
 
-  let totalAmount = 0;
-  let taxAmount = 0;
+  let amount = 0;
+  let taxAmount = Number(gstAmount) || 0;
 
   const newPo = await prisma.purchaseOrder.create({
     data: {
@@ -79,26 +79,37 @@ export const createPurchaseOrder = async (req: Request, res: Response) => {
       expectedDate: expectedDate ? new Date(expectedDate) : null,
       status: status || 'DRAFT',
       totalAmount: 0,
+      amount: 0,
+      gstMode: gstMode || 'NONE',
+      gstPercentage: gstPercentage ? Number(gstPercentage) : null,
       taxAmount: 0,
       notes,
       items: {
         create: items.map((item: any) => {
-          const amount = Number(item.quantityOrdered) * Number(item.rate);
-          totalAmount += amount;
+          const itemAmount = Number(item.quantityOrdered) * Number(item.rate);
+          amount += itemAmount;
           return {
             materialId: item.materialId,
             quantityOrdered: item.quantityOrdered,
             rate: item.rate,
-            amount
+            amount: itemAmount
           };
         })
       }
     }
   });
 
+  if (gstMode === 'PERCENTAGE') {
+    taxAmount = (amount * Number(gstPercentage)) / 100;
+  } else if (gstMode === 'AMOUNT') {
+    taxAmount = Number(gstAmount);
+  }
+
+  const finalTotalAmount = amount + taxAmount;
+
   const updatedPo = await prisma.purchaseOrder.update({
     where: { id: newPo.id },
-    data: { totalAmount, taxAmount },
+    data: { amount, totalAmount: finalTotalAmount, taxAmount },
     include: {
       vendor: { select: { name: true } }
     }
@@ -111,7 +122,7 @@ export const createPurchaseOrder = async (req: Request, res: Response) => {
       description: `Purchase Order ${poNumber} created for vendor ${updatedPo.vendor.name}`,
       vendorId,
       projectId,
-      amount: totalAmount,
+      amount: finalTotalAmount,
       referenceNo: poNumber
     }
   });

@@ -15,7 +15,7 @@ export const env = {
   CLIENT_URL: (process.env.CLIENT_URL || 'http://localhost:5173').trim(),
 
   // FMS Configuration
-  STORAGE_PROVIDER: (process.env.STORAGE_PROVIDER || 'LOCAL') as 'LOCAL' | 'S3',
+  STORAGE_PROVIDER: (process.env.STORAGE_PROVIDER || 'LOCAL') as 'LOCAL' | 'S3' | 'CLOUDINARY',
   S3_BUCKET_NAME: process.env.S3_BUCKET_NAME || '',
   S3_REGION: process.env.S3_REGION || '',
   S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID || '',

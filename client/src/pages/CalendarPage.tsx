@@ -3,12 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { Calendar as CalendarIcon, Clock, CheckCircle2, AlertTriangle, Plus, MapPin, ChevronLeft, ChevronRight, HardHat, CheckSquare, Square, Building2, CalendarDays, RefreshCw, Edit3, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 interface CalendarEvent {
   id: string;
   dateStr: string; // YYYY-MM-DD
   title: string;
-  type: 'MILESTONE' | 'POUR' | 'DELIVERY' | 'AUDIT' | 'TASK';
+  type: 'MEETING' | 'SITE_VISIT' | 'CLIENT_CALL' | 'PAYMENT_REMINDER' | 'TASK_DEADLINE' | 'OTHER';
   site: string;
   time: string;
   completed: boolean;
@@ -16,12 +17,20 @@ interface CalendarEvent {
 }
 
 export default function CalendarPage() {
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+    const confirmDialog = useConfirm();
+  const [todayStr, setTodayStr] = useState(() => new Date().toISOString().split('T')[0]);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const nowStr = new Date().toISOString().split('T')[0];
+      if (nowStr !== todayStr) setTodayStr(nowStr);
+    }, 60000); // Check every minute
+    return () => clearInterval(timer);
+  }, [todayStr]);
 
   const [currentDate, setCurrentDate] = useState(() => {
     const savedDate = localStorage.getItem('vastu_calendar_month_v2');
     if (savedDate) return new Date(savedDate);
+    const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
 
@@ -36,14 +45,14 @@ export default function CalendarPage() {
     title: string;
     dateStr: string;
     time: string;
-    type: 'MILESTONE' | 'POUR' | 'DELIVERY' | 'AUDIT' | 'TASK';
+    type: 'MEETING' | 'SITE_VISIT' | 'CLIENT_CALL' | 'PAYMENT_REMINDER' | 'TASK_DEADLINE' | 'OTHER';
     site: string;
     assignee: string;
   }>({
     title: '',
     dateStr: selectedDateStr || todayStr,
     time: '10:00 AM',
-    type: 'MILESTONE',
+    type: 'SITE_VISIT',
     site: '',
     assignee: '',
   });
@@ -100,7 +109,7 @@ export default function CalendarPage() {
                   id: calId,
                   dateStr: c.startTime ? new Date(c.startTime).toISOString().split('T')[0] : todayStr,
                   title: c.title,
-                  type: c.type || 'MILESTONE',
+                  type: c.type || 'SITE_VISIT',
                   site: c.location || c.project?.name || 'Main Site',
                   time: new Date(c.startTime || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                   completed: !!c.isCompleted,
@@ -118,7 +127,7 @@ export default function CalendarPage() {
                   id: taskId,
                   dateStr: t.dueDate ? t.dueDate.split('T')[0] : todayStr,
                   title: t.title,
-                  type: t.priority === 'URGENT' || t.priority === 'HIGH' ? 'MILESTONE' : 'TASK',
+                  type: 'TASK_DEADLINE',
                   site: t.project?.name || 'Corporate HQ',
                   time: '11:00 AM',
                   completed: t.status === 'COMPLETED',
@@ -139,6 +148,25 @@ export default function CalendarPage() {
       }
       return true;
     },
+  });
+
+  const { data: projectsData = [] } = useQuery({
+    queryKey: ['projects-select-cal'],
+    queryFn: async () => {
+      const { data } = await api.get('/projects');
+      return data.data?.data || data.data || [];
+    }
+  });
+
+  const { data: dailyActivities = [], isLoading: loadingActivities } = useQuery({
+    queryKey: ['daily-activities', selectedDateStr],
+    queryFn: async () => {
+      const d = new Date(selectedDateStr);
+      const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
+      const endOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+      const { data } = await api.get(`/activities?startDate=${startOfDay.toISOString()}&endDate=${endOfDay.toISOString()}`);
+      return data.data?.activities || [];
+    }
   });
 
   // Calendar logic helpers
@@ -189,7 +217,7 @@ export default function CalendarPage() {
 
   const handleDeleteEvent = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (!confirm('Are you sure you want to delete this scheduled event / task from the calendar?')) return;
+    if (!await confirmDialog({ title: 'Confirm Action', message: 'Are you sure you want to delete this scheduled event / task from the calendar?' })) return;
     setEvents((prev) => prev.filter((ev) => ev.id !== id));
     toast.success('Calendar event removed successfully.');
     try {
@@ -219,7 +247,7 @@ export default function CalendarPage() {
       } else {
         await api.put(`/calendar/${realId}`, {
           title: editingEvent.title,
-          type: editingEvent.type || 'MILESTONE',
+          type: editingEvent.type || 'SITE_VISIT',
           startTime: new Date(editingEvent.dateStr).toISOString(),
           location: editingEvent.site,
         });
@@ -253,7 +281,7 @@ export default function CalendarPage() {
       await api.post('/calendar', {
         title: newEvent.title,
         description: `Scheduled for ${newEvent.site} - Assigned to ${newEvent.assignee}`,
-        type: newEvent.type === 'POUR' || newEvent.type === 'AUDIT' ? 'MILESTONE' : 'TASK',
+        type: newEvent.type,
         startTime: new Date(newEvent.dateStr).toISOString(),
         location: newEvent.site,
       });
@@ -261,13 +289,13 @@ export default function CalendarPage() {
       toast.error(err.response?.data?.message || 'Failed to save scheduled event to server');
     }
 
-    setNewEvent({ title: '', dateStr: selectedDateStr, time: '10:00 AM', type: 'MILESTONE', site: 'Skyline Residency', assignee: 'Vikas Patil' });
+    setNewEvent({ title: '', dateStr: selectedDateStr, time: '10:00 AM', type: 'SITE_VISIT', site: 'Skyline Residency', assignee: 'Vikas Patil' });
   };
 
   // Filter tasks for selected date
   const tasksForSelectedDate = events.filter((e) => e.dateStr === selectedDateStr);
-  // Filter future upcoming tasks after selected date
-  const futureTasks = events.filter((e) => e.dateStr > selectedDateStr).sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+  // Filter future upcoming tasks after or on today
+  const futureTasks = events.filter((e) => e.dateStr >= todayStr).sort((a, b) => a.dateStr.localeCompare(b.dateStr));
 
   // Build grid calendar days
   const calendarDays = [];
@@ -415,11 +443,11 @@ export default function CalendarPage() {
                           <div
                             key={ev.id}
                             className={`text-[9px] sm:text-[10px] font-bold px-1 py-0.5 rounded-md truncate ${
-                              ev.type === 'POUR'
+                              ev.type === 'SITE_VISIT'
                                 ? 'bg-clay-violet text-[#7C6EF0]'
-                                : ev.type === 'DELIVERY'
+                                : ev.type === 'PAYMENT_REMINDER'
                                 ? 'bg-clay-green text-[#5CB77E]'
-                                : ev.type === 'AUDIT'
+                                : ev.type === 'TASK_DEADLINE'
                                 ? 'bg-clay-rose text-[#E5636C]'
                                 : 'bg-white/60 text-slate-500'
                             }`}
@@ -443,10 +471,10 @@ export default function CalendarPage() {
 
           <div className="flex flex-wrap items-center justify-between pt-3 border-t border-violet-100/30 text-[11px] text-slate-400 gap-3">
             <div className="flex items-center gap-3 flex-wrap">
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#7C6EF0]" /> Selected</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#F2A65A]" /> Today</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#5CB77E]" /> Delivery</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#E5636C]" /> Audit</span>
+              <span className="flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center"><span className="w-2.5 h-2.5 rounded-full bg-[#7C6EF0]" /> Selected</span>
+              <span className="flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center"><span className="w-2.5 h-2.5 rounded-full bg-[#F2A65A]" /> Today</span>
+              <span className="flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center"><span className="w-2.5 h-2.5 rounded-full bg-[#5CB77E]" /> Payment</span>
+              <span className="flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center"><span className="w-2.5 h-2.5 rounded-full bg-[#E5636C]" /> Deadline</span>
             </div>
           </div>
         </div>
@@ -509,14 +537,14 @@ export default function CalendarPage() {
                     <div className="space-y-1 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <span className={`text-[10px] font-heading font-bold uppercase px-2 py-0.5 rounded-lg ${
-                          ev.type === 'POUR' ? 'bg-clay-violet text-[#7C6EF0]' :
-                          ev.type === 'DELIVERY' ? 'bg-clay-green text-[#5CB77E]' :
-                          ev.type === 'AUDIT' ? 'bg-clay-rose text-[#E5636C]' :
+                          ev.type === 'SITE_VISIT' ? 'bg-clay-violet text-[#7C6EF0]' :
+                          ev.type === 'PAYMENT_REMINDER' ? 'bg-clay-green text-[#5CB77E]' :
+                          ev.type === 'TASK_DEADLINE' ? 'bg-clay-rose text-[#E5636C]' :
                           'bg-white/60 text-slate-500'
                         }`}>
                           {ev.type}
                         </span>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
                           <span className="text-xs font-mono font-semibold text-slate-500 flex items-center gap-1 mr-1">
                             <Clock className="w-3 h-3 text-slate-400" /> {ev.time}
                           </span>
@@ -601,6 +629,41 @@ export default function CalendarPage() {
               ))}
             </div>
           </div>
+
+          {/* Section 3: Done Activities for Selected Date */}
+          <div className="clay-card p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-3">
+              <h3 className="text-base font-bold text-slate-800 font-heading">Activities Logged</h3>
+              <span className="text-xs text-slate-400 font-semibold">{selectedDateStr}</span>
+            </div>
+
+            <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1 scrollbar-hide">
+              {loadingActivities ? (
+                <div className="py-4 text-center text-slate-400 text-xs animate-pulse">Loading activities...</div>
+              ) : dailyActivities.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 text-xs">No activities logged on this date.</div>
+              ) : (
+                dailyActivities.map((act: any) => (
+                  <div key={act.id} className="p-3 rounded-xl bg-white/60 border border-violet-100/30 flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-clay-violet text-[#7C6EF0] flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800 font-heading">{act.description || `${act.action} ${act.module}`}</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">
+                        {new Date(act.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {act.user?.name || 'System'}
+                      </div>
+                      {(act.project?.name || act.client?.name) && (
+                        <span className="text-[9px] font-bold text-[#7C6EF0] bg-clay-violet px-1.5 py-0.5 rounded mt-1 inline-block">
+                          {act.project?.name || act.client?.name}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -663,11 +726,12 @@ export default function CalendarPage() {
                     onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as any })}
                     className="clay-input w-full px-3 py-2 text-sm"
                   >
-                    <option value="MILESTONE">Site Milestone</option>
-                    <option value="POUR">RCC / Slab Pouring</option>
-                    <option value="DELIVERY">Material / Rebar Delivery</option>
-                    <option value="AUDIT">Inspection & Structural Audit</option>
-                    <option value="TASK">Daily Engineering Task</option>
+                    <option value="MEETING">Meeting</option>
+                    <option value="SITE_VISIT">Site Visit</option>
+                    <option value="CLIENT_CALL">Client Call</option>
+                    <option value="PAYMENT_REMINDER">Payment Reminder</option>
+                    <option value="TASK_DEADLINE">Task Deadline</option>
+                    <option value="OTHER">Other</option>
                   </select>
                 </div>
 
@@ -678,10 +742,13 @@ export default function CalendarPage() {
                     onChange={(e) => setNewEvent({ ...newEvent, site: e.target.value })}
                     className="clay-input w-full px-3 py-2 text-sm"
                   >
-                    <option value="Skyline Residency">Skyline Residency</option>
-                    <option value="Bandra Commercial">Bandra Commercial</option>
-                    <option value="Pune Industrial Park">Pune Industrial Park</option>
-                    <option value="Corporate HQ">Corporate HQ</option>
+                    {projectsData.length === 0 ? (
+                      <option value="">No projects found</option>
+                    ) : (
+                      projectsData.map((p: any) => (
+                        <option key={p.id} value={p.name}>{p.name}</option>
+                      ))
+                    )}
                   </select>
                 </div>
               </div>
@@ -763,11 +830,12 @@ export default function CalendarPage() {
                     onChange={(e) => setEditingEvent({ ...editingEvent, type: e.target.value })}
                     className="clay-input w-full px-3 py-2 text-sm font-semibold text-slate-800"
                   >
-                    <option value="MILESTONE">Milestone</option>
-                    <option value="POUR">Pour</option>
-                    <option value="DELIVERY">Delivery</option>
-                    <option value="AUDIT">Audit</option>
-                    <option value="TASK">Task</option>
+                    <option value="MEETING">Meeting</option>
+                    <option value="SITE_VISIT">Site Visit</option>
+                    <option value="CLIENT_CALL">Client Call</option>
+                    <option value="PAYMENT_REMINDER">Payment Reminder</option>
+                    <option value="TASK_DEADLINE">Task Deadline</option>
+                    <option value="OTHER">Other</option>
                   </select>
                 </div>
               </div>

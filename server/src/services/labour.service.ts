@@ -38,7 +38,7 @@ export const list = async (params: ListParams) => {
       take: limitNum,
       orderBy: { [sortBy]: sortOrder },
       include: {
-        _count: { select: { assignments: true, attendance: true, payments: true } },
+        _count: { select: { assignments: true, payments: true } },
       },
     }),
     prisma.labour.count({ where }),
@@ -54,10 +54,6 @@ export const getById = async (id: string) => {
       assignments: {
         where: { isActive: true },
         include: { project: { select: { id: true, name: true, city: true } } },
-      },
-      attendance: {
-        take: 30,
-        orderBy: { date: 'desc' },
       },
       payments: {
         take: 20,
@@ -92,28 +88,7 @@ export const remove = async (id: string, userId: string, idempotencyKey?: string
   return labour;
 };
 
-// Attendance management
-export const recordAttendance = async (
-  labourId: string,
-  date: Date,
-  present: boolean,
-  halfDay = false,
-  overtime = 0,
-  notes?: string
-) => {
-  return prisma.attendance.upsert({
-    where: { labourId_date: { labourId, date } },
-    update: { present, halfDay, overtime, notes },
-    create: { labourId, date, present, halfDay, overtime, notes },
-  });
-};
 
-export const getAttendanceByDate = async (date: Date) => {
-  return prisma.attendance.findMany({
-    where: { date },
-    include: { labour: { select: { id: true, name: true, skill: true, dailyWage: true } } },
-  });
-};
 
 // Assignment management
 export const assignToProject = async (labourId: string, projectId: string, startDate: Date) => {
@@ -160,6 +135,18 @@ export const recordPayment = async (
         { accountId: accountId || null, debitAmount: 0, creditAmount: Number(payment.amount), description: 'Bank/Cash Outflow' }
       ]
     }, tx);
+
+    await tx.expense.create({
+      data: {
+        amount: payment.amount,
+        paymentDate: payment.paymentDate,
+        type: 'LABOUR',
+        description: `Labour ${isAdvance ? 'Advance' : 'Payment'} to ${payment.labour.name}`,
+        paymentMethod: payment.paymentMethod,
+        accountId: accountId || null,
+        createdById: userId || 'SYSTEM',
+      }
+    });
 
     return payment;
   });

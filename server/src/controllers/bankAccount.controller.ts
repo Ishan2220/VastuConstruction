@@ -27,3 +27,9 @@ export const remove = asyncHandler(async (req: Request, res: Response) => {
   await bankService.remove(req.params.id as string, req.user!.userId);
   res.json(new ApiResponse(200, null, 'Bank account deleted successfully'));
 });
+
+export const reconcile = asyncHandler(async (req: Request, res: Response) => {
+  const { balance } = req.body;
+  const account = await bankService.reconcile(req.params.id as string, Number(balance), req.user!.userId);
+  res.json(new ApiResponse(200, account, 'Bank account reconciled successfully'));
+});

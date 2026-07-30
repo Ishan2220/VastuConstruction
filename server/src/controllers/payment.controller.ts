@@ -285,10 +285,38 @@ export const getPaymentHistory = asyncHandler(async (req: Request, res: Response
 });
 
 export const getPaymentSummary = asyncHandler(async (req: Request, res: Response) => {
-  // Similar logic but summarizing today
+  const dateFilter = req.query.dateFilter as string; // 'today', 'yesterday', 'this_week', 'this_month', 'financial_year', 'custom'
+  let startDate: Date | undefined;
+  let endDate: Date | undefined;
+
   const now = new Date();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  if (dateFilter === 'today') {
+    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  } else if (dateFilter === 'yesterday') {
+    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59, 999);
+  } else if (dateFilter === 'this_week') {
+    const day = now.getDay() || 7;
+    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day + 1);
+    endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  } else if (dateFilter === 'this_month') {
+    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+  } else if (dateFilter === 'financial_year') {
+    const currentYear = now.getFullYear();
+    const startYear = now.getMonth() >= 3 ? currentYear : currentYear - 1;
+    startDate = new Date(startYear, 3, 1);
+    endDate = new Date(startYear + 1, 2, 31, 23, 59, 59, 999);
+  } else if (dateFilter === 'custom' && req.query.startDate && req.query.endDate) {
+    startDate = new Date(req.query.startDate as string);
+    endDate = new Date(req.query.endDate as string);
+    endDate.setHours(23, 59, 59, 999);
+  } else {
+    // Default to today if nothing provided
+    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  }
 
   const baseQuery = Prisma.sql`
     WITH AllPayments AS (
@@ -307,8 +335,8 @@ export const getPaymentSummary = asyncHandler(async (req: Request, res: Response
   const summaryQuery = Prisma.sql`
     ${baseQuery}
     SELECT 
-      COALESCE(SUM(CASE WHEN direction = 'INFLOW' AND status = 'COMPLETED' AND "paymentDate" >= ${startOfDay} AND "paymentDate" <= ${endOfDay} THEN amount ELSE 0 END), 0) as "todayInflow",
-      COALESCE(SUM(CASE WHEN direction = 'OUTFLOW' AND status = 'COMPLETED' AND "paymentDate" >= ${startOfDay} AND "paymentDate" <= ${endOfDay} THEN amount ELSE 0 END), 0) as "todayOutflow",
+      COALESCE(SUM(CASE WHEN direction = 'INFLOW' AND status = 'COMPLETED' AND "paymentDate" >= ${startDate} AND "paymentDate" <= ${endDate} THEN amount ELSE 0 END), 0) as "todayInflow",
+      COALESCE(SUM(CASE WHEN direction = 'OUTFLOW' AND status = 'COMPLETED' AND "paymentDate" >= ${startDate} AND "paymentDate" <= ${endDate} THEN amount ELSE 0 END), 0) as "todayOutflow",
       COALESCE(SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END), 0) as "pendingPayments",
       COALESCE(SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END), 0) as "completedPayments",
       COALESCE(SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END), 0) as "cancelledPayments"

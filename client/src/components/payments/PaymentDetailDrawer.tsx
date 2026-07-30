@@ -24,6 +24,17 @@ interface PaymentDetailDrawerProps {
 export default function PaymentDetailDrawer({ isOpen, onClose, payment }: PaymentDetailDrawerProps) {
   if (!payment) return null;
 
+  let displayRemarks = payment.remarks || '';
+  let details: any[] = [];
+
+  if (displayRemarks.includes(' | DETAILS:')) {
+    try {
+      const parts = displayRemarks.split(' | DETAILS:');
+      displayRemarks = parts[0];
+      details = JSON.parse(parts[1]);
+    } catch (e) {}
+  }
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -52,38 +63,28 @@ export default function PaymentDetailDrawer({ isOpen, onClose, payment }: Paymen
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-6 pb-24 space-y-6">
               {/* Header Amount Card */}
               <div className={cn(
-                "rounded-xl p-6 text-center shadow-sm border",
+                "rounded-3xl p-8 text-center shadow-lg border relative overflow-hidden",
                 payment.direction === 'INFLOW' 
-                  ? "bg-emerald-50 border-emerald-100" 
-                  : "bg-rose-50 border-rose-100"
+                  ? "bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-400" 
+                  : "bg-gradient-to-br from-rose-500 to-rose-600 border-rose-400"
               )}>
-                <div className="inline-flex items-center justify-center rounded-full bg-white p-3 shadow-sm mb-3">
-                  <IndianRupee className={cn(
-                    "h-8 w-8",
-                    payment.direction === 'INFLOW' ? "text-emerald-600" : "text-rose-600"
-                  )} />
-                </div>
-                <h3 className={cn(
-                  "text-3xl font-bold tracking-tight mb-1",
-                  payment.direction === 'INFLOW' ? "text-emerald-700" : "text-rose-700"
-                )}>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+                
+                <h3 className="text-4xl font-black tracking-tight mb-2 text-white drop-shadow-md">
                   {payment.direction === 'INFLOW' ? '+' : '-'}₹{payment.amount.toLocaleString('en-IN')}
                 </h3>
-                <p className={cn(
-                  "text-sm font-medium",
-                  payment.direction === 'INFLOW' ? "text-emerald-600/80" : "text-rose-600/80"
-                )}>
+                <p className="text-sm font-bold text-white/90 tracking-wide uppercase">
                   {payment.paymentType}
                 </p>
-                <div className="mt-4 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-white shadow-sm border">
+                <div className="mt-5 inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-white/20 text-white shadow-sm border border-white/20 backdrop-blur-sm">
                   <span className={cn(
-                    "h-2 w-2 rounded-full mr-2",
-                    payment.status === 'COMPLETED' ? "bg-emerald-500" :
-                    payment.status === 'PENDING' ? "bg-amber-500" :
-                    payment.status === 'CANCELLED' ? "bg-rose-500" : "bg-blue-500"
+                    "h-2 w-2 rounded-full mr-2 shadow-sm",
+                    payment.status === 'COMPLETED' ? "bg-emerald-300" :
+                    payment.status === 'PENDING' ? "bg-amber-300" :
+                    payment.status === 'OVERDUE' ? "bg-rose-300" : "bg-blue-300"
                   )} />
                   {payment.status}
                 </div>
@@ -93,7 +94,7 @@ export default function PaymentDetailDrawer({ isOpen, onClose, payment }: Paymen
               <div className="space-y-4">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Transaction Information</h4>
                 
-                <DetailRow icon={Calendar} label="Date" value={format(new Date(payment.paymentDate), 'dd MMM yyyy')} />
+                <DetailRow icon={Calendar} label="Date" value={format(new Date(payment.createdAt), 'dd MMM yyyy')} />
                 <DetailRow icon={CreditCard} label="Payment Method" value={payment.paymentMethod} />
                 
                 {payment.reference && (
@@ -121,13 +122,33 @@ export default function PaymentDetailDrawer({ isOpen, onClose, payment }: Paymen
                   <DetailRow icon={Building2} label="Account" value={`${payment.accountName} ${payment.accountNo ? '(' + payment.accountNo + ')' : ''}`} />
                 )}
 
-                {(payment.remarks || payment.createdByName) && (
+                {(displayRemarks || payment.createdByName || details.length > 0) && (
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-6 mb-2">Additional Info</h4>
                 )}
 
-                {payment.remarks && (
-                  <DetailRow icon={FileText} label="Remarks" value={payment.remarks} />
+                {displayRemarks && (
+                  <DetailRow icon={FileText} label="Remarks" value={displayRemarks} />
                 )}
+                
+                {details.length > 0 && (
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-3">
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-2">
+                      <FileText className="w-3 h-3" /> Itemized Details
+                    </h5>
+                    {details.map((d: any, i: number) => (
+                      <div key={i} className="flex justify-between items-center text-sm border-b border-slate-100 last:border-0 pb-2 last:pb-0">
+                        <div>
+                          <p className="font-semibold text-slate-700">{d.materialName || d.category || d.customCategory || 'Item'}</p>
+                          <p className="text-xs text-slate-500">Qty: {d.quantity || d.count} × ₹{d.rate}</p>
+                        </div>
+                        <div className="font-bold text-slate-800">
+                          ₹{d.amount || ((d.quantity || d.count || 1) * d.rate)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
                 {payment.createdByName && (
                   <DetailRow icon={User} label="Created By" value={payment.createdByName} />
                 )}

@@ -23,7 +23,6 @@ export const getById = async (id: string) => {
     include: {
       user: { select: { id: true, name: true, email: true, phone: true, role: true, isActive: true } },
       leaves: { take: 20, orderBy: { createdAt: 'desc' } },
-      attendance: { take: 31, orderBy: { date: 'desc' } },
       salaryPayments: { take: 12, orderBy: { paymentDate: 'desc' } },
     },
   });
@@ -32,7 +31,7 @@ export const getById = async (id: string) => {
 };
 
 export const create = async (payload: any, userId: string) => {
-  const { idempotencyKey, name, email, phone, role, department } = payload;
+  const { idempotencyKey, name, email, phone, role, department, salary, dailyRate, payrollType, workingDaysOverride, workingHoursOverride, payrollStartDate, overtimeEligible } = payload;
   
   const hashedPassword = await bcrypt.hash('Vastu@123', 12);
   
@@ -44,6 +43,13 @@ export const create = async (payload: any, userId: string) => {
     data: {
       department: department || 'Operations',
       designation: role || 'Staff',
+      salary: salary ? Number(salary) : null,
+      dailyRate: dailyRate ? Number(dailyRate) : null,
+      payrollType: payrollType || 'ATTENDANCE_BASED',
+      workingDaysOverride: workingDaysOverride ? Number(workingDaysOverride) : null,
+      workingHoursOverride: workingHoursOverride ? Number(workingHoursOverride) : null,
+      payrollStartDate: payrollStartDate ? new Date(payrollStartDate) : null,
+      overtimeEligible: overtimeEligible !== undefined ? Boolean(overtimeEligible) : true,
       user: {
         create: {
           name,
@@ -64,10 +70,28 @@ export const create = async (payload: any, userId: string) => {
   return employee;
 };
 
-export const update = async (id: string, payload: Prisma.EmployeeUpdateInput & { idempotencyKey?: string }, userId: string) => {
-  const { idempotencyKey, ...data } = payload;
+export const update = async (id: string, payload: any, userId: string) => {
+  const { idempotencyKey, name, email, phone, designation, department, salary, dailyRate, status, ...rest } = payload;
   const oldEmployee = await getById(id);
-  const employee = await prisma.employee.update({ where: { id }, data });
+  
+  const updateData: any = { ...rest };
+  if (designation !== undefined) updateData.designation = designation;
+  if (department !== undefined) updateData.department = department;
+  if (salary !== undefined) updateData.salary = salary;
+  if (dailyRate !== undefined) updateData.dailyRate = dailyRate;
+  
+  if (name !== undefined || email !== undefined || phone !== undefined || status !== undefined) {
+    updateData.user = {
+      update: {
+        ...(name !== undefined && { name }),
+        ...(email !== undefined && { email }),
+        ...(phone !== undefined && { phone }),
+        ...(status !== undefined && { isActive: status === 'ACTIVE' })
+      }
+    };
+  }
+
+  const employee = await prisma.employee.update({ where: { id }, data: updateData });
   eventBus.publishMutation('Employee', 'UPDATE', userId, id, idempotencyKey || crypto.randomUUID(), employee, oldEmployee);
   return employee;
 };
@@ -122,23 +146,6 @@ export const createDailyReport = async (payload: Prisma.DailyReportUncheckedCrea
   return prisma.dailyReport.create({ data });
 };
 
-// Attendance
-export const getAttendance = async (employeeId: string, month: number, year: number) => {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0); // last day of month
-
-  return prisma.employeeAttendance.findMany({
-    where: {
-      employeeId,
-      date: {
-        gte: startDate,
-        lte: endDate
-      }
-    },
-    orderBy: { date: 'asc' }
-  });
-};
-
 // Salaries
 export const listSalaries = async () => {
   return prisma.salaryPayment.findMany({
@@ -153,9 +160,46 @@ export const listSalaries = async () => {
   });
 };
 
-export const paySalary = async (payload: Prisma.SalaryPaymentUncheckedCreateInput & { idempotencyKey?: string }, userId: string) => {
-  const { idempotencyKey, ...data } = payload;
-  const payment = await prisma.salaryPayment.create({ data });
+export const paySalary = async (payload: Prisma.SalaryPaymentUncheckedCreateInput & { idempotencyKey?: string; accountId?: string }, userId: string) => {
+  const { idempotencyKey, accountId, ...data } = payload;
+  
+  const payment = await prisma.$transaction(async (tx) => {
+    const created = await tx.salaryPayment.create({ data });
+    
+    if (created.status === 'PAID' && accountId) {
+      const { postJournalEntry } = await import('./journal.service.js');
+      
+      // Post Ledger Entry
+      await postJournalEntry({
+        entryDate: created.paymentDate,
+        description: `Salary Payment for ${created.paymentMonth}/${created.paymentYear} - ${created.reference || ''}`,
+        referenceId: created.id,
+        referenceType: 'SALARY_PAYMENT',
+        createdById: userId,
+        lines: [
+          { accountId: null, debitAmount: Number(created.amount), creditAmount: 0, description: 'Salary Expense' },
+          { accountId: accountId, debitAmount: 0, creditAmount: Number(created.amount), description: 'Bank/Cash Outflow' }
+        ]
+      }, tx);
+
+      // Create Expense Record to show in UI
+      await tx.expense.create({
+        data: {
+          type: 'SALARY',
+          amount: created.amount,
+          paymentDate: created.paymentDate,
+          paymentMethod: created.paymentMethod,
+          accountId: accountId,
+          description: `Salary Payment - ${created.paymentMonth}/${created.paymentYear}`,
+          remarks: created.reference,
+          createdById: userId,
+        }
+      });
+    }
+    
+    return created;
+  });
+
   eventBus.publishMutation('SalaryPayment', 'CREATE', userId, payment.id, idempotencyKey || crypto.randomUUID(), payment, null);
   return payment;
 };

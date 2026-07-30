@@ -6,7 +6,7 @@ const normalizeUser = (user: any): any => {
   if (!user) return null;
   return {
     ...user,
-    role: user.role || user.employee?.designation || 'ADMIN',
+    role: user.role || user.employee?.designation || 'ENGINEER',
   };
 };
 
@@ -19,7 +19,7 @@ interface AuthState {
   setAccessToken: (token: string) => void;
   setUser: (user: User) => void;
   setLoading: (loading: boolean) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -47,19 +47,24 @@ export const useAuthStore = create<AuthState>()(
       setLoading: (loading) =>
         set({ isLoading: loading }),
 
-      logout: () =>
+      logout: async () => {
+        try {
+          await fetch('/api/auth/logout', { method: 'POST' });
+        } catch (err) {
+          console.error('Logout failed:', err);
+        }
         set({
           accessToken: null,
           user: null,
           isAuthenticated: false,
           isLoading: false,
-        }),
+        });
+      },
     }),
     {
       name: 'vastu-auth-token',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        accessToken: state.accessToken,
         user: normalizeUser(state.user),
         isAuthenticated: state.isAuthenticated,
       }),

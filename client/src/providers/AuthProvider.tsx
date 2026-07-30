@@ -25,7 +25,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           useAuthStore.getState().setLoading(false);
         }
       } catch {
-        useAuthStore.getState().logout();
+        useAuthStore.setState({
+          accessToken: null,
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
       }
     };
 

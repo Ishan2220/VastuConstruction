@@ -35,118 +35,61 @@ export default function StorageAnalyticsPage() {
   if (!stats) return null;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex justify-between items-end">
+    <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold font-heading flex items-center gap-2">
-            <Database className="w-6 h-6 text-indigo-500" />
-            Enterprise Storage Analytics
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight font-heading flex items-center gap-2">
+            <Database className="w-8 h-8 text-[#7C6EF0]" /> Storage Analytics
           </h1>
-          <p className="text-slate-500 mt-1">Real-time metrics for File Management System (FMS)</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Files */}
-        <div className="bg-white p-6 rounded-xl border shadow-sm flex flex-col items-center text-center">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg mb-3">
-            <FileText className="w-6 h-6" />
-          </div>
-          <p className="text-slate-500 text-sm font-medium">Total Files</p>
-          <p className="text-3xl font-bold font-heading">{stats.totalFiles}</p>
-        </div>
-
-        {/* Storage Used */}
-        <div className="bg-white p-6 rounded-xl border shadow-sm flex flex-col items-center text-center">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg mb-3">
-            <HardDrive className="w-6 h-6" />
-          </div>
-          <p className="text-slate-500 text-sm font-medium">Storage Used</p>
-          <p className="text-3xl font-bold font-heading">{formatBytes(stats.storageUsed)}</p>
-        </div>
-
-        {/* Storage Saved */}
-        <div className="bg-white p-6 rounded-xl border shadow-sm flex flex-col items-center text-center relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-2 bg-emerald-500 text-white rounded-bl-xl text-xs font-bold">
-            -{stats.overallCompressionRatio}%
-          </div>
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg mb-3">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
-          <p className="text-slate-500 text-sm font-medium">Storage Saved</p>
-          <p className="text-3xl font-bold font-heading text-emerald-600">{formatBytes(stats.storageSaved)}</p>
-          <p className="text-xs text-emerald-500 mt-1 flex items-center justify-center gap-1">
-            <Activity className="w-3 h-3" /> via Deduplication & Compression
+          <p className="text-sm text-slate-600 mt-1">
+            Overview of file storage consumption across the system.
           </p>
         </div>
-
-        {/* Duplicates Prevented */}
-        <div className="bg-white p-6 rounded-xl border shadow-sm flex flex-col items-center text-center">
-          <div className="p-3 bg-amber-50 text-amber-600 rounded-lg mb-3">
-            <Filter className="w-6 h-6" />
-          </div>
-          <p className="text-slate-500 text-sm font-medium">Duplicates Prevented</p>
-          <p className="text-3xl font-bold font-heading">{stats.duplicateFilesPrevented}</p>
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-xl border shadow-sm p-6">
-          <h2 className="text-lg font-bold mb-4 font-heading border-b pb-2">File Types Distribution</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50">
-              <div className="flex items-center gap-3">
-                <Image className="text-blue-500 w-5 h-5" />
-                <span className="font-semibold text-slate-700">Images (Photos, Receipts)</span>
-              </div>
-              <span className="font-bold">{stats.images} files</span>
-            </div>
-            <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50">
-              <div className="flex items-center gap-3">
-                <FileText className="text-red-500 w-5 h-5" />
-                <span className="font-semibold text-slate-700">PDFs (Contracts, Permits)</span>
-              </div>
-              <span className="font-bold">{stats.pdfs} files</span>
-            </div>
-            <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50">
-              <div className="flex items-center gap-3">
-                <File className="text-green-500 w-5 h-5" />
-                <span className="font-semibold text-slate-700">Office Files (Excel, Word)</span>
-              </div>
-              <span className="font-bold">{stats.office} files</span>
-            </div>
-            <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50">
-              <div className="flex items-center gap-3">
-                <File className="text-slate-500 w-5 h-5" />
-                <span className="font-semibold text-slate-700">Other (CAD, ZIP, Misc)</span>
-              </div>
-              <span className="font-bold">{stats.other} files</span>
-            </div>
+      <div className="clay-card p-6 md:p-8 max-w-4xl space-y-8">
+        {/* Top Stats */}
+        <div className="grid grid-cols-2 divide-x divide-violet-100/30">
+          <div className="flex flex-col items-center justify-center p-4">
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Total Storage Used</p>
+            <p className="text-4xl font-extrabold text-[#7C6EF0] font-heading">{formatBytes(stats.storageUsed)}</p>
+          </div>
+          <div className="flex flex-col items-center justify-center p-4">
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Total Files</p>
+            <p className="text-4xl font-extrabold text-slate-700 font-heading">{stats.totalFiles}</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border shadow-sm p-6">
-          <h2 className="text-lg font-bold mb-4 font-heading border-b pb-2">System Health</h2>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-500">Database Engine</span>
-              <span className="font-semibold text-emerald-600">PostgreSQL (Metadata Only)</span>
+        <hr className="border-violet-100/30" />
+
+        {/* File Types */}
+        <div>
+          <h3 className="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <Filter className="w-5 h-5 text-slate-400" /> File Type Breakdown
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex flex-col items-center text-center transition hover:shadow-md hover:-translate-y-1">
+              <Image className="text-blue-500 w-8 h-8 mb-2" />
+              <p className="text-2xl font-bold text-slate-800">{stats.images}</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase mt-1">Images</p>
             </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-500">Binary Blobs in DB</span>
-              <span className="font-semibold text-emerald-600">0 Bytes</span>
+            
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex flex-col items-center text-center transition hover:shadow-md hover:-translate-y-1">
+              <FileText className="text-red-500 w-8 h-8 mb-2" />
+              <p className="text-2xl font-bold text-slate-800">{stats.pdfs}</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase mt-1">PDFs</p>
             </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-500">Background Queues</span>
-              <span className="font-semibold text-emerald-600">None (Synchronous)</span>
+            
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex flex-col items-center text-center transition hover:shadow-md hover:-translate-y-1">
+              <File className="text-emerald-500 w-8 h-8 mb-2" />
+              <p className="text-2xl font-bold text-slate-800">{stats.office}</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase mt-1">Documents</p>
             </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-500">Orphaned Files</span>
-              <span className="font-semibold text-emerald-600">0 Detected</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-500">Duplicate Files</span>
-              <span className="font-semibold text-amber-600">{stats.duplicateFilesPrevented} Prevented</span>
+            
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex flex-col items-center text-center transition hover:shadow-md hover:-translate-y-1">
+              <File className="text-slate-400 w-8 h-8 mb-2" />
+              <p className="text-2xl font-bold text-slate-800">{stats.other}</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase mt-1">Other</p>
             </div>
           </div>
         </div>

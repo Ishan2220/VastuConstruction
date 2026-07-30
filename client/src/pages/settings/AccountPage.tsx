@@ -3,6 +3,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useMutation } from '@tanstack/react-query';
 import { User, Mail, Shield, Save, KeyRound, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import api from '@/lib/api';
 import { Link } from 'react-router';
 
@@ -126,8 +127,7 @@ export default function AccountPage() {
               <div className="space-y-5">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">Current Password</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     required
                     placeholder="Enter current password"
                     className="w-full bg-white/80 border border-slate-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 rounded-xl px-4 py-3 text-sm transition-all shadow-sm"
@@ -138,8 +138,7 @@ export default function AccountPage() {
                 
                 <div className="pt-2">
                   <label className="block text-sm font-bold text-slate-700 mb-2">New Password</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     required
                     placeholder="Minimum 8 characters"
                     className="w-full bg-white/80 border border-slate-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 rounded-xl px-4 py-3 text-sm transition-all shadow-sm"
@@ -150,8 +149,7 @@ export default function AccountPage() {
                 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">Confirm New Password</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     required
                     placeholder="Repeat new password"
                     className="w-full bg-white/80 border border-slate-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 rounded-xl px-4 py-3 text-sm transition-all shadow-sm"

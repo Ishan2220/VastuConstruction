@@ -235,22 +235,36 @@ export const refreshAccessToken = async (token: string) => {
 
 export const logout = async (
   token: string,
-  userId: string,
   ipAddress?: string,
   userAgent?: string
 ) => {
-  if (token) {
-    await prisma.refreshToken.deleteMany({ where: { token } });
+  if (!token) return;
+  
+  let userId: string | undefined;
+  
+  const storedToken = await prisma.refreshToken.findUnique({ where: { token } });
+  if (storedToken) {
+    userId = storedToken.userId;
+    await prisma.refreshToken.delete({ where: { token } });
+  } else {
+    try {
+      const decoded = jwt.decode(token) as any;
+      if (decoded && decoded.userId) {
+        userId = decoded.userId;
+      }
+    } catch (e) {}
   }
 
-  await prisma.loginHistory.create({
-    data: {
-      userId,
-      action: 'LOGOUT',
-      ipAddress,
-      userAgent,
-    },
-  });
+  if (userId) {
+    await prisma.loginHistory.create({
+      data: {
+        userId,
+        action: 'LOGOUT',
+        ipAddress,
+        userAgent,
+      },
+    });
+  }
 };
 
 export const getMe = async (userId: string) => {

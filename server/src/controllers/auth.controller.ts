@@ -20,9 +20,9 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   // Set refresh token in HttpOnly cookie
   res.cookie('refreshToken', result.refreshToken, {
     httpOnly: true,
-    secure: true,
-    sameSite: 'none',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    secure: env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     path: '/',
   });
 
@@ -44,9 +44,9 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
 
   res.cookie('refreshToken', result.refreshToken, {
     httpOnly: true,
-    secure: true,
-    sameSite: 'none',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    secure: env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     path: '/',
   });
 
@@ -60,7 +60,7 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
   const ipAddress = req.ip || req.socket.remoteAddress;
   const userAgent = req.headers['user-agent'];
 
-  await authService.logout(token, req.user!.userId, ipAddress, userAgent);
+  await authService.logout(token, ipAddress, userAgent);
 
   res.clearCookie('refreshToken', { path: '/' });
   res.json(new ApiResponse(200, null, 'Logged out successfully'));
@@ -76,7 +76,7 @@ export const forgotPassword = asyncHandler(async (req: Request, res: Response) =
   if (!email) throw new ApiError(400, 'Email is required');
   
   const result = await authService.forgotPassword(email);
-  res.json(new ApiResponse(200, result, 'Password reset successfully (Temporary test flow)'));
+  res.json(new ApiResponse(200, null, 'If that email exists, a password reset link has been sent.'));
 });
 
 export const changePassword = asyncHandler(async (req: Request, res: Response) => {

@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import * as vendorService from '../services/vendor.service.js';
+import * as vendorPaymentService from '../services/vendorPayment.service.js';
 
 export const list = asyncHandler(async (req: Request, res: Response) => {
   const result = await vendorService.list(req.query as any);
@@ -24,11 +25,21 @@ export const update = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const recordPayment = asyncHandler(async (req: Request, res: Response) => {
-  const payment = await vendorService.recordPayment(req.params.id as string, req.body, req.user!.userId);
-  res.status(201).json(new ApiResponse(201, payment, 'Vendor payment recorded successfully'));
+  if (req.body.details && Array.isArray(req.body.details)) {
+    const payment = await vendorPaymentService.createPaymentWithDetails(req.params.id as string, req.body, req.user!.userId);
+    res.status(201).json(new ApiResponse(201, payment, 'Detailed vendor payment recorded successfully'));
+  } else {
+    const payment = await vendorService.recordPayment(req.params.id as string, req.body, req.user!.userId);
+    res.status(201).json(new ApiResponse(201, payment, 'Vendor payment recorded successfully'));
+  }
 });
 
 export const remove = asyncHandler(async (req: Request, res: Response) => {
   await vendorService.remove(req.params.id as string, req.user!.userId);
   res.json(new ApiResponse(200, null, 'Vendor deleted successfully'));
+});
+
+export const getByProject = asyncHandler(async (req: Request, res: Response) => {
+  const vendors = await vendorService.getVendorsByProject(req.params.projectId as string);
+  res.json(new ApiResponse(200, vendors, 'Project vendors fetched successfully'));
 });

@@ -1,6 +1,8 @@
 import { prisma } from '../config/database.js';
 import type { Prisma } from '@prisma/client';
 import { ApiError } from '../utils/ApiError.js';
+import { eventBus } from '../events/EventBus.js';
+import { randomUUID } from 'crypto';
 
 export interface JournalLineData {
   accountId: string | null;
@@ -62,6 +64,11 @@ export const postJournalEntry = async (
         }
       });
     }
+  }
+
+  // Publish audit log for this generic Ledger Entry if createdById is present
+  if (data.createdById) {
+    eventBus.publishMutation('JournalEntry', 'CREATE', data.createdById, entry.id, randomUUID(), entry, null);
   }
 
   return entry;

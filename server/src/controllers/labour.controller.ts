@@ -28,17 +28,6 @@ export const remove = asyncHandler(async (req: Request, res: Response) => {
   res.json(new ApiResponse(200, null, 'Labour deleted successfully'));
 });
 
-export const recordAttendance = asyncHandler(async (req: Request, res: Response) => {
-  const { labourId, date, present, halfDay, overtime, notes } = req.body;
-  const attendance = await labourService.recordAttendance(labourId, new Date(date), present, halfDay, overtime, notes);
-  res.json(new ApiResponse(200, attendance, 'Attendance recorded successfully'));
-});
-
-export const getAttendanceByDate = asyncHandler(async (req: Request, res: Response) => {
-  const attendance = await labourService.getAttendanceByDate(new Date((req.query.date as string) || new Date()));
-  res.json(new ApiResponse(200, attendance, 'Attendance fetched successfully'));
-});
-
 export const recordPayment = asyncHandler(async (req: Request, res: Response) => {
   const { labourId, amount, paymentDate, paymentMethod, isAdvance, notes, accountId } = req.body;
   const payment = await labourService.recordPayment(labourId, amount, new Date(paymentDate), paymentMethod, isAdvance, notes, accountId, req.user!.userId);

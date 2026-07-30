@@ -17,11 +17,15 @@ import api from '@/lib/api';
 import { toast } from 'sonner';
 import { CategorySelect } from '@/components/common/CategorySelect';
 import { useQuickAddListener } from '@/hooks/useQuickAddListener';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 export default function VendorsPage() {
+    const confirmDialog = useConfirm();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState('ALL');
+  const [filterCity, setFilterCity] = useState('ALL');
   const [isAddOpen, setIsAddOpen] = useState(false);
   useQuickAddListener('vendor', () => setIsAddOpen(true));
   const [editingVendor, setEditingVendor] = useState<any>(null);
@@ -117,11 +121,16 @@ export default function VendorsPage() {
     });
   };
 
-  const filteredVendors = vendors.filter((v: any) =>
-    v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.phone?.includes(searchTerm)
-  );
+  const filteredVendors = vendors.filter((v: any) => {
+    const matchesSearch = v.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          v.category?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          v.phone?.includes(searchTerm);
+    const matchesCategory = filterCategory === 'ALL' || v.category === filterCategory;
+    const matchesCity = filterCity === 'ALL' || v.city === filterCity;
+    return matchesSearch && matchesCategory && matchesCity;
+  });
+
+  const uniqueCities = Array.from(new Set(vendors.map((v: any) => v.city || 'Mumbai')));
 
   return (
     <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans">
@@ -144,8 +153,8 @@ export default function VendorsPage() {
         </button>
       </div>
 
-      <div className="clay-card p-4 flex items-center gap-4">
-        <div className="relative flex-1">
+      <div className="clay-card p-4 flex flex-col md:flex-row items-center gap-4">
+        <div className="relative flex-1 w-full">
           <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
           <input
             type="text"
@@ -154,6 +163,36 @@ export default function VendorsPage() {
             placeholder="Search suppliers by agency name, category, or phone..."
             className="w-full pl-10 pr-4 py-2 clay-input text-sm"
           />
+        </div>
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <select 
+            value={filterCategory} 
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="px-3 py-2 clay-input text-sm font-semibold text-slate-700 w-full md:w-auto"
+          >
+            <option value="ALL">All Categories</option>
+            <option value="CEMENT">Cement</option>
+            <option value="STEEL">Steel & TMT</option>
+            <option value="AGGREGATES">Aggregates (Sand/Stone)</option>
+            <option value="BRICKS">Bricks & Blocks</option>
+            <option value="PLUMBING">Plumbing</option>
+            <option value="ELECTRICAL">Electrical</option>
+            <option value="PAINT">Paint & Finishes</option>
+            <option value="MACHINERY">Machinery & Tools</option>
+            <option value="LABOUR_CONTRACTOR">Labour Contractor</option>
+            <option value="OTHER">Other</option>
+          </select>
+          
+          <select 
+            value={filterCity} 
+            onChange={(e) => setFilterCity(e.target.value)}
+            className="px-3 py-2 clay-input text-sm font-semibold text-slate-700 w-full md:w-auto"
+          >
+            <option value="ALL">All Cities</option>
+            {uniqueCities.map(city => (
+              <option key={city as string} value={city as string}>{city as string}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -180,19 +219,19 @@ export default function VendorsPage() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={(e) => { e.stopPropagation(); setEditingVendor(vendor); }}
-                        className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
+                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
                         title="Edit Vendor Details"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.stopPropagation();
-                          if (confirm(`Are you sure you want to delete vendor agency ${vendor.name}?`)) {
+                          if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete vendor agency ${vendor.name}?` })) {
                             deleteMutation.mutate(vendor.id);
                           }
                         }}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                         title="Delete Vendor Agency"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -203,11 +242,11 @@ export default function VendorsPage() {
                   <h3 className="text-lg font-bold text-slate-800 font-heading">{vendor.name}</h3>
                   <div className="text-xs text-slate-500 space-y-1">
                     <div>Contact: <strong className="text-slate-700">{vendor.contactPerson}</strong></div>
-                    <div className="flex items-center gap-1.5 pt-1">
+                    <div className="flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center pt-1">
                       <Phone className="w-3.5 h-3.5 text-slate-400" /> <span>{vendor.phone || 'N/A'}</span>
                     </div>
                     {vendor.email && (
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
                         <Mail className="w-3.5 h-3.5 text-slate-400" /> <span>{vendor.email}</span>
                       </div>
                     )}
@@ -215,18 +254,8 @@ export default function VendorsPage() {
                 </div>
                 <div className="pt-4 space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500 font-medium">Purchased</span>
-                    <span className="font-bold text-slate-800">₹{(vendor.totalPurchased || 0).toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500 font-medium">Paid</span>
-                    <span className="font-bold text-emerald-600">₹{(vendor.totalPaid || 0).toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm font-bold pt-2 border-t border-violet-100/30">
-                    <span className="text-slate-800">Outstanding</span>
-                    <span className={(vendor.outstanding || 0) > 0 ? 'text-rose-600' : 'text-slate-500'}>
-                      ₹{(vendor.outstanding || 0).toLocaleString()}
-                    </span>
+                    <span className="text-slate-500 font-medium">Total Paid</span>
+                    <span className="font-bold text-rose-600 text-base">₹{(vendor.totalPaid || 0).toLocaleString('en-IN')}</span>
                   </div>
                 </div>
 
@@ -275,33 +304,26 @@ export default function VendorsPage() {
                     </td>
                     <td className="p-4">
                       <div className="text-xs space-y-1">
-                        <div className="flex justify-between gap-4"><span className="text-slate-500">Purchased:</span> <span className="font-bold">₹{(vendor.totalPurchased || 0).toLocaleString()}</span></div>
-                        <div className="flex justify-between gap-4"><span className="text-slate-500">Paid:</span> <span className="font-bold text-emerald-600">₹{(vendor.totalPaid || 0).toLocaleString()}</span></div>
-                        <div className="flex justify-between gap-4 border-t pt-1 mt-1">
-                          <span className="text-slate-500">Due:</span> 
-                          <span className={(vendor.outstanding || 0) > 0 ? 'text-rose-600 font-bold' : 'text-slate-500 font-bold'}>
-                            ₹{(vendor.outstanding || 0).toLocaleString()}
-                          </span>
-                        </div>
+                        <div className="flex justify-between gap-4"><span className="text-slate-500">Total Paid:</span> <span className="font-bold text-rose-600 text-sm">₹{(vendor.totalPaid || 0).toLocaleString('en-IN')}</span></div>
                       </div>
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={(e) => { e.stopPropagation(); setEditingVendor(vendor); }}
-                          className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors"
+                          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors"
                           title="Edit Vendor Details"
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation();
-                            if (confirm(`Are you sure you want to delete vendor agency ${vendor.name}?`)) {
+                            if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete vendor agency ${vendor.name}?` })) {
                               deleteMutation.mutate(vendor.id);
                             }
                           }}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                           title="Delete Vendor Agency"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -356,7 +378,6 @@ export default function VendorsPage() {
                   className="w-full clay-input text-sm"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
                 <input
                   type="text"
                   placeholder="State"
@@ -364,14 +385,6 @@ export default function VendorsPage() {
                   onChange={(e) => setNewVendor({ ...newVendor, state: e.target.value })}
                   className="w-full clay-input text-sm"
                 />
-                <input
-                  type="number"
-                  placeholder="Opening Balance"
-                  value={newVendor.openingBalance}
-                  onChange={(e) => setNewVendor({ ...newVendor, openingBalance: e.target.value })}
-                  className="w-full clay-input text-sm"
-                />
-              </div>
               <input
                 type="text"
                 placeholder="Phone Number *"
@@ -436,22 +449,13 @@ export default function VendorsPage() {
                   className="w-full clay-input text-sm"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                  <input
+                <input
                   type="text"
                   placeholder="State"
                   value={editingVendor.state || ''}
                   onChange={(e) => setEditingVendor({ ...editingVendor, state: e.target.value })}
                   className="w-full clay-input text-sm"
                 />
-                <input
-                  type="number"
-                  placeholder="Opening Balance"
-                  value={editingVendor.openingBalance || ''}
-                  onChange={(e) => setEditingVendor({ ...editingVendor, openingBalance: e.target.value })}
-                  className="w-full clay-input text-sm"
-                />
-              </div>
               <input
                 type="text"
                 placeholder="Phone Number *"

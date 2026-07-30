@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, User, Mail, Phone, Building2, Calendar, Banknote, Shield, CheckCircle2 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
+import PageHeader from '@/components/layout/PageHeader';
 
 export default function EmployeeDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -41,24 +42,20 @@ export default function EmployeeDetailsPage() {
 
   return (
     <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans pb-24">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate('/employees')}
-          className="p-2 -ml-2 text-slate-400 hover:text-slate-700 hover:bg-white/50 rounded-xl transition-colors shadow-sm bg-white"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight font-heading flex items-center gap-3">
-            {nameStr}
-            <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase border ${statusStr === 'ACTIVE' ? 'bg-clay-green/10 text-[#5CB77E] border-[#5CB77E]/30' : 'bg-slate-200 text-slate-600 border-slate-300'}`}>
-              {statusStr}
-            </span>
-          </h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">{roleStr} • {deptStr}</p>
-        </div>
-      </div>
+      <PageHeader
+        title={nameStr}
+        description={`${roleStr} • ${deptStr}`}
+        showBack={false}
+        breadcrumbs={[
+          { label: 'Employees', href: '/employees' },
+          { label: nameStr }
+        ]}
+      >
+        <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase border ${statusStr === 'ACTIVE' ? 'bg-clay-green/10 text-[#5CB77E] border-[#5CB77E]/30' : 'bg-slate-200 text-slate-600 border-slate-300'}`}>
+          {statusStr}
+        </span>
+      </PageHeader>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Card */}
@@ -210,7 +207,7 @@ export default function EmployeeDetailsPage() {
                             {formatCurrency(Number(pay.amount))}
                           </td>
                           <td className="p-3">
-                            <div className="flex items-center gap-1.5 text-[#5CB77E] text-xs font-bold bg-clay-green/10 px-2.5 py-1 rounded-full w-fit border border-[#5CB77E]/30">
+                            <div className="flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-[#5CB77E] text-xs font-bold bg-clay-green/10 px-2.5 py-1 rounded-full w-fit border border-[#5CB77E]/30">
                               <CheckCircle2 className="w-3.5 h-3.5" /> {pay.status}
                             </div>
                           </td>
@@ -232,7 +229,7 @@ export default function EmployeeDetailsPage() {
                       </div>
                       <div className="flex items-center justify-between text-xs text-slate-600">
                         <div><span className="text-slate-400">Date:</span> {formatDate(pay.paymentDate)}</div>
-                        <div className="flex items-center gap-1.5 text-[#5CB77E] text-[10px] font-bold bg-clay-green/10 px-2 py-0.5 rounded-full border border-[#5CB77E]/30">
+                        <div className="flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-[#5CB77E] text-[10px] font-bold bg-clay-green/10 px-2 py-0.5 rounded-full border border-[#5CB77E]/30">
                           <CheckCircle2 className="w-3 h-3" /> {pay.status}
                         </div>
                       </div>

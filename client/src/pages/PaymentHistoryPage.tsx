@@ -52,7 +52,9 @@ export default function PaymentHistoryPage() {
     direction: '',
     type: '',
     method: '',
-    dateFilter: 'this_month'
+    dateFilter: 'this_month',
+    startDate: '',
+    endDate: ''
   });
 
   // Detail Drawer
@@ -97,7 +99,62 @@ export default function PaymentHistoryPage() {
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-    setPage(1); // Reset to first page
+    if (key !== 'startDate' && key !== 'endDate') {
+      setPage(1); // Reset to first page
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const toastId = toast.loading('Generating export...');
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '10000', // Fetch up to 10k records for export
+        search: searchTerm,
+        ...filters
+      });
+      const res = await api.get('/payments/history', { params });
+      
+      if (res.data.success && res.data.data.length > 0) {
+        const data = res.data.data;
+        const csvRows = [];
+        // Headers
+        csvRows.push(['Date', 'Reference', 'Type', 'Method', 'Source', 'Direction', 'Entity', 'Amount', 'Status'].join(','));
+        
+        // Data
+        data.forEach((p: any) => {
+          const entity = p.clientName || p.vendorName || p.employeeName || p.labourName || 'Internal';
+          const row = [
+            format(new Date(p.paymentDate), 'dd MMM yyyy'),
+            `"${p.reference || ''}"`,
+            `"${p.paymentType}"`,
+            `"${p.paymentMethod}"`,
+            `"${p.source}"`,
+            p.direction,
+            `"${entity}"`,
+            p.amount,
+            p.status
+          ];
+          csvRows.push(row.join(','));
+        });
+        
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        a.setAttribute('download', `payment_history_${format(new Date(), 'yyyyMMdd')}.csv`);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        toast.success('Export completed successfully', { id: toastId });
+      } else {
+        toast.error('No data available to export', { id: toastId });
+      }
+    } catch (err) {
+      toast.error('Export failed');
+    }
   };
 
   return (
@@ -119,7 +176,7 @@ export default function PaymentHistoryPage() {
               <span className="h-2 w-2 rounded-full bg-indigo-500 ml-1"></span>
             )}
           </button>
-          <button className={cn(clayButton, "px-4 py-2.5 flex items-center gap-2 text-slate-600 font-semibold")}>
+          <button onClick={handleExport} className={cn(clayButton, "px-4 py-2.5 flex items-center gap-2 text-slate-600 font-semibold")}>
             <Download className="h-4 w-4" />
             Export
           </button>
@@ -127,35 +184,27 @@ export default function PaymentHistoryPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
         <SummaryCard 
-          title="Today's Inflow" 
+          title={`${filters.dateFilter === 'today' ? "Today's" : filters.dateFilter === 'yesterday' ? "Yesterday's" : filters.dateFilter === 'this_week' ? "This Week's" : filters.dateFilter === 'this_month' ? "This Month's" : filters.dateFilter === 'financial_year' ? "FY's" : "Total"} Inflow`} 
           amount={summary.todayInflow} 
           icon={ArrowDownRight}
           color="text-emerald-600"
           bg="bg-emerald-500"
         />
         <SummaryCard 
-          title="Today's Outflow" 
+          title={`${filters.dateFilter === 'today' ? "Today's" : filters.dateFilter === 'yesterday' ? "Yesterday's" : filters.dateFilter === 'this_week' ? "This Week's" : filters.dateFilter === 'this_month' ? "This Month's" : filters.dateFilter === 'financial_year' ? "FY's" : "Total"} Outflow`} 
           amount={summary.todayOutflow} 
           icon={ArrowUpRight}
           color="text-rose-600"
           bg="bg-rose-500"
         />
         <SummaryCard 
-          title="Net (Today)" 
+          title={`Net Balance`} 
           amount={summary.todayInflow - summary.todayOutflow} 
           icon={IndianRupee}
           color={summary.todayInflow >= summary.todayOutflow ? "text-indigo-600" : "text-amber-600"}
           bg={summary.todayInflow >= summary.todayOutflow ? "bg-indigo-500" : "bg-amber-500"}
-        />
-        <SummaryCard 
-          title="Pending Payments" 
-          count={summary.pendingPayments} 
-          icon={Clock}
-          color="text-blue-600"
-          bg="bg-blue-500"
-          isCount
         />
       </div>
 
@@ -213,7 +262,7 @@ export default function PaymentHistoryPage() {
                       onClick={() => setSelectedPayment(payment)}
                     >
                       <td className="py-4 px-4">
-                        <div className="font-semibold text-slate-800">{format(new Date(payment.paymentDate), 'dd MMM yyyy')}</div>
+                        <div className="font-semibold text-slate-800">{format(new Date(payment.createdAt), 'dd MMM yyyy')}</div>
                         <div className="text-xs text-slate-500 mt-0.5">{payment.reference || 'No Ref'}</div>
                       </td>
                       <td className="py-4 px-4">
@@ -263,7 +312,7 @@ export default function PaymentHistoryPage() {
                         {payment.clientName || payment.vendorName || payment.employeeName || payment.labourName || payment.paymentType}
                       </h4>
                       <p className="text-xs text-slate-500 truncate mt-0.5">
-                        {format(new Date(payment.paymentDate), 'dd MMM yyyy')} • {payment.paymentMethod}
+                        {format(new Date(payment.createdAt), 'dd MMM yyyy')} • {payment.paymentMethod}
                       </p>
                     </div>
                   </div>
@@ -347,7 +396,31 @@ export default function PaymentHistoryPage() {
                     <option value="this_month">This Month</option>
                     <option value="financial_year">Financial Year</option>
                     <option value="all">All Time</option>
+                    <option value="custom">Custom Date Range</option>
                   </select>
+                  
+                  {filters.dateFilter === 'custom' && (
+                    <div className="grid grid-cols-2 gap-3 mt-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1">Start Date</label>
+                        <input
+                          type="date"
+                          value={filters.startDate}
+                          onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1">End Date</label>
+                        <input
+                          type="date"
+                          value={filters.endDate}
+                          onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -404,7 +477,7 @@ export default function PaymentHistoryPage() {
               <div className="mt-10 pt-6 border-t">
                 <button
                   onClick={() => {
-                    setFilters({ direction: '', type: '', method: '', dateFilter: 'this_month' });
+                    setFilters({ direction: '', type: '', method: '', dateFilter: 'this_month', startDate: '', endDate: '' });
                     setPage(1);
                   }}
                   className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-colors"
@@ -482,7 +555,7 @@ function StatusBadge({ status, compact = false }: { status: string, compact?: bo
   }
 
   return (
-    <div className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide", bg, text)}>
+    <div className={cn("inline-flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide", bg, text)}>
       <Icon className="h-3.5 w-3.5" />
       {status}
     </div>

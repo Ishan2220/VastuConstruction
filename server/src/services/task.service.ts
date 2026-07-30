@@ -62,22 +62,24 @@ export const getById = async (id: string) => {
   return task;
 };
 
-export const create = async (data: Prisma.TaskUncheckedCreateInput, userId: string) => {
+export const create = async (payload: Prisma.TaskUncheckedCreateInput & { idempotencyKey?: string }, userId: string) => {
+  const { idempotencyKey, ...data } = payload;
   const task = await prisma.task.create({ data });
-  eventBus.publishMutation('Task', 'CREATE', userId, task.id, crypto.randomUUID() || crypto.randomUUID(), task, null);
+  eventBus.publishMutation('Task', 'CREATE', userId, task.id, idempotencyKey || crypto.randomUUID(), task, null);
   return task;
 };
 
-export const update = async (id: string, data: Prisma.TaskUpdateInput, userId: string) => {
+export const update = async (id: string, payload: Prisma.TaskUpdateInput & { idempotencyKey?: string }, userId: string) => {
+  const { idempotencyKey, ...data } = payload;
   const oldTask = await getById(id);
   const task = await prisma.task.update({ where: { id }, data });
-  eventBus.publishMutation('Task', 'UPDATE', userId, id, crypto.randomUUID() || crypto.randomUUID(), task, oldTask);
+  eventBus.publishMutation('Task', 'UPDATE', userId, id, idempotencyKey || crypto.randomUUID(), task, oldTask);
   return task;
 };
 
 export const remove = async (id: string, userId: string) => {
   const oldTask = await getById(id);
   await prisma.task.delete({ where: { id } });
-  eventBus.publishMutation('Task', 'DELETE', userId, id, crypto.randomUUID() || crypto.randomUUID(), null, oldTask);
+  eventBus.publishMutation('Task', 'DELETE', userId, id, crypto.randomUUID(), null, oldTask);
   return { success: true };
 };

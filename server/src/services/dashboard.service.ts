@@ -71,6 +71,7 @@ export const getAdminDashboard = async () => {
     recentActivities,
     todayTasks,
     upcomingReminders,
+    upcomingTasks,
     totalLabour,
   ] = await Promise.all([
     // Lead count
@@ -104,11 +105,11 @@ export const getAdminDashboard = async () => {
     prisma.project.findMany({
       where: { deletedAt: null, status: 'IN_PROGRESS' },
       select: {
-        id: true, name: true, city: true,
+        id: true, name: true, city: true, state: true,
         client: { select: { name: true } },
         engineer: { select: { name: true } },
         contractValue: true,
-        milestones: { select: { status: true } }, // compute progress dynamically
+        progress: true,
       },
       orderBy: { updatedAt: 'desc' },
       take: 10,
@@ -144,25 +145,27 @@ export const getAdminDashboard = async () => {
       _count: true,
     }),
 
-    // Recent audit logs as activities
-    prisma.auditLog.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 10,
+    // Recent business activities
+    prisma.businessActivity.findMany({
+      orderBy: { date: 'desc' },
+      take: 5,
       include: {
         user: { select: { name: true } },
+        project: { select: { name: true } }
       },
     }),
 
-    // Today's tasks
+    // Today's tasks (or pending recent tasks)
     prisma.task.findMany({
       where: {
-        dueDate: { gte: todayStart, lte: todayEnd },
+        status: { not: 'COMPLETED' },
       },
       include: {
         assignee: { select: { name: true } },
         project: { select: { name: true } },
       },
-      orderBy: { priority: 'desc' },
+      orderBy: { dueDate: 'asc' },
+      take: 5,
     }),
 
     // Upcoming reminders (calendar events in next 7 days)
@@ -182,80 +185,84 @@ export const getAdminDashboard = async () => {
       },
     }),
 
+    // Upcoming Tasks (next 7 days)
+    prisma.task.findMany({
+      where: {
+        dueDate: {
+          gte: new Date(),
+          lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+        status: { not: 'COMPLETED' },
+      },
+      orderBy: { dueDate: 'asc' },
+      take: 10,
+      include: { project: { select: { name: true } } }
+    }),
+
     // Total active labour
     prisma.labour.count({ where: { deletedAt: null, isActive: true } }),
   ]);
 
-  const [vendorMonthAgg, labourMonthAgg, salaryMonthAgg] = await Promise.all([
-    prisma.vendorPayment.aggregate({ _sum: { amount: true }, where: { paymentDate: { gte: monthStart, lte: monthEnd } } }),
-    prisma.labourPayment.aggregate({ _sum: { amount: true }, where: { paymentDate: { gte: monthStart, lte: monthEnd } } }),
-    prisma.salaryPayment.aggregate({ _sum: { amount: true }, where: { paymentDate: { gte: monthStart, lte: monthEnd } } }),
-  ]);
+  // Site-wise P/L (Raw query to prevent OOM)
+  const siteWiseRaw = await prisma.$queryRaw`
+    SELECT 
+      p.id, 
+      p.name, 
+      p.contract_value AS "contractValue",
+      COALESCE((SELECT SUM(amount) FROM incomes i WHERE i.project_id = p.id AND i.deleted_at IS NULL), 0) AS "totalIncome",
+      COALESCE((SELECT SUM(amount) FROM expenses e WHERE e.project_id = p.id AND e.deleted_at IS NULL), 0) AS "totalExpense"
+    FROM projects p
+    WHERE p.deleted_at IS NULL AND p.status IN ('IN_PROGRESS', 'COMPLETED')
+  `;
 
-  if (Number(vendorMonthAgg._sum.amount) > 0) expenseByCategory.push({ type: 'VENDOR', _sum: { amount: vendorMonthAgg._sum.amount as any } } as any);
-  if (Number(labourMonthAgg._sum.amount) > 0) expenseByCategory.push({ type: 'LABOUR', _sum: { amount: labourMonthAgg._sum.amount as any } } as any);
-  if (Number(salaryMonthAgg._sum.amount) > 0) expenseByCategory.push({ type: 'SALARY', _sum: { amount: salaryMonthAgg._sum.amount as any } } as any);
-
-  // Site-wise P/L
-  const siteWisePL = await prisma.project.findMany({
-    where: { deletedAt: null, status: { in: ['IN_PROGRESS', 'COMPLETED'] } },
-    select: {
-      id: true,
-      name: true,
-      contractValue: true,
-      incomes: { select: { amount: true } },
-      expenses: { select: { amount: true } },
-    },
-  });
-
-  const siteWiseData = siteWisePL.map((project) => {
-    const totalIncome = project.incomes.reduce(
-      (sum, i) => sum.add(i.amount), new Prisma.Decimal(0)
-    );
-    const totalExpense = project.expenses.reduce(
-      (sum, e) => sum.add(e.amount), new Prisma.Decimal(0)
-    );
+  const siteWiseData = (siteWiseRaw as any[]).map((project) => {
+    const totalIncome = new Prisma.Decimal(project.totalIncome || 0);
+    const totalExpense = new Prisma.Decimal(project.totalExpense || 0);
     return {
       id: project.id,
       name: project.name,
-      contractValue: project.contractValue,
+      contractValue: new Prisma.Decimal(project.contractValue || 0),
       totalIncome,
       totalExpense,
       profit: totalIncome.sub(totalExpense),
     };
   });
 
-  const allClientsFinancials = await prisma.client.findMany({
-    where: { deletedAt: null },
-    select: {
-      id: true,
-      name: true,
-      companyName: true,
-      invoices: { where: { status: { not: 'CANCELLED' } }, select: { totalAmount: true } },
-      incomes: { select: { amount: true } }
-    }
-  });
+  // Top Outstanding Clients (Raw query to prevent OOM)
+  const topOutstandingClientsRaw = await prisma.$queryRaw`
+    SELECT 
+      c.id, 
+      c.name, 
+      c.company_name AS "companyName",
+      COALESCE((SELECT SUM(contract_value) FROM projects p WHERE p.client_id = c.id AND p.deleted_at IS NULL), 0) -
+      COALESCE((SELECT SUM(amount) FROM incomes i WHERE i.client_id = c.id AND i.deleted_at IS NULL), 0) AS outstanding
+    FROM clients c
+    WHERE c.deleted_at IS NULL
+    ORDER BY outstanding DESC
+    LIMIT 5
+  `;
 
-  const topOutstandingClients = allClientsFinancials.map(client => {
-    const totalBilled = client.invoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-    const totalPaid = client.incomes.reduce((sum, inc) => sum + Number(inc.amount || 0), 0);
-    return {
-      id: client.id,
-      name: client.name,
-      companyName: client.companyName,
-      outstanding: totalBilled - totalPaid,
-    };
-  }).filter(c => c.outstanding > 0)
-    .sort((a, b) => b.outstanding - a.outstanding)
-    .slice(0, 5);
+  const topOutstandingClients = (topOutstandingClientsRaw as any[])
+    .filter(c => Number(c.outstanding) > 0)
+    .map(c => ({
+      id: c.id,
+      name: c.name,
+      companyName: c.companyName,
+      outstanding: Number(c.outstanding)
+    }));
 
-  const computedActiveSites = activeSites.map(site => {
-    const total = site.milestones?.length || 0;
-    const completed = site.milestones?.filter(m => m.status === 'COMPLETED').length || 0;
-    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-    const { milestones, ...rest } = site;
-    return { ...rest, progress };
-  });
+  // Merge calendar events and upcoming tasks into upcomingReminders
+  const mergedReminders = [
+    ...upcomingReminders.map((r: any) => ({ id: r.id, title: r.title, startTime: r.startTime, type: 'Meeting' })),
+    ...upcomingTasks.map((t: any) => ({ id: t.id, title: t.title, startTime: t.dueDate, type: 'Task' }))
+  ].sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()).slice(0, 10);
+
+  const computedActiveSites = activeSites.map(site => ({
+    id: site.id,
+    name: site.name,
+    location: `${site.city || ''}, ${site.state || ''}`.replace(/^, | , $/g, ''),
+    progress: site.progress || 0
+  }));
 
   return {
     kpis: {
@@ -280,7 +287,7 @@ export const getAdminDashboard = async () => {
     recentActivities,
     todayTasks,
     recentLeads,
-    upcomingReminders,
+    upcomingReminders: mergedReminders,
     topOutstandingClients,
   };
 };
@@ -378,4 +385,89 @@ export const getEngineerDashboard = async (userId: string) => {
     upcomingEvents,
     recentProgress,
   };
+};
+
+export const getTodayActivities = async () => {
+  const today = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  const [expenses, incomes, clients, leads, tasks] = await Promise.all([
+    prisma.expense.findMany({
+      where: { createdAt: { gte: today } },
+      include: { vendor: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' }
+    }),
+    prisma.income.findMany({
+      where: { createdAt: { gte: today } },
+      include: { client: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' }
+    }),
+    prisma.client.findMany({
+      where: { createdAt: { gte: today } },
+      orderBy: { createdAt: 'desc' }
+    }),
+    prisma.lead.findMany({
+      where: { updatedAt: { gte: today } },
+      orderBy: { updatedAt: 'desc' }
+    }),
+    prisma.task.findMany({
+      where: { updatedAt: { gte: today }, status: 'COMPLETED' },
+      orderBy: { updatedAt: 'desc' }
+    })
+  ]);
+
+  const activities: any[] = [];
+
+  expenses.forEach(e => {
+    activities.push({
+      id: `exp-${e.id}`,
+      type: 'EXPENSE',
+      title: `Logged Expense: ${e.description}`,
+      amount: e.amount,
+      time: e.createdAt,
+      icon: 'receipt'
+    });
+  });
+
+  incomes.forEach(i => {
+    activities.push({
+      id: `inc-${i.id}`,
+      type: 'INCOME',
+      title: `Payment Received from ${i.client?.name || 'Client'}`,
+      amount: i.amount,
+      time: i.createdAt,
+      icon: 'arrow-down'
+    });
+  });
+
+  clients.forEach(c => {
+    activities.push({
+      id: `cli-${c.id}`,
+      type: 'CLIENT',
+      title: `New Client Registered: ${c.name}`,
+      time: c.createdAt,
+      icon: 'users'
+    });
+  });
+
+  leads.forEach(l => {
+    activities.push({
+      id: `lead-${l.id}`,
+      type: 'LEAD',
+      title: `Lead Updated: ${l.name} (${l.status})`,
+      time: l.updatedAt,
+      icon: 'user-plus'
+    });
+  });
+
+  tasks.forEach(t => {
+    activities.push({
+      id: `task-${t.id}`,
+      type: 'TASK',
+      title: `Task Completed: ${t.title}`,
+      time: t.updatedAt,
+      icon: 'check-circle'
+    });
+  });
+
+  return activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 };

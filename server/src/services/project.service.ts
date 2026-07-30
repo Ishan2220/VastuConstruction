@@ -90,9 +90,28 @@ export const getById = async (id: string, userId?: string, userRole?: Role) => {
   return project;
 };
 
+const generateProjectCode = async () => {
+  const year = new Date().getFullYear();
+  const prefix = `VC-${year}-`;
+  const lastProject = await prisma.project.findFirst({
+    where: { projectCode: { startsWith: prefix } },
+    orderBy: { createdAt: 'desc' },
+  });
+  let sequence = 1;
+  if (lastProject && lastProject.projectCode) {
+    const match = lastProject.projectCode.match(/-(\d+)$/);
+    if (match) sequence = parseInt(match[1], 10) + 1;
+  }
+  return `${prefix}${sequence.toString().padStart(3, '0')}`;
+};
+
 export const create = async (payload: any, userId: string) => {
-  const { code, budget, id: _id, createdAt, updatedAt, client, engineer, createdBy, siteProgress, timeline, tasks, _count, idempotencyKey, ...validData } = payload;
+  const { code, projectCode, budget, id: _id, createdAt, updatedAt, client, engineer, createdBy, siteProgress, timeline, tasks, _count, idempotencyKey, ...validData } = payload;
+  
+  const generatedCode = projectCode || code || await generateProjectCode();
+  
   const data: Prisma.ProjectUncheckedCreateInput = {
+    projectCode: generatedCode,
     name: validData.name || 'Unnamed Project',
     description: validData.description || null,
     clientId: cleanRelationId(validData.clientId) || '',
@@ -125,13 +144,12 @@ export const create = async (payload: any, userId: string) => {
   return project;
 };
 
-export const update = async (id: string, payload: any, userId: string) => {
-  const existing = await prisma.project.findFirst({ where: { id, deletedAt: null } });
-  if (!existing) throw new ApiError(404, 'Project not found');
-
-  const { code, budget, id: _id, createdAt, updatedAt, client, engineer, createdBy, siteProgress, timeline, tasks, _count, createdById, idempotencyKey, ...validData } = payload;
+export const update = async (id: string, payload: any, userId: string, userRole?: Role) => {
+  const oldProject = await getById(id, userId, userRole);
+  const { code, projectCode, budget, id: _id, createdAt, updatedAt, client, engineer, createdBy, siteProgress, timeline, tasks, _count, createdById, idempotencyKey, ...validData } = payload;
   const data: Prisma.ProjectUncheckedUpdateInput = {
     ...(validData.name && { name: validData.name }),
+    ...(projectCode || code ? { projectCode: projectCode || code } : {}),
     ...(validData.description !== undefined && { description: validData.description || null }),
     ...(validData.clientId && { clientId: cleanRelationId(validData.clientId)! }),
     ...(validData.engineerId !== undefined && { engineerId: cleanRelationId(validData.engineerId) || null }),
@@ -149,16 +167,16 @@ export const update = async (id: string, payload: any, userId: string) => {
   const project = await prisma.project.update({ where: { id }, data });
 
   // Add timeline for status changes
-  if (data.status && data.status !== existing.status) {
+  if (data.status && oldProject.status !== data.status) {
     await prisma.projectTimeline.create({
       data: {
         projectId: id,
-        action: `Status changed from ${existing.status} to ${data.status}`,
+        action: `Status changed from ${oldProject.status} to ${data.status}`,
       },
     });
   }
 
-  eventBus.publishMutation('Project', 'UPDATE', userId, id, idempotencyKey || randomUUID(), project, existing);
+  eventBus.publishMutation('Project', 'UPDATE', userId, id, idempotencyKey || randomUUID(), project, oldProject);
   return project;
 };
 
@@ -199,17 +217,58 @@ export const addSiteProgress = async (
   return progress;
 };
 
-export const remove = async (id: string, userId: string, idempotencyKey?: string) => {
-  const existing = await prisma.project.findFirst({ where: { id, deletedAt: null } });
-  if (!existing) throw new ApiError(404, 'Project not found');
+export const remove = async (id: string, userId: string, userRole?: Role) => {
+  const existing = await getById(id, userId, userRole);
 
   const project = await prisma.project.update({
     where: { id },
     data: { deletedAt: new Date() },
   });
 
-  eventBus.publishMutation('Project', 'DELETE', userId, id, idempotencyKey || randomUUID(), null, existing);
+  eventBus.publishMutation('Project', 'DELETE', userId, id, randomUUID(), null, existing);
   return project;
+};
+
+export const getSiteDashboard = async (id: string, userId?: string, userRole?: Role) => {
+  const project = await getById(id, userId, userRole);
+  
+  const [incomes, expenses, allTasks] = await Promise.all([
+    prisma.income.aggregate({
+      where: { projectId: id, deletedAt: null },
+      _sum: { amount: true }
+    }),
+    prisma.expense.aggregate({
+      where: { projectId: id, deletedAt: null },
+      _sum: { amount: true }
+    }),
+    prisma.task.findMany({
+      where: { projectId: id }
+    })
+  ]);
+
+  const totalReceived = incomes._sum.amount ? Number(incomes._sum.amount) : 0;
+  const totalSpent = expenses._sum.amount ? Number(expenses._sum.amount) : 0;
+  const contractValue = Number(project.contractValue || 0);
+  
+  const financialProgress = contractValue > 0 ? (totalReceived / contractValue) * 100 : 0;
+  
+  const totalTasks = allTasks.length;
+  const completedTasks = allTasks.filter(t => t.status === 'COMPLETED').length;
+  const taskProgress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+  return {
+    ...project,
+    dashboardStats: {
+      totalReceived,
+      totalSpent,
+      contractValue,
+      financialProgress: Math.min(Math.round(financialProgress), 100),
+      totalTasks,
+      completedTasks,
+      taskProgress: Math.min(Math.round(taskProgress), 100),
+      manualProgress: project.progress
+    }
+  };
 };
 
 export const addProgress = addSiteProgress;

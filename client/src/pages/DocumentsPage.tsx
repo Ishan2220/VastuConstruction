@@ -4,17 +4,22 @@ import { FileText, Plus, Search, Download, Folder, Upload, Eye, CheckCircle2, Sh
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { useQuickAddListener } from '@/hooks/useQuickAddListener';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 export default function DocumentsPage() {
+    const confirmDialog = useConfirm();
   const [searchTerm, setSearchTerm] = useState('');
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   useQuickAddListener('document', () => setIsUploadOpen(true));
   const [previewDoc, setPreviewDoc] = useState<any | null>(null);
 
   const [docTitle, setDocTitle] = useState('');
-  const [category, setCategory] = useState('BLUEPRINT');
+  const [category, setCategory] = useState('DRAWING');
+  const [customCategory, setCustomCategory] = useState('');
   const [siteName, setSiteName] = useState('Corporate HQ');
   const [fileNotes, setFileNotes] = useState('');
+  const [uploadMode, setUploadMode] = useState<'FILE' | 'DRIVE'>('FILE');
+  const [driveLink, setDriveLink] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
 
@@ -96,23 +101,33 @@ export default function DocumentsPage() {
       toast.error('Document title is required');
       return;
     }
-    if (!selectedFile) {
+    if (uploadMode === 'FILE' && !selectedFile) {
       toast.error('Please select a file to upload');
       return;
     }
+    if (uploadMode === 'DRIVE' && !driveLink) {
+      toast.error('Please provide a Google Drive link');
+      return;
+    }
 
-    let typeEnum = 'OTHER';
-    if (category === 'BLUEPRINT' || category === 'ENGINEERING') typeEnum = 'DRAWING';
-    else if (category === 'PERMIT' || category === 'COMPLIANCE' || category === 'QUALITY_CERTIFICATE') typeEnum = 'PDF';
+    const typeEnum = category === 'OTHER' && customCategory.trim() !== '' ? customCategory.trim() : category;
 
     try {
-      setIsUploadingFile(true);
-      const formData = new FormData();
-      formData.append('file', selectedFile);
+      let uploadedFileUrl = '';
+      let uploadedSize = 0;
 
-      const uploadRes = await api.post('/files/upload', formData);
-      const uploadedFileUrl = uploadRes.data.data.publicUrl;
-      const uploadedSize = uploadRes.data.data.fileSizeOriginal || selectedFile.size;
+      if (uploadMode === 'FILE' && selectedFile) {
+        setIsUploadingFile(true);
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        const uploadRes = await api.post('/files/upload', formData);
+        uploadedFileUrl = uploadRes.data.data.publicUrl;
+        uploadedSize = uploadRes.data.data.fileSizeOriginal || selectedFile.size;
+      } else {
+        uploadedFileUrl = driveLink;
+        uploadedSize = 0; // External link
+      }
 
       uploadMutation.mutate({
         title: docTitle,
@@ -128,6 +143,10 @@ export default function DocumentsPage() {
   };
 
   const triggerRealDownload = async (doc: any) => {
+    if (doc.fileUrl?.includes('drive.google.com') || doc.fileUrl?.includes('docs.google.com')) {
+      window.open(doc.fileUrl, '_blank');
+      return;
+    }
     try {
       const res = await api.get(`/files/${doc.id}/download`);
       if (res.data?.data?.downloadUrl) {
@@ -140,7 +159,13 @@ export default function DocumentsPage() {
 
         window.open(downloadUrl, '_blank');
       } else {
-        toast.error('Could not retrieve document download URL.');
+        // Fallback
+        let fallbackUrl = doc.fileUrl;
+        if (!fallbackUrl.startsWith('http')) {
+          const backendUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '';
+          fallbackUrl = backendUrl + fallbackUrl;
+        }
+        window.open(fallbackUrl, '_blank');
       }
     } catch (err: any) {
       console.error(err);
@@ -245,7 +270,7 @@ export default function DocumentsPage() {
                   <div className="flex gap-1">
                     <button
                       onClick={() => setPreviewDoc(doc)}
-                      className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors"
+                      className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors"
                       title="View Document"
                     >
                       <Eye className="w-4 h-4" />
@@ -255,23 +280,23 @@ export default function DocumentsPage() {
                         setEditDoc({
                           ...doc,
                           title: doc.title || '',
-                          category: doc.category || doc.type || 'BLUEPRINT',
+                          category: doc.category || doc.type || 'DRAWING',
                           site: doc.site || 'Skyline Residency',
                         });
                         setIsEditOpen(true);
                       }}
-                      className="p-1.5 text-slate-400 hover:text-[#F2A65A] hover:bg-[#F2A65A]/10 rounded-lg transition-colors"
+                      className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#F2A65A] hover:bg-[#F2A65A]/10 rounded-lg transition-colors"
                       title="Edit Document Info"
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => {
-                        if (confirm(`Are you sure you want to delete "${doc.title}"?`)) {
+                      onClick={async () => {
+                        if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete "${doc.title}"?` })) {
                           deleteMutation.mutate(doc.id);
                         }
                       }}
-                      className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-[#E5636C]/10 rounded-lg transition-colors"
+                      className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#E5636C] hover:bg-[#E5636C]/10 rounded-lg transition-colors"
                       title="Delete Document"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -279,7 +304,7 @@ export default function DocumentsPage() {
                   </div>
                   <button
                     onClick={() => triggerRealDownload(doc)}
-                    className="clay-btn px-3 py-1.5 text-xs text-white flex items-center gap-1.5"
+                    className="clay-btn px-3 py-1.5 text-xs text-white flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                     title="Download Original File to Device"
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -354,28 +379,59 @@ export default function DocumentsPage() {
                 </div>
 
                 <div className="h-96 rounded-xl border-2 border-dashed border-[#7C6EF0]/30 bg-white/20 flex flex-col items-center justify-center relative overflow-hidden">
-                  {previewDoc.fileUrl ? (
-                    <iframe
-                      src={
-                        previewDoc.fileUrl.startsWith('http') 
-                          ? previewDoc.fileUrl 
-                          : (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') + previewDoc.fileUrl
-                      }
-                      className="w-full h-full border-none"
-                      title={previewDoc.title || 'Document Preview'}
-                    />
-                  ) : (
-                    <>
-                      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#7C6EF0_1px,transparent_1px)] [background-size:16px_16px]" />
-                      <HardHat className="w-12 h-12 text-[#7C6EF0] animate-bounce" />
-                      <div className="space-y-1 z-10 text-center mt-3">
-                        <div className="font-bold text-base text-slate-800">{previewDoc.title || 'Untitled Document'}</div>
-                        <div className="text-xs text-slate-500 max-w-md mx-auto">
-                          Structural reinforcement blueprint & inspection certificate rendered securely from Vastu Cloud CDN.
+                  {(() => {
+                    if (!previewDoc.fileUrl) {
+                      return (
+                        <>
+                          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#7C6EF0_1px,transparent_1px)] [background-size:16px_16px]" />
+                          <HardHat className="w-12 h-12 text-[#7C6EF0] animate-bounce" />
+                          <div className="space-y-1 z-10 text-center mt-3">
+                            <div className="font-bold text-base text-slate-800">{previewDoc.title || 'Untitled Document'}</div>
+                            <div className="text-xs text-slate-500 max-w-md mx-auto">
+                              Structural reinforcement blueprint & inspection certificate rendered securely from Vastu Cloud CDN.
+                            </div>
+                          </div>
+                        </>
+                      );
+                    }
+
+                    const url = previewDoc.fileUrl.startsWith('http') 
+                      ? previewDoc.fileUrl 
+                      : (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') + previewDoc.fileUrl;
+                    
+                    const lowerUrl = url.toLowerCase();
+                    const isPdf = lowerUrl.endsWith('.pdf');
+                    const isImage = lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.png') || lowerUrl.endsWith('.webp') || lowerUrl.endsWith('.gif');
+                    const isText = lowerUrl.endsWith('.txt');
+                    const isDocxXlsx = lowerUrl.endsWith('.docx') || lowerUrl.endsWith('.xlsx') || lowerUrl.endsWith('.xls') || lowerUrl.endsWith('.doc');
+
+                    if (isImage) {
+                      return <img src={url} alt={previewDoc.title} className="max-w-full max-h-full object-contain" />;
+                    } else if (isPdf || isText) {
+                      return <iframe src={url} className="w-full h-full border-none" title={previewDoc.title || 'Document Preview'} />;
+                    } else if (isDocxXlsx) {
+                      return (
+                        <div className="text-center space-y-3 z-10 p-6 bg-white/80 rounded-xl shadow-sm border border-slate-200">
+                          <FileCode className="w-10 h-10 text-slate-400 mx-auto" />
+                          <h4 className="font-bold text-slate-800">Preview Not Available</h4>
+                          <p className="text-xs text-slate-500 max-w-xs">
+                            This document format requires a native application to view. Please download the file.
+                          </p>
+                          <button onClick={() => triggerRealDownload(previewDoc)} className="clay-btn mt-2 px-4 py-2 text-white text-xs font-bold rounded-lg bg-[#7C6EF0]">
+                            Download Now
+                          </button>
                         </div>
-                      </div>
-                    </>
-                  )}
+                      );
+                    } else {
+                      return (
+                        <div className="text-center space-y-3 z-10">
+                           <FileText className="w-10 h-10 text-[#7C6EF0] mx-auto opacity-70" />
+                           <p className="text-sm font-bold text-slate-700">Preview not supported for this file type.</p>
+                           <p className="text-xs text-slate-500">Please download to view.</p>
+                        </div>
+                      );
+                    }
+                  })()}
                 </div>
               </div>
             </div>
@@ -434,12 +490,28 @@ export default function DocumentsPage() {
                     onChange={(e) => setCategory(e.target.value)}
                     className="clay-input w-full px-3 py-2 text-sm"
                   >
-                    <option value="BLUEPRINT">Structural Blueprint / CAD</option>
-                    <option value="PERMIT">Municipal Permit / Approval</option>
-                    <option value="QUALITY_CERTIFICATE">Quality / Mill Certificate</option>
-                    <option value="ENGINEERING">Soil / Structural Engineering Report</option>
-                    <option value="COMPLIANCE">Environmental Compliance Notice</option>
+                    <option value="SITE_PHOTO">Site Photo</option>
+                    <option value="DAILY_REPORT">Daily Report</option>
+                    <option value="DRAWING">Drawing / Blueprint</option>
+                    <option value="INVOICE">Invoice</option>
+                    <option value="GST_BILL">GST Bill</option>
+                    <option value="PURCHASE_ORDER">Purchase Order</option>
+                    <option value="VENDOR_RECEIPT">Vendor Receipt</option>
+                    <option value="CONTRACT">Contract</option>
+                    <option value="CLIENT_DOCUMENT">Client Document</option>
+                    <option value="LABOUR_DOCUMENT">Labour Document</option>
+                    <option value="OTHER">Other (Custom)</option>
                   </select>
+                  {category === 'OTHER' && (
+                    <input
+                      type="text"
+                      placeholder="Enter custom category"
+                      value={customCategory}
+                      onChange={(e) => setCustomCategory(e.target.value)}
+                      required
+                      className="clay-input w-full px-3 py-2 text-sm mt-2"
+                    />
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -468,21 +540,49 @@ export default function DocumentsPage() {
                 />
               </div>
 
-              <div className="p-6 border-2 border-dashed border-[#7C6EF0]/30 rounded-xl text-center text-xs text-[#7C6EF0] bg-clay-violet space-y-3">
-                <Upload className="w-8 h-8 mx-auto animate-bounce" />
-                <div className="font-semibold">Select File (PDF, DWG, CAD, JPG, PNG, or ZIP)</div>
-                <input
-                  type="file"
-                  required
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) setSelectedFile(f);
-                  }}
-                  className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-white/50 file:text-[#7C6EF0] hover:file:bg-white/70 cursor-pointer"
-                />
-                {selectedFile && (
-                  <div className="text-[#5CB77E] font-bold bg-clay-green px-3 py-1.5 rounded-lg inline-block">
-                    Ready to Upload: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+              <div className="space-y-3">
+                <div className="flex gap-4 border-b border-violet-100/30 pb-2">
+                  <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                    <input type="radio" checked={uploadMode === 'FILE'} onChange={() => setUploadMode('FILE')} className="accent-violet-600" />
+                    <span>Upload Local File</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                    <input type="radio" checked={uploadMode === 'DRIVE'} onChange={() => setUploadMode('DRIVE')} className="accent-violet-600" />
+                    <span>Link Google Drive</span>
+                  </label>
+                </div>
+
+                {uploadMode === 'FILE' ? (
+                  <div className="p-6 border-2 border-dashed border-[#7C6EF0]/30 rounded-xl text-center text-xs text-[#7C6EF0] bg-clay-violet space-y-3">
+                    <Upload className="w-8 h-8 mx-auto animate-bounce" />
+                    <div className="font-semibold">Select File (PDF, DWG, CAD, JPG, PNG, or ZIP)</div>
+                    <input
+                      type="file"
+                      required={uploadMode === 'FILE'}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) setSelectedFile(f);
+                      }}
+                      className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-white/50 file:text-[#7C6EF0] hover:file:bg-white/70 cursor-pointer"
+                    />
+                    {selectedFile && (
+                      <div className="text-[#5CB77E] font-bold bg-clay-green px-3 py-1.5 rounded-lg inline-block">
+                        Ready to Upload: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-700">Google Drive URL *</label>
+                    <input
+                      type="url"
+                      required={uploadMode === 'DRIVE'}
+                      placeholder="https://drive.google.com/file/d/..."
+                      value={driveLink}
+                      onChange={(e) => setDriveLink(e.target.value)}
+                      className="clay-input w-full px-3 py-2 text-sm"
+                    />
+                    <p className="text-[10px] text-slate-500">Ensure the Google Drive link is accessible to intended viewers.</p>
                   </div>
                 )}
               </div>
@@ -513,11 +613,13 @@ export default function DocumentsPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                const updatedType = editDoc.category === 'OTHER' && editDoc.customCategory?.trim() ? editDoc.customCategory.trim() : editDoc.category;
                 editMutation.mutate({
                   id: editDoc.id,
                   payload: {
                     title: editDoc.title,
-                    category: editDoc.category,
+                    category: updatedType,
+                    type: updatedType,
                     site: editDoc.site,
                   },
                 });
@@ -541,12 +643,28 @@ export default function DocumentsPage() {
                   onChange={(e) => setEditDoc({ ...editDoc, category: e.target.value })}
                   className="clay-input w-full px-3 py-2 text-sm mt-1"
                 >
-                  <option value="BLUEPRINT">Structural Blueprint / CAD</option>
-                  <option value="PERMIT">Municipal Permit / Approval</option>
-                  <option value="QUALITY_CERTIFICATE">Quality / Mill Certificate</option>
-                  <option value="ENGINEERING">Soil / Structural Engineering Report</option>
-                  <option value="COMPLIANCE">Environmental Compliance Notice</option>
+                  <option value="SITE_PHOTO">Site Photo</option>
+                  <option value="DAILY_REPORT">Daily Report</option>
+                  <option value="DRAWING">Drawing / Blueprint</option>
+                  <option value="INVOICE">Invoice</option>
+                  <option value="GST_BILL">GST Bill</option>
+                  <option value="PURCHASE_ORDER">Purchase Order</option>
+                  <option value="VENDOR_RECEIPT">Vendor Receipt</option>
+                  <option value="CONTRACT">Contract</option>
+                  <option value="CLIENT_DOCUMENT">Client Document</option>
+                  <option value="LABOUR_DOCUMENT">Labour Document</option>
+                  <option value="OTHER">Other (Custom)</option>
                 </select>
+                {editDoc.category === 'OTHER' && (
+                  <input
+                    type="text"
+                    placeholder="Enter custom category"
+                    value={editDoc.customCategory || ''}
+                    onChange={(e) => setEditDoc({ ...editDoc, customCategory: e.target.value })}
+                    required
+                    className="clay-input w-full px-3 py-2 text-sm mt-2"
+                  />
+                )}
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-700">Associated Site</label>

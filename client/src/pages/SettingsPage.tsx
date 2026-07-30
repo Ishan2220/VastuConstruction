@@ -51,6 +51,20 @@ export default function SettingsPage() {
           </div>
         </Link>
 
+        <Link to="/settings/financial" className="block group relative bg-white/70 backdrop-blur-md border border-slate-200/60 p-6 rounded-3xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          <div className="relative flex items-start gap-5 pointer-events-none">
+            <div className="p-4 rounded-2xl bg-white border border-slate-100 text-slate-800 shadow-sm group-hover:scale-110 group-hover:bg-slate-800 group-hover:text-white transition-all duration-300">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-indian-rupee"><path d="M6 3h12"/><path d="M6 8h12"/><path d="m6 13 8.5 8"/><path d="M6 13h3"/><path d="M9 13c6.667 0 6.667-10 0-10"/></svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-slate-800 font-heading group-hover:text-slate-900 transition-colors">Financial & GST Settings</h3>
+              <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">Manage GST configurations, flexible tax rules, and general financial preferences.</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-800 group-hover:translate-x-1 transition-all" />
+          </div>
+        </Link>
+
         {/* Future expansion placeholders */}
         <div className="group relative bg-slate-50/50 backdrop-blur-xl border border-slate-200/50 p-6 rounded-3xl opacity-60 cursor-not-allowed">
           <div className="flex items-start gap-5">

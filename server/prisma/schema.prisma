@@ -12,6 +12,12 @@ datasource db {
 
 // ─── ENUMS ───────────────────────────────────────────────────
 
+enum GstMode {
+  NONE
+  PERCENTAGE
+  AMOUNT
+}
+
 enum Role {
   ADMIN
   ACCOUNTANT
@@ -21,8 +27,9 @@ enum Role {
 enum LeadStatus {
   NEW
   CONTACTED
-  QUALIFIED
-  PROPOSAL
+  SITE_VISIT
+  FOLLOW_UP
+  PROPOSAL_SENT
   NEGOTIATION
   WON
   LOST
@@ -56,6 +63,19 @@ enum TaskPriority {
   MEDIUM
   HIGH
   URGENT
+}
+
+enum PersonType {
+  EMPLOYEE
+  LABOR
+}
+
+enum AttendanceStatus {
+  PRESENT
+  HALF_DAY
+  ABSENT
+  LEAVE
+  HOLIDAY
 }
 
 enum TaskStatus {
@@ -107,18 +127,18 @@ enum FileCategory {
 // ─── USERS & AUTH ────────────────────────────────────────────
 
 model User {
-  id             String    @id @default(uuid())
-  email          String    @unique
-  password       String
-  name           String
-  phone          String?
-  role           Role      @default(ENGINEER)
-  avatar         String?
-  isActive       Boolean   @default(true) @map("is_active")
-  forcePasswordChange Boolean @default(false) @map("force_password_change")
-  lastLoginAt    DateTime? @map("last_login_at")
-  tempAdminUntil DateTime? @map("temp_admin_until")
-  tempAdminPages String[]  @map("temp_admin_pages")
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  password            String
+  name                String
+  phone               String?
+  role                Role      @default(ENGINEER)
+  avatar              String?
+  isActive            Boolean   @default(true) @map("is_active")
+  forcePasswordChange Boolean   @default(false) @map("force_password_change")
+  lastLoginAt         DateTime? @map("last_login_at")
+  tempAdminUntil      DateTime? @map("temp_admin_until")
+  tempAdminPages      String[]  @map("temp_admin_pages")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -154,6 +174,12 @@ model User {
   materialConsumptions MaterialConsumption[] @relation("MaterialConsumptionUser")
   approvalRequests     ApprovalRequest[]     @relation("ApprovalRequester")
   approvalSteps        ApprovalStep[]        @relation("ApprovalApprover")
+
+  // Payroll Relations
+  approvedPayrolls   Payroll[]           @relation("PayrollApprover")
+  payrollAdjustments PayrollAdjustment[] @relation("PayrollAdjustmentCreator")
+  payrollHistories   PayrollHistory[]    @relation("PayrollHistoryCreator")
+  calculatedWorkLogs DailyWorkLog[]      @relation("DailyWorkLogCalculator")
 
   @@map("users")
 }
@@ -212,6 +238,10 @@ model Lead {
   source             String     @default("OTHER")
   budget             Decimal?   @db.Decimal(12, 2)
   plotSize           String?    @map("plot_size")
+  plotArea           String?    @map("plot_area")
+  plotAddress        String?    @map("plot_address")
+  plotDescription    String?    @map("plot_description") @db.Text
+  captureDate        DateTime?  @default(now()) @map("capture_date")
   requiredService    String?    @map("required_service")
   requirement        String?    @db.Text
   notes              String?    @db.Text
@@ -253,18 +283,18 @@ model LeadTimeline {
 }
 
 model Client {
-  id          String  @id @default(uuid())
-  name        String
-  email       String?
-  phone       String
-  altPhone    String? @map("alt_phone")
-  address     String?
-  city        String?
-  state       String?
-  pincode     String?
-  gst         String?
-  pan         String?
-  companyName String? @map("company_name")
+  id             String   @id @default(uuid())
+  name           String
+  email          String?
+  phone          String
+  altPhone       String?  @map("alt_phone")
+  address        String?
+  city           String?
+  state          String?
+  pincode        String?
+  gst            String?
+  pan            String?
+  companyName    String?  @map("company_name")
   openingBalance Decimal? @default(0) @map("opening_balance") @db.Decimal(12, 2)
 
   leadId      String? @unique @map("lead_id")
@@ -354,6 +384,7 @@ model Project {
   milestones           ProjectMilestone[]
   purchaseOrders       PurchaseOrder[]
   materialConsumptions MaterialConsumption[]
+  vendorAttendances    VendorAttendance[]
 
   @@index([status])
   @@index([clientId])
@@ -402,20 +433,20 @@ model Drawing {
 // ─── MATERIALS & VENDORS ─────────────────────────────────────
 
 model Vendor {
-  id            String  @id @default(uuid())
-  name          String
-  contactPerson String? @map("contact_person")
-  phone         String
-  altPhone      String? @map("alt_phone")
-  email         String?
-  address       String?
-  city          String?
-  state         String?
-  gst           String?
-  pan           String?
-  category      String? // Material type they supply
-  rating        Int?    @default(0) // 0-5
-  isActive      Boolean @default(true) @map("is_active")
+  id             String   @id @default(uuid())
+  name           String
+  contactPerson  String?  @map("contact_person")
+  phone          String
+  altPhone       String?  @map("alt_phone")
+  email          String?
+  address        String?
+  city           String?
+  state          String?
+  gst            String?
+  pan            String?
+  category       String? // Material type they supply
+  rating         Int?     @default(0) // 0-5
+  isActive       Boolean  @default(true) @map("is_active")
   openingBalance Decimal? @default(0) @map("opening_balance") @db.Decimal(12, 2)
 
   createdAt DateTime  @default(now()) @map("created_at")
@@ -426,26 +457,30 @@ model Vendor {
   materials      Material[]
   materialOrders MaterialOrder[]
   payments       VendorPayment[]
+  labourRates    VendorLabourRate[]
   expenses       Expense[]
-  documents      Document[]      @relation("VendorDocuments")
+  documents      Document[]         @relation("VendorDocuments")
+  invoices       Invoice[]
 
   isArchived         Boolean            @default(false) @map("is_archived")
   businessActivities BusinessActivity[]
   purchaseOrders     PurchaseOrder[]
+  vendorAttendances  VendorAttendance[]
 
   @@index([name])
   @@map("vendors")
 }
 
 model Material {
-  id       String  @id @default(uuid())
-  name     String
-  unit     String
-  rate     Decimal @db.Decimal(10, 2)
-  gstRate  Decimal @default(0) @map("gst_rate") @db.Decimal(4, 2)
-  vendorId String? @map("vendor_id")
-  vendor   Vendor? @relation(fields: [vendorId], references: [id])
-  isActive Boolean @default(true) @map("is_active")
+  id        String  @id @default(uuid())
+  name      String
+  unit      String
+  rate      Decimal @db.Decimal(10, 2)
+  gstRate   Decimal @default(0) @map("gst_rate") @db.Decimal(4, 2)
+  vendorId  String? @map("vendor_id")
+  vendor    Vendor? @relation(fields: [vendorId], references: [id])
+  isDefault Boolean @default(false) @map("is_default")
+  isActive  Boolean @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -463,19 +498,22 @@ model Material {
 }
 
 model MaterialOrder {
-  id           String    @id @default(uuid())
-  orderNumber  String    @unique @map("order_number")
-  vendorId     String    @map("vendor_id")
-  vendor       Vendor    @relation(fields: [vendorId], references: [id])
-  projectId    String    @map("project_id")
-  project      Project   @relation(fields: [projectId], references: [id])
-  orderDate    DateTime  @default(now()) @map("order_date")
-  deliveryDate DateTime? @map("delivery_date")
-  totalAmount  Decimal   @map("total_amount") @db.Decimal(12, 2)
-  gstAmount    Decimal   @default(0) @map("gst_amount") @db.Decimal(10, 2)
-  status       String    @default("PENDING") // PENDING, PARTIAL, DELIVERED, CANCELLED
-  billUrl      String?   @map("bill_url")
-  notes        String?
+  id            String    @id @default(uuid())
+  orderNumber   String    @unique @map("order_number")
+  vendorId      String    @map("vendor_id")
+  vendor        Vendor    @relation(fields: [vendorId], references: [id])
+  projectId     String    @map("project_id")
+  project       Project   @relation(fields: [projectId], references: [id])
+  orderDate     DateTime  @default(now()) @map("order_date")
+  deliveryDate  DateTime? @map("delivery_date")
+  amount        Decimal   @default(0) @db.Decimal(12, 2)
+  gstMode       GstMode   @default(NONE) @map("gst_mode")
+  gstPercentage Decimal?  @map("gst_percentage") @db.Decimal(5, 2)
+  gstAmount     Decimal   @default(0) @map("gst_amount") @db.Decimal(10, 2)
+  totalAmount   Decimal   @map("total_amount") @db.Decimal(12, 2)
+  status        String    @default("PENDING") // PENDING, PARTIAL, DELIVERED, CANCELLED
+  billUrl       String?   @map("bill_url")
+  notes         String?
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -520,6 +558,10 @@ model VendorPayment {
   vendorId      String   @map("vendor_id")
   vendor        Vendor   @relation(fields: [vendorId], references: [id])
   amount        Decimal  @db.Decimal(12, 2)
+  gstMode       GstMode  @default(NONE) @map("gst_mode")
+  gstPercentage Decimal? @map("gst_percentage") @db.Decimal(5, 2)
+  gstAmount     Decimal  @default(0) @map("gst_amount") @db.Decimal(10, 2)
+  totalAmount   Decimal  @default(0) @map("total_amount") @db.Decimal(12, 2)
   paymentDate   DateTime @map("payment_date")
   paymentMethod String   @map("payment_method")
   reference     String? // Cheque no, txn id, etc.
@@ -528,8 +570,58 @@ model VendorPayment {
 
   createdAt DateTime @default(now()) @map("created_at")
 
+  details VendorPaymentDetail[]
+
   @@index([vendorId])
   @@map("vendor_payments")
+}
+
+model VendorPaymentDetail {
+  id              String        @id @default(uuid())
+  vendorPaymentId String        @map("vendor_payment_id")
+  vendorPayment   VendorPayment @relation(fields: [vendorPaymentId], references: [id], onDelete: Cascade)
+  categoryId      String?       @map("category_id") // Optional because it could be material payment, etc.
+  description     String
+  quantity        Decimal       @db.Decimal(10, 2)
+  rate            Decimal       @db.Decimal(10, 2)
+  amount          Decimal       @db.Decimal(12, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([vendorPaymentId])
+  @@map("vendor_payment_details")
+}
+
+model LabourCategory {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  isActive    Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  vendorRates             VendorLabourRate[]
+  vendorAttendanceDetails VendorAttendanceDetail[]
+
+  @@map("labour_categories")
+}
+
+model VendorLabourRate {
+  id           String         @id @default(uuid())
+  vendorId     String         @map("vendor_id")
+  vendor       Vendor         @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  categoryId   String         @map("category_id")
+  category     LabourCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  dailyRate    Decimal        @map("daily_rate") @db.Decimal(10, 2)
+  overtimeRate Decimal?       @map("overtime_rate") @db.Decimal(10, 2)
+  isActive     Boolean        @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([vendorId, categoryId])
+  @@map("vendor_labour_rates")
 }
 
 // ─── LABOUR ──────────────────────────────────────────────────
@@ -550,7 +642,6 @@ model Labour {
 
   // Relations
   assignments LabourAssignment[]
-  attendance  Attendance[]
   payments    LabourPayment[]
 
   @@index([name])
@@ -571,19 +662,28 @@ model LabourAssignment {
   @@map("labour_assignments")
 }
 
-model Attendance {
-  id       String   @id @default(uuid())
-  labourId String   @map("labour_id")
-  labour   Labour   @relation(fields: [labourId], references: [id])
-  date     DateTime @db.Date
-  present  Boolean  @default(true)
-  halfDay  Boolean  @default(false) @map("half_day")
-  overtime Decimal  @default(0) @db.Decimal(4, 2) // hours
-  notes    String?
+model UnifiedAttendance {
+  id            String           @id @default(cuid())
+  personId      String           @map("person_id")
+  personType    PersonType       @map("person_type")
+  date          DateTime         @db.Date
+  status        AttendanceStatus
+  overtimeHours Float?           @default(0) @map("overtime_hours")
 
-  @@unique([labourId, date])
+  checkIn             DateTime? @map("check_in")
+  checkOut            DateTime? @map("check_out")
+  workingHours        Float?    @default(0) @map("working_hours")
+  dailySalaryEarned   Decimal?  @map("daily_salary_earned") @db.Decimal(12, 2)
+  dailyOvertimeAmount Decimal?  @map("daily_overtime_amount") @db.Decimal(12, 2)
+
+  markedBy  String   @map("marked_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([personId, personType, date])
   @@index([date])
-  @@map("attendance")
+  @@index([personId, personType])
+  @@map("unified_attendance")
 }
 
 model LabourPayment {
@@ -605,16 +705,18 @@ model LabourPayment {
 // ─── FINANCE ─────────────────────────────────────────────────
 
 model BankAccount {
-  id             String  @id @default(uuid())
-  bankName       String  @map("bank_name")
-  accountName    String  @map("account_name")
-  accountNo      String  @unique @map("account_no")
-  ifsc           String?
-  branch         String?
-  accountType    String  @default("BANK") @map("account_type") // e.g., "BANK", "CASH", "WALLET", "CREDIT_CARD"
-  openingBalance Decimal @default(0) @map("opening_balance") @db.Decimal(14, 2)
-  balance        Decimal @default(0) @db.Decimal(14, 2) // Derived snapshot, NOT source of truth
-  isActive       Boolean @default(true) @map("is_active")
+  id                    String    @id @default(uuid())
+  bankName              String    @map("bank_name")
+  accountName           String    @map("account_name")
+  accountNo             String    @unique @map("account_no")
+  ifsc                  String?
+  branch                String?
+  accountType           String    @default("BANK") @map("account_type") // e.g., "BANK", "CASH", "WALLET", "CREDIT_CARD"
+  openingBalance        Decimal   @default(0) @map("opening_balance") @db.Decimal(14, 2)
+  balance               Decimal   @default(0) @db.Decimal(14, 2) // Derived snapshot, NOT source of truth
+  lastReconciledAt      DateTime? @map("last_reconciled_at")
+  lastReconciledBalance Decimal?  @map("last_reconciled_balance") @db.Decimal(14, 2)
+  isActive              Boolean   @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -633,7 +735,10 @@ model Income {
   projectId     String?      @map("project_id")
   project       Project?     @relation(fields: [projectId], references: [id])
   amount        Decimal      @db.Decimal(12, 2)
+  gstMode       GstMode      @default(NONE) @map("gst_mode")
+  gstPercentage Decimal?     @map("gst_percentage") @db.Decimal(5, 2)
   gstAmount     Decimal      @default(0) @map("gst_amount") @db.Decimal(10, 2)
+  totalAmount   Decimal      @default(0) @map("total_amount") @db.Decimal(12, 2)
   paymentDate   DateTime     @map("payment_date")
   paymentMethod String       @map("payment_method")
   accountId     String?      @map("account_id")
@@ -647,12 +752,16 @@ model Income {
   createdById String @map("created_by_id")
   createdBy   User   @relation("IncomeCreator", fields: [createdById], references: [id])
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   @@index([clientId])
   @@index([projectId])
   @@index([paymentDate])
+  @@index([deletedAt])
+  @@index([projectId, deletedAt])
+  @@index([clientId, deletedAt])
   @@map("incomes")
 }
 
@@ -662,9 +771,13 @@ model Expense {
   project       Project?     @relation(fields: [projectId], references: [id])
   vendorId      String?      @map("vendor_id")
   vendor        Vendor?      @relation(fields: [vendorId], references: [id])
+  isPersonal    Boolean      @default(false) @map("is_personal")
   type          String
   amount        Decimal      @db.Decimal(12, 2)
+  gstMode       GstMode      @default(NONE) @map("gst_mode")
+  gstPercentage Decimal?     @map("gst_percentage") @db.Decimal(5, 2)
   gstAmount     Decimal      @default(0) @map("gst_amount") @db.Decimal(10, 2)
+  totalAmount   Decimal      @default(0) @map("total_amount") @db.Decimal(12, 2)
   paymentDate   DateTime     @map("payment_date")
   paymentMethod String       @map("payment_method")
   accountId     String?      @map("account_id")
@@ -676,12 +789,17 @@ model Expense {
   createdById String @map("created_by_id")
   createdBy   User   @relation("ExpenseCreator", fields: [createdById], references: [id])
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   @@index([projectId])
+  @@index([vendorId, projectId])
+  @@index([isPersonal])
   @@index([type])
   @@index([paymentDate])
+  @@index([deletedAt])
+  @@index([projectId, deletedAt])
   @@map("expenses")
 }
 
@@ -779,16 +897,24 @@ model Employee {
   department  String?
   joiningDate DateTime? @map("joining_date")
   salary      Decimal?  @db.Decimal(10, 2)
+  dailyRate   Decimal?  @map("daily_rate") @db.Decimal(10, 2)
+
+  payrollType          String    @default("ATTENDANCE_BASED") @map("payroll_type")
+  workingDaysOverride  Int?      @map("working_days_override")
+  workingHoursOverride Float?    @map("working_hours_override")
+  payrollStartDate     DateTime? @map("payroll_start_date") @db.Date
+  overtimeEligible     Boolean   @default(true) @map("overtime_eligible")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  leaves Leave[]
+  leaves        Leave[]
+  payrolls      Payroll[]
+  dailyWorkLogs DailyWorkLog[]
 
-  isArchived         Boolean              @default(false) @map("is_archived")
+  isArchived         Boolean            @default(false) @map("is_archived")
   businessActivities BusinessActivity[]
-  attendance         EmployeeAttendance[]
   salaryPayments     SalaryPayment[]
 
   @@map("employees")
@@ -1017,14 +1143,19 @@ model Invoice {
   issueDate     DateTime  @map("issue_date")
   dueDate       DateTime? @map("due_date")
 
-  clientId  String   @map("client_id")
-  client    Client   @relation(fields: [clientId], references: [id])
+  type      String   @default("CLIENT") // CLIENT, VENDOR
+  clientId  String?  @map("client_id")
+  client    Client?  @relation(fields: [clientId], references: [id])
+  vendorId  String?  @map("vendor_id")
+  vendor    Vendor?  @relation(fields: [vendorId], references: [id])
   projectId String?  @map("project_id")
   project   Project? @relation(fields: [projectId], references: [id])
 
-  subtotal    Decimal @default(0) @db.Decimal(12, 2)
-  taxAmount   Decimal @default(0) @map("tax_amount") @db.Decimal(12, 2)
-  totalAmount Decimal @default(0) @map("total_amount") @db.Decimal(12, 2)
+  subtotal      Decimal  @default(0) @db.Decimal(12, 2)
+  gstMode       GstMode  @default(NONE) @map("gst_mode")
+  gstPercentage Decimal? @map("gst_percentage") @db.Decimal(5, 2)
+  taxAmount     Decimal  @default(0) @map("tax_amount") @db.Decimal(12, 2)
+  totalAmount   Decimal  @default(0) @map("total_amount") @db.Decimal(12, 2)
 
   status String  @default("UNPAID") // UNPAID, PARTIAL, PAID, CANCELLED
   pdfUrl String? @map("pdf_url")
@@ -1034,9 +1165,30 @@ model Invoice {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  items InvoiceItem[]
+
   @@index([clientId])
+  @@index([vendorId])
   @@index([projectId])
   @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  invoiceId   String   @map("invoice_id")
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Decimal  @db.Decimal(10, 2)
+  rate        Decimal  @db.Decimal(12, 2)
+  amount      Decimal  @db.Decimal(12, 2)
+  gstRate     Decimal? @map("gst_rate") @db.Decimal(5, 2)
+  gstAmount   Decimal? @map("gst_amount") @db.Decimal(12, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([invoiceId])
+  @@map("invoice_items")
 }
 
 model ProjectMaterialRequirement {
@@ -1051,22 +1203,6 @@ model ProjectMaterialRequirement {
 
   @@unique([projectId, materialId])
   @@map("project_material_requirements")
-}
-
-model EmployeeAttendance {
-  id         String    @id @default(uuid())
-  employeeId String    @map("employee_id")
-  employee   Employee  @relation(fields: [employeeId], references: [id])
-  date       DateTime  @db.Date
-  status     String    @default("PRESENT") // PRESENT, ABSENT, HALF_DAY, LEAVE, LATE
-  checkIn    DateTime? @map("check_in")
-  checkOut   DateTime? @map("check_out")
-  overtime   Decimal   @default(0) @db.Decimal(4, 2) // hours
-  notes      String?
-
-  @@unique([employeeId, date])
-  @@index([date])
-  @@map("employee_attendance")
 }
 
 model SalaryPayment {
@@ -1126,8 +1262,11 @@ model PurchaseOrder {
 
   status String @default("DRAFT") // DRAFT, SUBMITTED, APPROVED, ORDERED, PARTIAL, RECEIVED, CANCELLED
 
-  totalAmount Decimal @map("total_amount") @db.Decimal(12, 2)
-  taxAmount   Decimal @default(0) @map("tax_amount") @db.Decimal(12, 2)
+  amount        Decimal  @default(0) @db.Decimal(12, 2)
+  gstMode       GstMode  @default(NONE) @map("gst_mode")
+  gstPercentage Decimal? @map("gst_percentage") @db.Decimal(5, 2)
+  taxAmount     Decimal  @default(0) @map("tax_amount") @db.Decimal(12, 2)
+  totalAmount   Decimal  @map("total_amount") @db.Decimal(12, 2)
 
   notes      String?
   pdfUrl     String? @map("pdf_url")
@@ -1220,10 +1359,158 @@ model ApprovalStep {
 }
 
 model SystemSettings {
-  id           String   @id @default("1")
-  settings     Json
-  featureFlags Json?    @map("feature_flags")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id                String    @id @default("1")
+  settings          Json
+  featureFlags      Json?     @map("feature_flags")
+  closedPeriodUntil DateTime? @map("closed_period_until") @db.Date
+  companyDetails    Json?     @map("company_details")
+  letterheadUrl     String?   @map("letterhead_url")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   @@map("system_settings")
+}
+
+model VendorAttendance {
+  id        String   @id @default(uuid())
+  vendorId  String   @map("vendor_id")
+  vendor    Vendor   @relation(fields: [vendorId], references: [id])
+  projectId String?  @map("project_id") // Site-wise tracking
+  project   Project? @relation(fields: [projectId], references: [id])
+  date      DateTime @db.Date
+  totalWage Decimal  @map("total_wage") @db.Decimal(10, 2)
+  notes     String?
+
+  details VendorAttendanceDetail[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([vendorId, projectId, date])
+  @@map("vendor_attendances")
+}
+
+model VendorAttendanceDetail {
+  id                 String           @id @default(uuid())
+  vendorAttendanceId String           @map("vendor_attendance_id")
+  vendorAttendance   VendorAttendance @relation(fields: [vendorAttendanceId], references: [id], onDelete: Cascade)
+  categoryId         String?          @map("category_id")
+  category           LabourCategory?  @relation(fields: [categoryId], references: [id])
+  customCategory     String?          @map("custom_category")
+  count              Decimal          @db.Decimal(10, 2) // e.g. 5.5
+  rate               Decimal          @db.Decimal(10, 2) // e.g. 950
+  amount             Decimal          @db.Decimal(12, 2) // count * rate
+
+  @@map("vendor_attendance_details")
+}
+
+// ─── PAYROLL & ATTENDANCE ENHANCEMENTS ───────────────────────
+
+model PayrollSettings {
+  id                   String   @id @default("1")
+  standardWorkingDays  Int      @default(26) @map("standard_working_days")
+  standardWorkingHours Float    @default(8) @map("standard_working_hours")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("payroll_settings")
+}
+
+model Payroll {
+  id         String   @id @default(uuid())
+  employeeId String   @map("employee_id")
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  month      Int
+  year       Int
+  status     String   @default("DRAFT") // DRAFT, CALCULATED, APPROVED, PAID, LOCKED
+
+  // Breakdown
+  monthlySalary Decimal @map("monthly_salary") @db.Decimal(12, 2)
+  workingDays   Int     @map("working_days")
+  dailySalary   Decimal @map("daily_salary") @db.Decimal(12, 2)
+
+  presentDays Float @default(0) @map("present_days")
+  halfDays    Float @default(0) @map("half_days")
+  absentDays  Float @default(0) @map("absent_days")
+
+  totalWorkingHours  Float @default(0) @map("total_working_hours")
+  totalOvertimeHours Float @default(0) @map("total_overtime_hours")
+
+  overtimeEarnings     Decimal @default(0) @map("overtime_earnings") @db.Decimal(12, 2)
+  baseSalary           Decimal @default(0) @map("base_salary") @db.Decimal(12, 2)
+  attendanceDeductions Decimal @default(0) @map("attendance_deductions") @db.Decimal(12, 2)
+
+  grossSalary Decimal @default(0) @map("gross_salary") @db.Decimal(12, 2)
+  netSalary   Decimal @default(0) @map("net_salary") @db.Decimal(12, 2)
+
+  approvedById String? @map("approved_by_id")
+  approvedBy   User?   @relation("PayrollApprover", fields: [approvedById], references: [id])
+
+  paidAt   DateTime? @map("paid_at")
+  lockedAt DateTime? @map("locked_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  history     PayrollHistory[]
+  adjustments PayrollAdjustment[]
+
+  @@unique([employeeId, month, year])
+  @@map("payrolls")
+}
+
+model PayrollAdjustment {
+  id        String  @id @default(uuid())
+  payrollId String  @map("payroll_id")
+  payroll   Payroll @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+  type      String // BONUS, INCENTIVE, ARREARS, DEDUCTION, CORRECTION
+  amount    Decimal @db.Decimal(12, 2)
+  reason    String
+
+  createdById String @map("created_by_id")
+  createdBy   User   @relation("PayrollAdjustmentCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("payroll_adjustments")
+}
+
+model PayrollHistory {
+  id        String  @id @default(uuid())
+  payrollId String  @map("payroll_id")
+  payroll   Payroll @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+
+  snapshotData Json @map("snapshot_data") // Stores the entire breakdown
+
+  action      String // GENERATED, APPROVED, PAID, LOCKED, REOPENED
+  createdById String @map("created_by_id")
+  createdBy   User   @relation("PayrollHistoryCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("payroll_history")
+}
+
+model DailyWorkLog {
+  id         String   @id @default(uuid())
+  employeeId String   @map("employee_id")
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  date       DateTime @db.Date
+
+  checkIn       DateTime? @map("check_in")
+  checkOut      DateTime? @map("check_out")
+  workingHours  Float     @default(0) @map("working_hours")
+  standardHours Float     @default(8) @map("standard_hours")
+  overtimeHours Float     @default(0) @map("overtime_hours")
+
+  dailySalary        Decimal @map("daily_salary") @db.Decimal(12, 2)
+  overtimeMultiplier Float   @default(1.0) @map("overtime_multiplier")
+  overtimeAmount     Decimal @map("overtime_amount") @db.Decimal(12, 2)
+  finalDaySalary     Decimal @map("final_day_salary") @db.Decimal(12, 2)
+
+  calculatedById String? @map("calculated_by_id")
+  calculatedBy   User?   @relation("DailyWorkLogCalculator", fields: [calculatedById], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([employeeId, date])
+  @@map("daily_work_logs")
 }

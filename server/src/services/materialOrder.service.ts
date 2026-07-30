@@ -85,6 +85,9 @@ interface CreateOrderData {
     quantityOrdered: number;
     rate: number;
   }>;
+  gstMode?: 'NONE' | 'PERCENTAGE' | 'AMOUNT';
+  gstPercentage?: number | null;
+  gstAmount?: number;
 }
 
 export const create = async (data: CreateOrderData & { idempotencyKey?: string }, userId: string) => {
@@ -97,7 +100,11 @@ export const create = async (data: CreateOrderData & { idempotencyKey?: string }
     amount: item.quantityOrdered * item.rate,
   }));
 
-  const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+  const amount = items.reduce((sum, item) => sum + item.amount, 0);
+  const gstMode = data.gstMode || 'NONE';
+  const gstAmount = Number(data.gstAmount) || 0;
+  const totalAmount = amount + gstAmount;
+  const gstPercentage = data.gstPercentage ? Number(data.gstPercentage) : null;
 
   const finalOrder = await prisma.$transaction(async (tx) => {
     const created = await tx.materialOrder.create({
@@ -106,6 +113,10 @@ export const create = async (data: CreateOrderData & { idempotencyKey?: string }
         vendorId: data.vendorId,
         projectId: data.projectId,
         deliveryDate: data.deliveryDate ? new Date(data.deliveryDate) : null,
+        amount,
+        gstMode,
+        gstPercentage,
+        gstAmount,
         totalAmount,
         notes: data.notes,
         items: { create: items },
@@ -117,17 +128,36 @@ export const create = async (data: CreateOrderData & { idempotencyKey?: string }
       },
     });
 
-    // Debit Inventory/Material Expense, Credit Accounts Payable
+    // Log the incurred material cost as an ACCRUED expense for the project
+    const expense = await tx.expense.create({
+      data: {
+        vendorId: data.vendorId,
+        projectId: data.projectId,
+        type: 'MATERIAL',
+        amount: totalAmount,
+        paymentDate: data.deliveryDate ? new Date(data.deliveryDate) : new Date(),
+        paymentMethod: 'ACCRUED',
+        description: `Material Order: ${orderNumber}`,
+        remarks: data.notes,
+        createdById: userId,
+      }
+    });
+
+    // Debit Inventory/Material Expense, Debit GST, Credit Accounts Payable
+    const lines = [];
+    lines.push({ accountId: null, debitAmount: 0, creditAmount: totalAmount, description: 'Accounts Payable' });
+    lines.push({ accountId: null, debitAmount: amount, creditAmount: 0, description: 'Inventory/Material (Base)' });
+    if (gstAmount > 0) {
+      lines.push({ accountId: null, debitAmount: gstAmount, creditAmount: 0, description: 'GST Paid' });
+    }
+
     await postJournalEntry({
       entryDate: new Date(),
       description: `Material Order: ${orderNumber}`,
       referenceId: created.id,
       referenceType: 'MATERIAL_ORDER',
       createdById: userId,
-      lines: [
-        { accountId: null, debitAmount: totalAmount, creditAmount: 0, description: 'Inventory/Material' },
-        { accountId: null, debitAmount: 0, creditAmount: totalAmount, description: 'Accounts Payable' }
-      ]
+      lines
     }, tx);
 
     return created;

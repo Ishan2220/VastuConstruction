@@ -20,16 +20,18 @@ export default function AuditLogsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState('ALL');
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
+  const [page, setPage] = useState(1);
 
-  const { data: logsData = [], isLoading } = useQuery({
-    queryKey: ['audit-logs-list'],
+  const { data: logsData, isLoading } = useQuery({
+    queryKey: ['audit-logs-list', page],
     queryFn: async () => {
-      const { data } = await api.get('/audit-logs');
-      return data.data?.data || data.data || [];
+      const { data } = await api.get(`/audit-logs?page=${page}&limit=20`);
+      return data.data;
     },
   });
 
-  const displayList = Array.isArray(logsData) ? logsData : [];
+  const displayList = Array.isArray(logsData?.data) ? logsData.data : [];
+  const totalPages = logsData?.totalPages || 1;
 
   const filteredLogs = displayList.filter((l: any) => {
     const action = l.action || '';
@@ -165,7 +167,7 @@ export default function AuditLogsPage() {
                       <td className="p-4 text-center">
                         <button
                           onClick={() => setSelectedLog(log)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-clay-violet/10 hover:bg-clay-violet/20 text-[#7C6EF0] font-sans text-xs font-bold border border-violet-100/40 transition-all"
+                          className="inline-flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center px-3 py-1.5 rounded-xl bg-clay-violet/10 hover:bg-clay-violet/20 text-[#7C6EF0] font-sans text-xs font-bold border border-violet-100/40 transition-all"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           <span>Inspect Diff</span>
@@ -177,6 +179,29 @@ export default function AuditLogsPage() {
               )}
             </tbody>
           </table>
+        </div>
+        
+        {/* Pagination Controls */}
+        <div className="p-4 border-t border-violet-100/40 flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-500">
+            Page {page} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all border border-violet-100/30 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <button 
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-clay-violet/10 text-[#7C6EF0] hover:bg-clay-violet/20 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
 
@@ -231,7 +256,7 @@ export default function AuditLogsPage() {
               {/* Mutated Fields List */}
               {Array.isArray(selectedLog.changedFields) && selectedLog.changedFields.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-1.5 font-heading">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center font-heading">
                     <Terminal className="w-4 h-4 text-[#7C6EF0]" />
                     <span>Specific Fields Mutated</span>
                   </h4>
@@ -247,7 +272,7 @@ export default function AuditLogsPage() {
 
               {/* Old vs New Comparison Table */}
               <div className="space-y-4">
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5 font-heading">
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center font-heading">
                   <FileDiff className="w-4 h-4 text-[#7C6EF0]" />
                   <span>State Snapshot Diffs (Old Data &rarr; New Data)</span>
                 </h4>

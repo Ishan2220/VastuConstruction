@@ -106,7 +106,7 @@ export const create = async (payload: any, userId: string) => {
   const client = await prisma.client.create({
     data,
   });
-  eventBus.publishMutation('Client', 'CREATE', userId, client.id, crypto.randomUUID() || crypto.randomUUID(), client, null);
+  eventBus.publishMutation('Client', 'CREATE', userId, client.id, crypto.randomUUID(), client, null);
   return client;
 };
 
@@ -122,7 +122,7 @@ export const update = async (id: string, payload: any, userId: string) => {
   };
 
   const client = await prisma.client.update({ where: { id }, data });
-  eventBus.publishMutation('Client', 'UPDATE', userId, id, crypto.randomUUID() || crypto.randomUUID(), client, existing);
+  eventBus.publishMutation('Client', 'UPDATE', userId, id, crypto.randomUUID(), client, existing);
   return client;
 };
 
@@ -134,7 +134,7 @@ export const remove = async (id: string, userId: string) => {
     where: { id },
     data: { deletedAt: new Date() },
   });
-  eventBus.publishMutation('Client', 'DELETE', userId, id, crypto.randomUUID() || crypto.randomUUID(), null, existing);
+  eventBus.publishMutation('Client', 'DELETE', userId, id, crypto.randomUUID(), null, existing);
   return client;
 };
 

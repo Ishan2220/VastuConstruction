@@ -23,4 +23,27 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-router') || id.includes('react-dom')) {
+              return 'vendor';
+            }
+            if (id.includes('lucide-react') || id.includes('framer-motion')) {
+              return 'ui';
+            }
+            if (id.includes('recharts')) {
+              return 'charts';
+            }
+            if (id.includes('@tanstack/react-query')) {
+              return 'query';
+            }
+            return 'modules';
+          }
+        },
+      },
+    },
+  },
 });

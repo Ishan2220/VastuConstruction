@@ -22,7 +22,6 @@ import api from '@/lib/api';
 
 export default function ReportsPage() {
   const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
-
   const [activeTab, setActiveTab] = useState<'analytics' | 'ledger'>('analytics');
 
   const { data: finSummary, isLoading: finLoading } = useQuery({
@@ -224,9 +223,9 @@ export default function ReportsPage() {
                 <Calculator className="w-4 h-4 text-[#F2A65A]" />
               </div>
               <div className="text-2xl font-extrabold text-slate-800 font-heading">
-                {formatCurrency(finSummary?.gstSummary?.netPayable || 0)}
+                {formatCurrency(Number(finSummary?.gstSummary?.netPayable) || 0)}
               </div>
-              <div className="text-xs font-semibold text-[#F2A65A]">Output tax minus input tax credit</div>
+              <div className="text-xs font-semibold text-[#F2A65A]">Calculated from incomes and expenses</div>
             </div>
           </div>
 

@@ -25,6 +25,6 @@ router.post('/temp-admin', authorize('ADMIN', { page: 'Employees' }), ctrl.grant
 router.get('/:id', authorize('ADMIN', 'ACCOUNTANT', { page: 'Employees' }), ctrl.getById);
 router.put('/:id', authorize('ADMIN', { page: 'Employees' }), ctrl.update);
 router.patch('/leaves/:id/status', authorize('ADMIN', { page: 'Employees' }), ctrl.updateLeaveStatus);
-router.get('/:id/attendance', authorize('ADMIN', 'ACCOUNTANT', { page: 'Employees' }), ctrl.getAttendance);
+
 
 export default router;

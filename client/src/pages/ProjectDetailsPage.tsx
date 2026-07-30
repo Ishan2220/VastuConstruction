@@ -26,8 +26,11 @@ import {
 import { formatCurrency } from '@/lib/utils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
+import PageHeader from '@/components/layout/PageHeader';
 
 export default function ProjectDetailsPage() {
+    const confirmDialog = useConfirm();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -196,42 +199,30 @@ export default function ProjectDetailsPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans">
+    <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans pb-24">
       {/* Top Navigation Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <PageHeader
+        title={project.name}
+        description={project.code || 'PROJ-01'}
+        showBack={false}
+        breadcrumbs={[
+          { label: 'Projects', href: '/projects' },
+          { label: project.name }
+        ]}
+      >
         <div className="flex items-center gap-3">
-          <Link
-            to="/projects"
-            className="p-2 rounded-xl bg-white/50 border border-violet-100/40 text-slate-600 hover:text-slate-800 shadow-sm transition-all backdrop-blur-sm"
-            title="Back to Projects"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-clay-violet/10 text-[#7C6EF0] border border-violet-100/40">
-                {project.code || 'PROJ-01'}
-              </span>
-              <span className={`text-[11px] font-bold uppercase px-2.5 py-0.5 rounded-full border ${
-                project.status === 'IN_PROGRESS'
-                  ? 'bg-clay-green/10 text-[#5CB77E] border-[#5CB77E]/30'
-                  : project.status === 'COMPLETED'
-                  ? 'bg-clay-blue/10 text-[#4EA8DE] border-[#4EA8DE]/30'
-                  : 'bg-clay-amber/10 text-[#F2A65A] border-[#F2A65A]/30'
-              }`}>
-                {(project.status || 'IN_PROGRESS').replace('_', ' ')}
-              </span>
-            </div>
-            <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight font-heading mt-1">
-              {project.name}
-            </h1>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
+          <span className={`text-[11px] font-bold uppercase px-2.5 py-0.5 rounded-full border ${
+            project.status === 'IN_PROGRESS'
+              ? 'bg-clay-green/10 text-[#5CB77E] border-[#5CB77E]/30'
+              : project.status === 'COMPLETED'
+              ? 'bg-clay-blue/10 text-[#4EA8DE] border-[#4EA8DE]/30'
+              : 'bg-clay-amber/10 text-[#F2A65A] border-[#F2A65A]/30'
+          }`}>
+            {(project.status || 'IN_PROGRESS').replace('_', ' ')}
+          </span>
           <button
             onClick={() => setIsProgressOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#5CB77E] hover:bg-[#4ea16b] text-white text-sm font-bold shadow-md shadow-[#5CB77E]/20 transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#5CB77E] hover:bg-[#4ea16b] text-white text-sm font-bold shadow-md shadow-[#5CB77E]/20 transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>Log Daily Site Progress</span>
@@ -239,15 +230,15 @@ export default function ProjectDetailsPage() {
 
           <button
             onClick={() => setIsEditOpen(true)}
-            className="clay-btn inline-flex items-center gap-2 px-4 py-2.5"
+            className="clay-btn inline-flex items-center gap-2 px-4 py-2"
           >
             <Edit3 className="w-4 h-4" />
             <span>Edit Details</span>
           </button>
 
           <button
-            onClick={() => {
-              if (confirm(`Are you sure you want to remove project "${project.name}"?`)) {
+            onClick={async () => {
+              if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to remove project "${project.name}"?` })) {
                 deleteMutation.mutate();
               }
             }}
@@ -257,7 +248,7 @@ export default function ProjectDetailsPage() {
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
-      </div>
+      </PageHeader>
 
       {/* Hero Valuation & Status Bar */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

@@ -5,6 +5,7 @@ import { normalizePaymentMethod, normalizeExpenseType, cleanRelationId } from '.
 import { eventBus } from '../events/EventBus.js';
 import { postJournalEntry, reverseJournalEntry } from './journal.service.js';
 import { randomUUID } from 'crypto';
+import { checkFinancialLock } from '../utils/financialLock.js';
 
 interface ListParams {
   page?: number;
@@ -12,6 +13,7 @@ interface ListParams {
   projectId?: string;
   vendorId?: string;
   type?: string;
+  isPersonal?: boolean | string;
   startDate?: string;
   endDate?: string;
   sortBy?: string;
@@ -19,7 +21,7 @@ interface ListParams {
 }
 
 export const list = async (params: ListParams) => {
-  const { page = 1, limit = 10, projectId, vendorId, type, startDate, endDate, sortBy = 'paymentDate', sortOrder = 'desc' } = params;
+  const { page = 1, limit = 10, projectId, vendorId, type, startDate, endDate, isPersonal, sortBy = 'paymentDate', sortOrder = 'desc' } = params;
   const pageNum = Number(page) || 1;
   const limitNum = Number(limit) || 10;
   const skip = (pageNum - 1) * limitNum;
@@ -37,6 +39,8 @@ export const list = async (params: ListParams) => {
         lte: new Date(endDate),
       },
     }),
+    ...(isPersonal !== undefined && { isPersonal: isPersonal === 'true' || isPersonal === true }),
+    deletedAt: null,
   };
 
   const [data, total] = await Promise.all([
@@ -68,7 +72,7 @@ export const getById = async (id: string) => {
       createdBy: { select: { id: true, name: true, email: true } },
     },
   });
-  if (!expense) throw new ApiError(404, 'Expense record not found');
+  if (!expense || expense.deletedAt) throw new ApiError(404, 'Expense record not found');
   return expense;
 };
 
@@ -78,31 +82,50 @@ export const create = async (
     vendorId?: string | null;
     type?: string;
     amount: number;
+    gstMode?: 'NONE' | 'PERCENTAGE' | 'AMOUNT';
+    gstPercentage?: number | null;
     gstAmount?: number;
+    totalAmount?: number;
     paymentDate: Date;
     paymentMethod?: string;
     accountId?: string | null;
     description?: string | null;
     billUrl?: string | null;
     remarks?: string | null;
+    isPersonal?: boolean;
   },
   userId: string
 ) => {
   const { idempotencyKey, ...restData } = data as any;
+  const gstMode = data.gstMode || 'NONE';
+  const gstAmount = Number(data.gstAmount) || 0;
+  const amount = Number(data.amount) || 0;
+  let totalAmount = Number(data.totalAmount) || (amount + gstAmount);
+  
   const cleanedData = {
     ...restData,
     projectId: cleanRelationId(data.projectId) || null,
     vendorId: cleanRelationId(data.vendorId) || null,
     accountId: cleanRelationId(data.accountId) || null,
+    isPersonal: data.isPersonal || false,
     type: normalizeExpenseType(data.type),
-    amount: Number(data.amount) || 0,
-    gstAmount: Number(data.gstAmount) || 0,
+    amount,
+    gstMode,
+    gstPercentage: data.gstPercentage ? Number(data.gstPercentage) : null,
+    gstAmount,
+    totalAmount,
     paymentDate: data.paymentDate ? new Date(data.paymentDate) : new Date(),
     paymentMethod: normalizePaymentMethod(data.paymentMethod),
     description: cleanRelationId(data.description) || null,
     billUrl: cleanRelationId(data.billUrl) || null,
     remarks: cleanRelationId(data.remarks) || null,
   };
+
+  if (!cleanedData.accountId) {
+    throw new ApiError(400, 'Account ID is required for logging expenses');
+  }
+
+  await checkFinancialLock(cleanedData.paymentDate);
 
   const expense = await prisma.$transaction(async (tx) => {
     const created = await tx.expense.create({
@@ -112,18 +135,24 @@ export const create = async (
       },
     });
 
-    // Double-Entry Ledger
-    const totalAmt = Number(cleanedData.amount) + Number(cleanedData.gstAmount);
+    // Double-Entry Ledger with Flexible GST split
+    const lines = [];
+    // 1. Bank Account pays the Total Amount (Base + GST)
+    lines.push({ accountId: cleanedData.accountId, debitAmount: 0, creditAmount: cleanedData.totalAmount, description: 'Expense payment (Total)' });
+    // 2. Expense Account (Null for now) receives the Base Amount (Debit increases expenses)
+    lines.push({ accountId: null, debitAmount: cleanedData.amount, creditAmount: 0, description: 'Expense recognition (Base)' });
+    // 3. Tax Account (Null for now) receives the GST Amount if any (Debit)
+    if (cleanedData.gstAmount > 0) {
+      lines.push({ accountId: null, debitAmount: cleanedData.gstAmount, creditAmount: 0, description: 'GST Paid' });
+    }
+
     await postJournalEntry({
       entryDate: cleanedData.paymentDate,
       description: `Expense: ${cleanedData.description || cleanedData.type}`,
       referenceId: created.id,
       referenceType: 'EXPENSE',
       createdById: userId,
-      lines: [
-        { accountId: null, debitAmount: totalAmt, creditAmount: 0, description: 'Expense recognition' },
-        { accountId: cleanedData.accountId, debitAmount: 0, creditAmount: totalAmt, description: 'Expense payment' }
-      ]
+      lines
     }, tx);
 
     return created;
@@ -135,15 +164,19 @@ export const create = async (
 
 export const remove = async (id: string, userId: string, idempotencyKey?: string) => {
   const oldExpense = await getById(id);
+  await checkFinancialLock(oldExpense.paymentDate);
 
   await prisma.$transaction(async (tx) => {
     await reverseJournalEntry(id, userId, 'Expense deletion reversal', tx);
     
-    // Instead of actually deleting, we soft delete or keep it for audit.
-    // For now, since schema.prisma doesn't have deletedAt on Expense, we will delete but the JournalEntry remains!
-    await tx.expense.delete({ where: { id } });
+    await tx.expense.update({ where: { id }, data: { deletedAt: new Date() } });
   });
 
   eventBus.publishMutation('Expense', 'DELETE', userId, id, idempotencyKey || randomUUID(), null, oldExpense);
+  
+  if (oldExpense.accountId) {
+    eventBus.publishMutation('BankAccount', 'UPDATE', userId, oldExpense.accountId, randomUUID(), { id: oldExpense.accountId }, null);
+  }
+  eventBus.publishMutation('DashboardStats', 'UPDATE', userId, 'dashboard', randomUUID(), null, null);
   return { success: true };
 };

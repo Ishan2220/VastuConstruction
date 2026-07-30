@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useParams, Link } from 'react-router';
 import { motion } from 'framer-motion';
 import {
   Package,
@@ -15,14 +16,19 @@ import {
   Building2,
   Trash2,
   Pencil,
+  ChevronRight,
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { CategorySelect } from '@/components/common/CategorySelect';
 import { useQuickAddListener } from '@/hooks/useQuickAddListener';
+import SiteMaterialsView from './SiteMaterialsView';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 export default function MaterialsPage() {
+    const confirmDialog = useConfirm();
+  const { id: siteId } = useParams();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'STOCK' | 'ORDERS' | 'DIRECTORY'>('STOCK');
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,7 +41,27 @@ export default function MaterialsPage() {
     projectId: '',
     notes: '',
     items: [{ materialId: '', quantityOrdered: '', rate: '' }],
+    gstMode: 'NONE',
+    gstPercentage: 18,
+    gstAmount: '',
   });
+
+  const { data: settings } = useQuery({
+    queryKey: ['financial-settings'],
+    queryFn: async () => {
+      const { data } = await api.get('/settings');
+      return data?.data?.settings || {};
+    },
+  });
+
+  // Update defaults when settings load
+  useEffect(() => {
+    if (settings && isOrderOpen) {
+      if (settings.defaultGstMode && newOrder.gstMode === 'NONE') {
+        setNewOrder(prev => ({ ...prev, gstMode: settings.defaultGstMode, gstPercentage: settings.defaultGstPercentage || 18 }));
+      }
+    }
+  }, [settings, isOrderOpen]);
 
   const [isEditStockOpen, setIsEditStockOpen] = useState(false);
   const [editStock, setEditStock] = useState<any | null>(null);
@@ -217,9 +243,16 @@ export default function MaterialsPage() {
       vendorId: newOrder.vendorId,
       projectId: newOrder.projectId,
       notes: newOrder.notes,
+      gstMode: newOrder.gstMode,
+      gstPercentage: newOrder.gstPercentage,
+      gstAmount: newOrder.gstMode === 'AMOUNT' ? newOrder.gstAmount : undefined,
       items: formattedItems,
     });
   };
+
+  if (siteId) {
+    return <SiteMaterialsView projectId={siteId} />;
+  }
 
   return (
     <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans">
@@ -268,71 +301,46 @@ export default function MaterialsPage() {
       {activeTab === 'STOCK' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {stockData.map((s: any) => {
-              const isLow = Number(s.quantity) <= Number(s.material?.minStockAlert || 50);
-              return (
-                <motion.div
-                  key={s.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`clay-card p-6 flex flex-col justify-between ${
-                    isLow ? '!border-[#E5636C]/40 !bg-rose-50/50 shadow-[inset_0_0_20px_rgba(229,99,108,0.1)]' : ''
-                  }`}
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-white/60 shadow-sm border border-violet-100/30 text-slate-700">
-                        {s.material?.code || 'MAT-001'}
-                      </span>
-                      {isLow ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase px-2 py-0.5 rounded-md bg-rose-100/80 text-[#E5636C] border border-[#E5636C]/20 shadow-sm">
-                          <AlertTriangle className="w-3 h-3" /> Low Stock
+            {projectsList.length === 0 ? (
+              <div className="col-span-full py-10 text-center text-slate-400">
+                <Building2 className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p>No project sites available.</p>
+              </div>
+            ) : (
+              projectsList.map((project: any) => {
+                const siteStock = stockData.filter((s: any) => s.projectId === project.id);
+                return (
+                  <Link
+                    key={project.id}
+                    to={`/materials/${project.id}`}
+                    className="clay-card p-6 flex flex-col justify-between hover:border-[#7C6EF0]/50 transition-all group cursor-pointer block"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="w-10 h-10 rounded-xl bg-clay-violet/20 flex items-center justify-center border border-violet-100/40 text-[#7C6EF0]">
+                          <Building2 className="w-5 h-5" />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-violet-50 text-[#7C6EF0] border border-violet-100 shadow-sm">
+                          {project.code || 'SITE'}
                         </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase px-2 py-0.5 rounded-md bg-emerald-50/80 text-[#5CB77E] border border-[#5CB77E]/20 shadow-sm">
-                          <CheckCircle2 className="w-3 h-3" /> Optimal
-                        </span>
-                      )}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-800 font-heading group-hover:text-[#7C6EF0] transition-colors">
+                          {project.name}
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-1">{project.city || 'Location N/A'}</p>
+                      </div>
                     </div>
-
-                    <h3 className="text-base font-bold text-slate-800 font-heading">{s.material?.name}</h3>
-                    <div className="text-xs text-slate-600 flex items-center gap-1">
-                      <Building2 className="w-3.5 h-3.5 text-slate-400" /> Site: <strong className="text-slate-700">{s.project?.name || 'Main Site'}</strong>
+                    <div className="pt-4 mt-4 border-t border-violet-100/30 flex items-center justify-between text-sm">
+                      <div className="text-slate-600 font-medium">
+                        <strong className="text-slate-800 font-bold">{siteStock.length}</strong> Materials Tracked
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#7C6EF0]" />
                     </div>
-                  </div>
-
-                  <div className="pt-4 mt-4 border-t border-violet-100/30 flex items-center justify-between">
-                    <div>
-                      <span className="text-2xl font-extrabold text-[#7C6EF0] font-mono">{s.quantity}</span>
-                      <span className="text-xs font-bold text-slate-500 ml-1.5 uppercase">{s.material?.unit || 'UNITS'}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => {
-                          setEditStock({ id: s.id, quantity: s.quantity, materialName: s.material?.name });
-                          setIsEditStockOpen(true);
-                        }}
-                        className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#F2A65A] transition-all shadow-sm border border-amber-100/50"
-                        title="Edit Stock Quantity"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (confirm(`Remove stock record for ${s.material?.name}?`)) {
-                            deleteStockMutation.mutate(s.id);
-                          }
-                        }}
-                        className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-[#E5636C] transition-all shadow-sm border border-rose-100/50"
-                        title="Remove Stock Record"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
+                  </Link>
+                );
+              })
+            )}
           </div>
         </div>
       )}
@@ -378,12 +386,12 @@ export default function MaterialsPage() {
                       </td>
                       <td className="p-4 text-right">
                         <button
-                          onClick={() => {
-                            if (confirm(`Are you sure you want to delete PO ${o.orderNumber}?`)) {
+                          onClick={async () => {
+                            if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete PO ${o.orderNumber}?` })) {
                               deleteOrderMutation.mutate(o.id);
                             }
                           }}
-                          className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-[#E5636C] transition-all shadow-sm border border-rose-100/50"
+                          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-rose-50 hover:bg-rose-100 text-[#E5636C] transition-all shadow-sm border border-rose-100/50"
                           title="Delete Purchase Order"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -424,12 +432,12 @@ export default function MaterialsPage() {
                   </div>
                   <div className="flex justify-end pt-1">
                     <button
-                      onClick={() => {
-                        if (confirm(`Are you sure you want to delete PO ${o.orderNumber}?`)) {
+                      onClick={async () => {
+                        if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete PO ${o.orderNumber}?` })) {
                           deleteOrderMutation.mutate(o.id);
                         }
                       }}
-                      className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-[#E5636C] transition-all shadow-sm border border-rose-100/50"
+                      className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-rose-50 hover:bg-rose-100 text-[#E5636C] transition-all shadow-sm border border-rose-100/50"
                       title="Delete Purchase Order"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -447,7 +455,7 @@ export default function MaterialsPage() {
           <div className="flex justify-end">
             <button
               onClick={() => setIsAddDirOpen(true)}
-              className="clay-btn px-4 py-2 text-white font-bold text-xs flex items-center gap-1.5"
+              className="clay-btn px-4 py-2 text-white font-bold text-xs flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               <Plus className="w-4 h-4" /> Add Material to Directory
             </button>
@@ -472,18 +480,18 @@ export default function MaterialsPage() {
                         setEditDir({ ...m });
                         setIsEditDirOpen(true);
                       }}
-                      className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-[#F2A65A] transition-all shadow-sm border border-amber-100/50"
+                      className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 text-[#F2A65A] transition-all shadow-sm border border-amber-100/50"
                       title="Edit Material"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => {
-                        if (confirm(`Remove ${m.name} from directory?`)) {
+                      onClick={async () => {
+                        if (await confirmDialog({ title: 'Confirm Action', message: `Remove ${m.name} from directory?` })) {
                           deleteDirMutation.mutate(m.id);
                         }
                       }}
-                      className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-[#E5636C] transition-all shadow-sm border border-rose-100/50"
+                      className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-rose-50 hover:bg-rose-100 text-[#E5636C] transition-all shadow-sm border border-rose-100/50"
                       title="Delete Material"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -581,6 +589,64 @@ export default function MaterialsPage() {
                     />
                   </div>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">GST Mode</label>
+                  <select
+                    value={newOrder.gstMode}
+                    onChange={(e) => setNewOrder({ ...newOrder, gstMode: e.target.value })}
+                    className="clay-input w-full text-sm"
+                    disabled={settings?.allowOperatorOverride === false}
+                  >
+                    {!settings?.gstMandatory && <option value="NONE">No GST</option>}
+                    <option value="PERCENTAGE">GST %</option>
+                    {settings?.allowManualGstAmount !== false && <option value="AMOUNT">Manual GST (₹)</option>}
+                  </select>
+                </div>
+
+                {newOrder.gstMode === 'PERCENTAGE' && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-700">GST %</label>
+                    <select
+                      value={newOrder.gstPercentage}
+                      onChange={(e) => setNewOrder({ ...newOrder, gstPercentage: Number(e.target.value) })}
+                      className="clay-input w-full text-sm"
+                      disabled={settings?.allowOperatorOverride === false}
+                    >
+                      <option value="0">0%</option>
+                      <option value="5">5%</option>
+                      <option value="12">12%</option>
+                      <option value="18">18%</option>
+                      <option value="28">28%</option>
+                    </select>
+                  </div>
+                )}
+
+                {newOrder.gstMode === 'AMOUNT' && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-700">GST Amount</label>
+                    <input
+                      type="number"
+                      placeholder="GST Amount (₹)"
+                      value={newOrder.gstAmount}
+                      onChange={(e) => setNewOrder({ ...newOrder, gstAmount: e.target.value })}
+                      className="clay-input w-full text-sm font-mono"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-[#7C6EF0]/10 p-3 rounded-xl border border-[#7C6EF0]/20 flex justify-between items-center text-[#7C6EF0]">
+                <span className="text-sm font-bold uppercase tracking-wider">Total PO Amount:</span>
+                <span className="font-mono font-bold text-lg">
+                  {(
+                    (Number(newOrder.items[0].quantityOrdered) * Number(newOrder.items[0].rate)) + 
+                    (newOrder.gstMode === 'PERCENTAGE' ? ((Number(newOrder.items[0].quantityOrdered) * Number(newOrder.items[0].rate)) * newOrder.gstPercentage) / 100 : 
+                     newOrder.gstMode === 'AMOUNT' ? Number(newOrder.gstAmount) : 0)
+                  ).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                </span>
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">

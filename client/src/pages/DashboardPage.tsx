@@ -22,6 +22,7 @@ import {
   PackageCheck,
   Landmark,
   Activity,
+  Banknote,
 } from 'lucide-react';
 import { CacheManager } from '@/lib/CacheManager';
 import { formatCurrency } from '@/lib/utils';
@@ -31,6 +32,9 @@ import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useQuickAddListener } from '@/hooks/useQuickAddListener';
 import { staggerContainer, fadeInUp, clayCardHover } from '@/animations';
+import { AutocompleteInput } from '@/components/ui/AutocompleteInput';
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 // --------------- Types ---------------
 interface KpiState {
@@ -114,9 +118,12 @@ const defaultKpis: KpiState = {
   vendorPayable: 0,
 };
 
-const EXPENSE_COLORS = ['#7C6EF0', '#F2A65A', '#5CB77E', '#E5636C', '#4EA8DE', '#A78BFA', '#FB923C', '#34D399'];
-const PM_COLORS = ['#7C6EF0', '#5CB77E', '#F2A65A', '#A78BFA', '#4EA8DE', '#FB923C'];
-const PM_TEXT_COLORS = ['text-[#7C6EF0]', 'text-[#5CB77E]', 'text-[#F2A65A]', 'text-violet-500', 'text-blue-500', 'text-orange-500'];
+const CHART_COLORS = [
+  '#6366F1', '#EC4899', '#14B8A6', '#F59E0B', '#8B5CF6', 
+  '#10B981', '#3B82F6', '#F43F5E', '#84CC16', '#06B6D4', 
+  '#D946EF', '#EAB308', '#22C55E', '#A855F7', '#0EA5E9', 
+  '#EF4444', '#16A34A', '#F97316', '#64748B', '#0F766E'
+];
 const BADGE_OPTIONS = [
   'bg-violet-50 text-violet-700 border-violet-200',
   'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -174,16 +181,25 @@ export default function DashboardPage() {
       const { data } = await api.get('/dashboard/summary');
       return data?.data || null;
     },
-    refetchInterval: 300000, // 5 minutes
+    refetchOnMount: true,
   });
 
   const { data: kpiData } = useQuery({
-    queryKey: ['dashboard-kpis'],
+    queryKey: ['admin-dashboard-stats', 'dashboard-kpis'],
     queryFn: async () => {
       const { data } = await api.get('/dashboard/kpis');
       return data || null; // Returning exact shape, not data.data
     },
-    refetchInterval: 60000, // 1 minute
+    refetchOnMount: true,
+  });
+
+  const { data: todayActivities = [] } = useQuery({
+    queryKey: ['admin-dashboard-stats', 'today-activities'],
+    queryFn: async () => {
+      const { data } = await api.get('/dashboard/activities');
+      return data?.data || [];
+    },
+    refetchOnMount: true,
   });
 
   const kpis: KpiState & { overallProfit: number } = useMemo(() => {
@@ -242,10 +258,14 @@ export default function DashboardPage() {
       id: String(idx),
       name: c.type,
       amount: Number(c._sum?.amount) || 0,
-      color: EXPENSE_COLORS[idx % EXPENSE_COLORS.length]
+      color: CHART_COLORS[idx % CHART_COLORS.length]
     }));
   }, [serverDashboard]);
   const totalExpCatAmount = expenseCategories.reduce((s: number, c: any) => s + c.amount, 0);
+
+  const personalExpenseTotal = useMemo(() => {
+    return expenseCategories.find((c: any) => c.name === 'PERSONAL')?.amount || 0;
+  }, [expenseCategories]);
 
   const paymentModes = useMemo(() => {
     if (!serverDashboard?.paymentModeSummary) return [];
@@ -254,8 +274,8 @@ export default function DashboardPage() {
       mode: pm.paymentMethod,
       amount: Number(pm._sum?.amount) || 0,
       pct: 0,
-      color: PM_COLORS[idx % PM_COLORS.length],
-      text: PM_TEXT_COLORS[idx % PM_TEXT_COLORS.length]
+      color: CHART_COLORS[idx % CHART_COLORS.length],
+      text: CHART_COLORS[idx % CHART_COLORS.length]
     }));
     const total = pmData.reduce((s: number, p: any) => s + p.amount, 0) || 1;
     return pmData.map((pm: any) => ({ ...pm, pct: Math.round((pm.amount / total) * 100) }));
@@ -266,9 +286,9 @@ export default function DashboardPage() {
     if (!serverDashboard?.recentActivities) return [];
     return serverDashboard.recentActivities.map((a: any) => ({
       id: a.id,
-      desc: `${a.user?.name || 'System'} ${a.action === 'CREATE' ? 'created' : a.action === 'DELETE' ? 'deleted' : 'updated'} ${a.entity}`,
-      time: new Date(a.createdAt).toLocaleString(),
-      type: 'PAYMENT'
+      desc: `${a.user?.name || 'System'} ${a.action.toLowerCase()} ${a.module.toLowerCase()}`,
+      time: new Date(a.date).toLocaleString(),
+      type: a.module
     }));
   }, [serverDashboard]);
 
@@ -300,9 +320,23 @@ export default function DashboardPage() {
     return serverDashboard.topOutstandingClients;
   }, [serverDashboard]);
 
-  const toggleTaskComplete = (id: string, e: React.MouseEvent) => {
+  const updateTaskStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { data } = await api.patch(`/tasks/${id}/status`, { status });
+      return data;
+    },
+    onSuccess: () => {
+      refetch(); // Refetch dashboard data
+      toast.success('Task status updated');
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to update task');
+    }
+  });
+
+  const toggleTaskComplete = (id: string, e: React.MouseEvent, currentCompleted: boolean) => {
     e.stopPropagation();
-    toast.info('Status updates should be done in Tasks module');
+    updateTaskStatusMutation.mutate({ id, status: currentCompleted ? 'PENDING' : 'COMPLETED' });
   };
 
   // ---- Create Project Modal (API) ----
@@ -354,75 +388,15 @@ export default function DashboardPage() {
   // RENDER
   // ============================================
   if (isLoading) {
-    return (
-      <div className="p-4 sm:p-6 space-y-6 min-h-full">
-        <div className="h-8 bg-white/50 rounded-2xl w-48 animate-pulse" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="clay-card p-5 h-28 animate-pulse">
-              <div className="h-4 bg-violet-100/50 rounded w-20 mb-3" />
-              <div className="h-6 bg-violet-100/30 rounded w-16" />
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 clay-card h-64 animate-pulse" />
-          <div className="clay-card h-64 animate-pulse" />
-        </div>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   if (isError) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[70vh] gap-4">
-        <div className="w-16 h-16 rounded-2xl bg-clay-rose flex items-center justify-center">
-          <AlertCircle className="w-8 h-8 text-[#E5636C]" />
-        </div>
-        <p className="text-sm font-semibold text-slate-500">Failed to synchronize dashboard data.</p>
-        <button onClick={() => refetch()} className="clay-btn px-6 py-2.5 text-sm">
-          Retry Connection
-        </button>
-      </div>
-    );
+    return <ErrorState error="Failed to synchronize dashboard data." onRetry={() => refetch()} />;
   }
 
   return (
     <div className="p-4 sm:p-6 space-y-5 min-h-full font-sans">
-
-      {/* =========================================== */}
-      {/* ROW 1: Five KPI Cards — Mobile Grid */}
-      {/* =========================================== */}
-      <motion.div
-        variants={staggerContainer}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
-      >
-        {kpiCardConfig.map((cfg) => {
-          const Icon = cfg.icon;
-          const value = kpis[cfg.key as keyof KpiState];
-          return (
-            <motion.div
-              key={cfg.key}
-              variants={fadeInUp}
-              {...clayCardHover}
-              onClick={() => navigate(cfg.route)}
-              className={`clay-card p-4 cursor-pointer group flex flex-col justify-between min-h-[110px]`}
-            >
-              <div className={`w-10 h-10 rounded-xl ${cfg.gradient} flex items-center justify-center ${cfg.iconColor} mb-2`}>
-                <Icon className="w-5 h-5" />
-              </div>
-              <div className="mt-1">
-                <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block leading-tight">{cfg.label}</span>
-                <span className="text-lg sm:text-xl font-extrabold text-slate-900 font-heading group-hover:text-[#7C6EF0] transition-colors mt-0.5 block truncate">
-                  {cfg.isMoney ? formatCurrency(value) : value}
-                </span>
-              </div>
-            </motion.div>
-          );
-        })}
-      </motion.div>
 
       {/* =========================================== */}
       {/* ROW 2: Financial Cards + Overall Profit */}
@@ -431,7 +405,7 @@ export default function DashboardPage() {
         variants={staggerContainer}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
+        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3"
       >
         {finCardConfig.map((cfg) => {
           const Icon = cfg.icon;
@@ -472,6 +446,190 @@ export default function DashboardPage() {
             </div>
           </div>
         </motion.div>
+
+        {/* Personal Expenses (Admin Only) */}
+        {user?.role === 'ADMIN' && (
+          <motion.div
+            variants={fadeInUp}
+            onClick={() => navigate('/expenses')}
+            className="clay-card-sm p-3 sm:p-4 cursor-pointer group flex flex-col justify-between min-h-[90px]"
+          >
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-clay-rose flex items-center justify-center text-[#E5636C] mb-2 shrink-0">
+              <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] sm:text-[11px] font-semibold text-slate-400 leading-tight">Personal Expenses</div>
+              <div className="text-sm sm:text-base font-extrabold text-slate-900 font-heading group-hover:text-[#7C6EF0] transition-colors truncate mt-0.5">
+                {formatCurrency(personalExpenseTotal)}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </motion.div>
+
+      {/* =========================================== */}
+      {/* ROW 4: Today's Tasks + Recent Leads + Activities */}
+      {/* =========================================== */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Today's Tasks */}
+        <div className="clay-card p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
+              <h3 className="text-base font-bold text-slate-800 font-heading">Today's Tasks</h3>
+              <div className="flex items-center gap-2">
+                <button onClick={() => navigate('/tasks')}
+                  className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-clay-violet text-[#7C6EF0] hover:bg-violet-100 cursor-pointer" title="Go to Tasks">
+                  <Plus className="w-4 h-4" />
+                </button>
+                <Link to="/tasks" className="text-xs font-bold text-[#7C6EF0] hover:underline">All</Link>
+              </div>
+            </div>
+            <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1 scrollbar-hide">
+              {todayTasks.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 text-xs">No tasks for today.</div>
+              ) : (
+                todayTasks.map((t: any) => (
+                  <div key={t.id}
+                    className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-3 cursor-pointer ${
+                      t.completed ? 'bg-green-50/40 border-green-200/40 opacity-75' : 'bg-white/60 border-violet-100/30 hover:border-[#7C6EF0]/30'
+                    }`}>
+                    <div className="flex items-center gap-3">
+                      <button onClick={(e: any) => toggleTaskComplete(t.id, e, !!t.completed)} className="flex-shrink-0 cursor-pointer disabled:opacity-50" disabled={updateTaskStatusMutation.isPending}>
+                        {t.completed ? <CheckSquare className="w-4 h-4 text-[#5CB77E]" /> : <Square className="w-4 h-4 text-slate-300" />}
+                      </button>
+                      <div>
+                        <div className={`text-xs font-bold font-heading ${t.completed ? 'line-through text-slate-400' : 'text-slate-800'}`}>
+                          {t.title}
+                        </div>
+                        <div className="text-[11px] text-slate-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {t.time || '12:00 PM'}
+                        </div>
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-lg ${
+                      t.priority === 'High' ? 'bg-clay-rose text-[#E5636C]' :
+                      t.priority === 'Low' ? 'bg-clay-blue text-[#4EA8DE]' :
+                      'bg-clay-amber text-[#F2A65A]'
+                    }`}>{t.priority}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-100/60 text-center">
+            <Link to="/tasks" className="text-xs font-bold text-[#7C6EF0] hover:underline">Open Task Directory</Link>
+          </div>
+        </div>
+
+        {/* Recent Leads */}
+        <div className="clay-card p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
+              <h3 className="text-base font-bold text-slate-800 font-heading">Recent Leads</h3>
+              <div className="flex items-center gap-2">
+                <button onClick={() => navigate('/leads')}
+                  className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-clay-violet text-[#7C6EF0] hover:bg-violet-100 cursor-pointer" title="Go to Leads">
+                  <Plus className="w-4 h-4" />
+                </button>
+                <Link to="/leads" className="text-xs font-bold text-[#7C6EF0] hover:underline">All</Link>
+              </div>
+            </div>
+            <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1 scrollbar-hide">
+              {leads.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 text-xs">No leads added yet.</div>
+              ) : (
+                leads.map((lead: any) => (
+                  <div key={lead.id} onClick={() => navigate('/leads')}
+                    className="py-2.5 px-3 rounded-xl bg-white/60 border border-violet-100/30 hover:border-[#7C6EF0]/30 flex items-center justify-between transition-all cursor-pointer group">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#7C6EF0] to-[#A78BFA] text-white font-bold flex items-center justify-center text-xs shrink-0 font-heading">
+                        {lead.name[0]?.toUpperCase() || '?'}
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-slate-800 font-heading">{lead.name}</div>
+                        <div className="text-[11px] text-slate-400">{lead.city}</div>
+                      </div>
+                    </div>
+                    <div className="text-right space-y-1">
+                      {lead.stage && (
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border uppercase ${lead.badge}`}>
+                          {lead.stage}
+                        </span>
+                      )}
+                      <div className="text-[10px] text-slate-400">{lead.date}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-100/60 text-center">
+            <Link to="/leads" className="text-xs font-bold text-[#7C6EF0] hover:underline">Open CRM Leads Hub</Link>
+          </div>
+        </div>
+
+        {/* Recent Activities */}
+        <div className="clay-card p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
+              <h3 className="text-base font-bold text-slate-800 font-heading">Recent Activities</h3>
+            </div>
+            <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1 scrollbar-hide">
+              {activities.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 text-xs">No recent activities.</div>
+              ) : (
+                activities.map((act: any) => (
+                  <div key={act.id} className="p-3 rounded-xl bg-white/60 border border-violet-100/30 flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-clay-violet flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-[#7C6EF0]">{act.type.slice(0, 2)}</span>
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800 font-heading">{act.desc}</div>
+                      <div className="text-[10px] text-slate-400 mt-1">{act.time}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-100/60 text-center">
+            <span className="text-xs font-bold text-slate-400">System Activity Log</span>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================== */}
+      {/* ROW 1: Five KPI Cards — Mobile Grid */}
+      {/* =========================================== */}
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
+      >
+        {kpiCardConfig.map((cfg) => {
+          const Icon = cfg.icon;
+          const value = kpis[cfg.key as keyof KpiState];
+          return (
+            <motion.div
+              key={cfg.key}
+              variants={fadeInUp}
+              {...clayCardHover}
+              onClick={() => navigate(cfg.route)}
+              className={`clay-card p-4 cursor-pointer group flex flex-col justify-between min-h-[110px]`}
+            >
+              <div className={`w-10 h-10 rounded-xl ${cfg.gradient} flex items-center justify-center ${cfg.iconColor} mb-2`}>
+                <Icon className="w-5 h-5" />
+              </div>
+              <div className="mt-1">
+                <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block leading-tight">{cfg.label}</span>
+                <span className="text-lg sm:text-xl font-extrabold text-slate-900 font-heading group-hover:text-[#7C6EF0] transition-colors mt-0.5 block truncate">
+                  {cfg.isMoney ? formatCurrency(value) : value}
+                </span>
+              </div>
+            </motion.div>
+          );
+        })}
       </motion.div>
 
       {/* =========================================== */}
@@ -488,7 +646,7 @@ export default function DashboardPage() {
             {sites.length === 0 ? (
               <div className="py-10 text-center text-slate-400 text-sm">No sites added yet.</div>
             ) : (
-              sites.map((site: any) => (
+              sites.map((site: any, index: number) => (
                 <div key={site.id} onClick={() => navigate('/site-profit-loss')}
                   className="p-3 rounded-xl bg-white/60 border border-violet-100/40 hover:border-[#7C6EF0]/30 transition-all cursor-pointer flex items-center justify-between gap-3 group">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -497,7 +655,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-bold text-slate-800 group-hover:text-[#7C6EF0] transition-colors font-heading truncate">{site.name}</div>
-                      <div className="text-[11px] text-slate-400 truncate">{site.location}</div>
+                      <span className="font-semibold text-xs truncate" style={{ color: CHART_COLORS[index % CHART_COLORS.length] }}>{site.location}</span>
                     </div>
                   </div>
                   <div className="text-right min-w-[100px] space-y-1">
@@ -514,7 +672,7 @@ export default function DashboardPage() {
             )}
           </div>
           <button onClick={() => navigate('/sites')}
-            className="w-full mt-4 py-2.5 rounded-xl border border-dashed border-[#7C6EF0]/30 bg-clay-violet hover:bg-violet-100/50 text-[#7C6EF0] text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+            className="w-full mt-4 py-2.5 rounded-xl border border-dashed border-[#7C6EF0]/30 bg-clay-violet hover:bg-violet-100/50 text-[#7C6EF0] text-xs font-bold transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer">
             <Plus className="w-4 h-4" /> Go to Sites
           </button>
         </motion.div>
@@ -529,7 +687,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={() => navigate('/calendar')}
-                  className="p-1.5 rounded-lg bg-clay-violet text-[#7C6EF0] hover:bg-violet-100 cursor-pointer" title="Go to Calendar">
+                  className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-clay-violet text-[#7C6EF0] hover:bg-violet-100 cursor-pointer" title="Go to Calendar">
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
@@ -564,41 +722,6 @@ export default function DashboardPage() {
       </div>
 
       {/* =========================================== */}
-      {/* ANALYTICS ROW: Outstanding Ledgers */}
-      {/* =========================================== */}
-      {user?.role !== 'ENGINEER' && (
-      <div className="grid grid-cols-1 gap-4">
-        {/* Outstanding Ledgers */}
-        <div className="clay-card p-5 border-l-4 border-l-[#7C6EF0] flex flex-col">
-          <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
-            <h3 className="text-base font-bold text-slate-800 font-heading">Outstanding Ledgers</h3>
-            <Link to="/clients" className="text-xs font-bold text-[#7C6EF0] hover:underline">View All Clients</Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[300px] overflow-y-auto scrollbar-hide pr-1">
-            {topOutstandingClients.length === 0 ? (
-              <div className="py-8 text-center text-slate-400 text-xs col-span-full">No outstanding balances.</div>
-            ) : (
-              topOutstandingClients.map((client: any) => (
-                <div key={client.id} className="p-4 rounded-xl bg-white/60 border border-violet-100/40 flex flex-col justify-between gap-2 shadow-xs hover:border-[#7C6EF0]/30 transition-all cursor-pointer" onClick={() => navigate(`/clients`)}>
-                  <div className="min-w-0">
-                    <div className="text-sm font-bold text-slate-800 truncate font-heading">{client.name}</div>
-                    <div className="text-[10px] text-slate-500 truncate">{client.companyName || 'Private Client'}</div>
-                  </div>
-                  <div className="text-left mt-2 border-t border-slate-100/60 pt-2">
-                    <div className="text-xs text-slate-400 font-medium mb-0.5">Pending Amount</div>
-                    <div className="text-sm font-bold text-[#E5636C] font-heading">
-                      ₹{(client.outstanding || 0).toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-      )}
-
-      {/* =========================================== */}
       {/* CHARTS ROW: Expenses + Payment Mode + Site P/L */}
       {/* =========================================== */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -620,7 +743,7 @@ export default function DashboardPage() {
                     <Pie data={expenseCategories} dataKey="amount" innerRadius={50} outerRadius={70}
                       paddingAngle={expenseCategories.length === 1 ? 0 : 5} stroke="none">
                       {expenseCategories.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                       ))}
                     </Pie>
                   </PieChart>
@@ -635,12 +758,12 @@ export default function DashboardPage() {
               {expenseCategories.length === 0 ? (
                 <div className="py-4 text-center text-slate-400 text-xs">No expense categories yet.</div>
               ) : (
-                expenseCategories.map((cat: any) => {
+                expenseCategories.map((cat: any, index: number) => {
                   const pct = totalExpCatAmount > 0 ? Math.round((cat.amount / totalExpCatAmount) * 100) : 0;
                   return (
                     <div key={cat.id} className="flex items-center justify-between text-xs font-semibold p-2.5 rounded-xl bg-white/60 border border-violet-100/30">
                       <span className="flex items-center gap-2 text-slate-600">
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} /> {cat.name} ({pct}%)
+                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} /> {cat.name} ({pct}%)
                       </span>
                       <span className="font-heading font-bold text-slate-800">{formatCurrency(cat.amount)}</span>
                     </div>
@@ -669,7 +792,7 @@ export default function DashboardPage() {
                     <Pie data={paymentModes} dataKey="amount" innerRadius={50} outerRadius={70}
                       paddingAngle={paymentModes.length === 1 ? 0 : 5} stroke="none">
                       {paymentModes.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                       ))}
                     </Pie>
                   </PieChart>
@@ -684,10 +807,10 @@ export default function DashboardPage() {
               {paymentModes.length === 0 ? (
                 <div className="py-4 text-center text-slate-400 text-xs">No payment modes yet.</div>
               ) : (
-                paymentModes.map((pm: any) => (
+                paymentModes.map((pm: any, index: number) => (
                   <div key={pm.id} className="flex items-center justify-between text-xs font-semibold p-2.5 rounded-xl bg-white/60 border border-violet-100/30">
                     <div className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full" style={{ backgroundColor: pm.color }} />
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
                       <span className="text-slate-600">{pm.mode} ({pm.pct}%)</span>
                     </div>
                     <span className="font-heading font-bold text-slate-800">{formatCurrency(pm.amount)}</span>
@@ -748,105 +871,85 @@ export default function DashboardPage() {
       </div>
 
       {/* =========================================== */}
-      {/* ROW 4: Today's Tasks + Recent Leads */}
+      {/* ANALYTICS ROW: Outstanding Ledgers */}
       {/* =========================================== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Today's Tasks */}
-        <div className="clay-card p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
-              <h3 className="text-base font-bold text-slate-800 font-heading">Today's Tasks</h3>
-              <div className="flex items-center gap-2">
-                <button onClick={() => navigate('/tasks')}
-                  className="p-1.5 rounded-lg bg-clay-violet text-[#7C6EF0] hover:bg-violet-100 cursor-pointer" title="Go to Tasks">
-                  <Plus className="w-4 h-4" />
-                </button>
-                <Link to="/tasks" className="text-xs font-bold text-[#7C6EF0] hover:underline">All</Link>
-              </div>
-            </div>
-            <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1 scrollbar-hide">
-              {todayTasks.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 text-xs">No tasks for today.</div>
-              ) : (
-                todayTasks.map((t: any) => (
-                  <div key={t.id}
-                    className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-3 cursor-pointer ${
-                      t.completed ? 'bg-green-50/40 border-green-200/40 opacity-75' : 'bg-white/60 border-violet-100/30 hover:border-[#7C6EF0]/30'
-                    }`}>
-                    <div className="flex items-center gap-3">
-                      <button onClick={(e: any) => toggleTaskComplete(t.id, e)} className="flex-shrink-0 cursor-pointer">
-                        {t.completed ? <CheckSquare className="w-4 h-4 text-[#5CB77E]" /> : <Square className="w-4 h-4 text-slate-300" />}
-                      </button>
-                      <div>
-                        <div className={`text-xs font-bold font-heading ${t.completed ? 'line-through text-slate-400' : 'text-slate-800'}`}>
-                          {t.title}
-                        </div>
-                        <div className="text-[11px] text-slate-400 flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {t.time || '12:00 PM'}
-                        </div>
-                      </div>
-                    </div>
-                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-lg ${
-                      t.priority === 'High' ? 'bg-clay-rose text-[#E5636C]' :
-                      t.priority === 'Low' ? 'bg-clay-blue text-[#4EA8DE]' :
-                      'bg-clay-amber text-[#F2A65A]'
-                    }`}>{t.priority}</span>
-                  </div>
-                ))
-              )}
-            </div>
+      {user?.role !== 'ENGINEER' && (
+      <div className="grid grid-cols-1 gap-4">
+        {/* Outstanding Ledgers */}
+        <div className="clay-card p-5 border-l-4 border-l-[#7C6EF0] flex flex-col">
+          <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
+            <h3 className="text-base font-bold text-slate-800 font-heading">Outstanding Ledgers</h3>
+            <Link to="/clients" className="text-xs font-bold text-[#7C6EF0] hover:underline">View All Clients</Link>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-100/60 text-center">
-            <Link to="/tasks" className="text-xs font-bold text-[#7C6EF0] hover:underline">Open Task Directory</Link>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[300px] overflow-y-auto scrollbar-hide pr-1">
+            {topOutstandingClients.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 text-xs col-span-full">No outstanding balances.</div>
+            ) : (
+              topOutstandingClients.map((client: any) => (
+                <div key={client.id} className="p-4 rounded-xl bg-white/60 border border-violet-100/40 flex flex-col justify-between gap-2 shadow-xs hover:border-[#7C6EF0]/30 transition-all cursor-pointer" onClick={() => navigate(`/clients`)}>
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold text-slate-800 truncate font-heading">{client.name}</div>
+                    <div className="text-[10px] text-slate-500 truncate">{client.companyName || 'Private Client'}</div>
+                  </div>
+                  <div className="text-left mt-2 border-t border-slate-100/60 pt-2">
+                    <div className="text-xs text-slate-400 font-medium mb-0.5">Pending Amount</div>
+                    <div className="text-sm font-bold text-[#E5636C] font-heading">
+                      ₹{(client.outstanding || 0).toLocaleString('en-IN')}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
+      </div>
+      )}
 
-        {/* Recent Leads */}
-        <div className="clay-card p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
-              <h3 className="text-base font-bold text-slate-800 font-heading">Recent Leads</h3>
-              <div className="flex items-center gap-2">
-                <button onClick={() => navigate('/leads')}
-                  className="p-1.5 rounded-lg bg-clay-violet text-[#7C6EF0] hover:bg-violet-100 cursor-pointer" title="Go to Leads">
-                  <Plus className="w-4 h-4" />
-                </button>
-                <Link to="/leads" className="text-xs font-bold text-[#7C6EF0] hover:underline">All</Link>
-              </div>
-            </div>
-            <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1 scrollbar-hide">
-              {leads.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 text-xs">No leads added yet.</div>
-              ) : (
-                leads.map((lead: any) => (
-                  <div key={lead.id} onClick={() => navigate('/leads')}
-                    className="py-2.5 px-3 rounded-xl bg-white/60 border border-violet-100/30 hover:border-[#7C6EF0]/30 flex items-center justify-between transition-all cursor-pointer group">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#7C6EF0] to-[#A78BFA] text-white font-bold flex items-center justify-center text-xs shrink-0 font-heading">
-                        {lead.name[0]?.toUpperCase() || '?'}
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-slate-800 font-heading">{lead.name}</div>
-                        <div className="text-[11px] text-slate-400">{lead.city}</div>
-                      </div>
+      {/* =========================================== */}
+      {/* ACTIVITY FEED */}
+      {/* =========================================== */}
+      <div className="grid grid-cols-1 mt-4">
+        <motion.div variants={fadeInUp} initial="hidden" animate="show" className="clay-card p-5">
+          <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
+            <h3 className="text-base font-bold text-slate-800 font-heading">Today's Activities</h3>
+            <span className="text-xs font-bold text-slate-400">Live Feed</span>
+          </div>
+          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
+            {todayActivities.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 text-xs">No activities recorded today yet.</div>
+            ) : (
+              todayActivities.map((act: any) => (
+                <div key={act.id} className="flex gap-4 group">
+                  <div className="flex flex-col items-center">
+                    <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 group-hover:border-[#7C6EF0]/30 transition-colors">
+                      {act.type === 'EXPENSE' && <Banknote className="w-4 h-4 text-[#E5636C]" />}
+                      {act.type === 'INCOME' && <IndianRupee className="w-4 h-4 text-[#5CB77E]" />}
+                      {act.type === 'CLIENT' && <Users className="w-4 h-4 text-[#4EA8DE]" />}
+                      {act.type === 'LEAD' && <Activity className="w-4 h-4 text-[#F2A65A]" />}
+                      {act.type === 'TASK' && <CheckSquare className="w-4 h-4 text-[#7C6EF0]" />}
                     </div>
-                    <div className="text-right space-y-1">
-                      {lead.stage && (
-                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border uppercase ${lead.badge}`}>
-                          {lead.stage}
-                        </span>
+                    <div className="w-px h-full bg-slate-100 mt-2" />
+                  </div>
+                  <div className="bg-white/60 p-3 rounded-xl border border-violet-100/40 w-full mb-2 group-hover:border-[#7C6EF0]/30 transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="text-sm font-bold text-slate-800">{act.title}</div>
+                        <div className="text-[11px] text-slate-500 mt-0.5">
+                          {new Date(act.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+                      {act.amount !== undefined && (
+                        <div className={`text-sm font-bold ${act.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {act.type === 'INCOME' ? '+' : '-'}₹{(act.amount || 0).toLocaleString('en-IN')}
+                        </div>
                       )}
-                      <div className="text-[10px] text-slate-400">{lead.date}</div>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                </div>
+              ))
+            )}
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-100/60 text-center">
-            <Link to="/leads" className="text-xs font-bold text-[#7C6EF0] hover:underline">Open CRM Leads Hub</Link>
-          </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* ============================================ */}
@@ -877,14 +980,12 @@ export default function DashboardPage() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-600">Client *</label>
-                  <select required value={newProject.clientId}
-                    onChange={(e: any) => setNewProject({ ...newProject, clientId: e.target.value })}
-                    className="clay-input w-full px-3 py-2 text-sm font-semibold">
-                    <option value="">Select Client</option>
-                    {(clients as any[]).map((c: any) => (
-                      <option key={c.id} value={c.id}>{c.name} ({c.companyName || 'Corporate'})</option>
-                    ))}
-                  </select>
+                  <AutocompleteInput
+                    value={newProject.clientId}
+                    onChange={(val: string) => setNewProject({ ...newProject, clientId: val })}
+                    options={(clients as any[]).map(c => ({ id: c.id, name: `${c.name} (${c.companyName || 'Corporate'})` }))}
+                    placeholder="Search Client..."
+                  />
                 </div>
               </div>
 

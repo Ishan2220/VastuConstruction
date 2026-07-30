@@ -50,15 +50,6 @@ export const createDailyReport = asyncHandler(async (req: Request, res: Response
   res.status(201).json(new ApiResponse(201, report, 'Daily site report submitted successfully'));
 });
 
-export const getAttendance = asyncHandler(async (req: Request, res: Response) => {
-  const { month, year } = req.query;
-  const currentMonth = Number(month) || new Date().getMonth() + 1;
-  const currentYear = Number(year) || new Date().getFullYear();
-  
-  const attendance = await empService.getAttendance(req.params.id as string, currentMonth, currentYear);
-  res.json(new ApiResponse(200, attendance, 'Employee attendance fetched successfully'));
-});
-
 export const listSalaries = asyncHandler(async (req: Request, res: Response) => {
   const salaries = await empService.listSalaries();
   res.json(new ApiResponse(200, salaries, 'Salaries fetched successfully'));

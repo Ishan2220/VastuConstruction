@@ -24,9 +24,14 @@ import { CacheManager } from '@/lib/CacheManager';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store/authStore';
+import { AutocompleteInput } from '@/components/ui/AutocompleteInput';
 import { useQuickAddListener } from '@/hooks/useQuickAddListener';
+import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
 
 export default function ProjectsPage() {
+    const confirmDialog = useConfirm();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,8 +44,9 @@ export default function ProjectsPage() {
   // New project state
   const [newProject, setNewProject] = useState({
     name: '',
-    code: '',
+    projectCode: '',
     clientId: '',
+    engineerId: '',
     status: 'IN_PROGRESS',
     budget: '',
     contractValue: '',
@@ -66,6 +72,15 @@ export default function ProjectsPage() {
     },
   });
 
+  const { data: engineers = [] } = useQuery({
+    queryKey: ['engineers-select'],
+    queryFn: async () => {
+      const { data } = await api.get('/employees');
+      const emps = data.data || [];
+      return emps.filter((e: any) => e.user?.role === 'ENGINEER');
+    },
+  });
+
   const createMutation = useMutation({
     mutationFn: async (projectData: any) => {
       const { data } = await api.post('/projects', projectData);
@@ -77,8 +92,9 @@ export default function ProjectsPage() {
       setIsCreateOpen(false);
       setNewProject({
         name: '',
-        code: '',
+        projectCode: '',
         clientId: '',
+        engineerId: '',
         status: 'IN_PROGRESS',
         budget: '',
         contractValue: '',
@@ -94,8 +110,8 @@ export default function ProjectsPage() {
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProject.name || !newProject.code || !newProject.clientId) {
-      toast.error('Please fill required fields (Name, Code, Client)');
+    if (!newProject.name || !newProject.clientId) {
+      toast.error('Please fill required fields (Name, Client)');
       return;
     }
     createMutation.mutate({
@@ -139,7 +155,7 @@ export default function ProjectsPage() {
     if (!editingProject) return;
     updateMutation.mutate({
       name: editingProject.name,
-      code: editingProject.code,
+      projectCode: editingProject.projectCode,
       status: editingProject.status,
       budget: Number(editingProject.budget) || 0,
       contractValue: Number(editingProject.contractValue) || 0,
@@ -152,12 +168,14 @@ export default function ProjectsPage() {
 
   const filteredProjects = projects.filter((p: any) =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.projectCode && p.projectCode.toLowerCase().includes(searchTerm.toLowerCase())) ||
     p.city?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  if (isLoading) return <PageSkeleton />;
+
   return (
-    <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans">
+    <div className="p-4 md:p-8 lg:p-8 space-y-6 min-h-full font-sans pb-24">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -242,10 +260,10 @@ export default function ProjectsPage() {
               </thead>
               <tbody className="divide-y divide-violet-100/30">
                 {filteredProjects.map((project: any) => (
-                  <tr key={project.id} onClick={() => navigate(`/projects/${project.id}`)} className="hover:bg-white/60 transition-colors group cursor-pointer">
+                  <tr key={project.id} onClick={() => navigate(`/projects/${project.id}/dashboard`)} className="hover:bg-white/60 transition-colors group cursor-pointer">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <span className="text-xs font-heading font-bold text-[#7C6EF0]">{project.code}</span>
+                        <span className="text-xs font-heading font-bold text-[#7C6EF0]">{project.projectCode}</span>
                         <span className="text-sm font-bold text-slate-800">{project.name}</span>
                       </div>
                     </td>
@@ -267,7 +285,7 @@ export default function ProjectsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-col items-center gap-1.5">
+                      <div className="flex flex-col items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
                         <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${
                           project.status === 'IN_PROGRESS'
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -298,19 +316,19 @@ export default function ProjectsPage() {
                               actualCompletion: project.actualCompletion ? new Date(project.actualCompletion).toISOString().split('T')[0] : '',
                             });
                           }}
-                          className="p-1.5 text-slate-400 hover:text-[#7C6EF0] hover:bg-clay-violet rounded-lg transition-all"
+                          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-clay-violet rounded-lg transition-all"
                           title="Quick Edit Project"
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation();
-                            if (confirm(`Are you sure you want to delete "${project.name}"?`)) {
+                            if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete "${project.name}"?` })) {
                               deleteMutation.mutate(project.id);
                             }
                           }}
-                          className="p-1.5 text-slate-400 hover:text-[#E5636C] hover:bg-clay-rose rounded-lg transition-all"
+                          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#E5636C] hover:bg-clay-rose rounded-lg transition-all"
                           title="Delete Project Site"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -330,14 +348,14 @@ export default function ProjectsPage() {
                 key={project.id}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                onClick={() => navigate(`/projects/${project.id}`)}
+                onClick={() => navigate(`/projects/${project.id}/dashboard`)}
                 className="clay-card-sm p-5 hover:shadow-md hover:border-[#7C6EF0]/30 transition-all flex flex-col justify-between space-y-4 cursor-pointer"
               >
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <span className="text-xs font-heading font-bold px-2 py-0.5 rounded bg-clay-violet/20 text-[#7C6EF0] border border-violet-100/40">
-                        {project.code}
+                        {project.projectCode}
                       </span>
                       <h3 className="text-base font-bold text-slate-900 mt-1 font-heading transition-colors">
                         {project.name}
@@ -404,9 +422,9 @@ export default function ProjectsPage() {
                     </button>
 
                     <button
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
-                        if (confirm(`Are you sure you want to delete "${project.name}"?`)) {
+                        if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete "${project.name}"?` })) {
                           deleteMutation.mutate(project.id);
                         }
                       }}
@@ -437,47 +455,58 @@ export default function ProjectsPage() {
             </div>
 
             <form onSubmit={handleCreateSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Project Code *</label>
+                  <label className="text-xs font-semibold text-slate-700">Project Code</label>
                   <input
                     type="text"
-                    required
-                    placeholder="e.g. PROJ-MUM-05"
-                    value={newProject.code}
-                    onChange={(e) => setNewProject({ ...newProject, code: e.target.value.toUpperCase() })}
+                    placeholder="Leave blank to auto-generate"
+                    value={newProject.projectCode}
+                    onChange={(e) => setNewProject({ ...newProject, projectCode: e.target.value.toUpperCase() })}
                     className="w-full px-3 py-2 clay-input text-sm font-heading focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Client Contract *</label>
-                  <select
-                    required
+                  <label className="text-xs font-semibold text-slate-700">Select Client *</label>
+                  <AutocompleteInput
                     value={newProject.clientId}
-                    onChange={(e) => setNewProject({ ...newProject, clientId: e.target.value })}
+                    onChange={(val: string) => setNewProject({ ...newProject, clientId: val })}
+                    options={clients.map((c: any) => ({ id: c.id, name: `${c.name} (${c.companyName || 'Private'})` }))}
+                    placeholder="Search Client..."
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Project Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Skyline Residency Tower A"
+                    value={newProject.name}
+                    onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                    className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Assign Site Engineer</label>
+                  <select
+                    value={newProject.engineerId}
+                    onChange={(e) => setNewProject({ ...newProject, engineerId: e.target.value })}
                     className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
                   >
-                    <option value="">Select Client</option>
-                    {clients.map((c: any) => (
-                      <option key={c.id} value={c.id}>{c.name} ({c.companyName || 'Corporate'})</option>
+                    <option value="">Select Engineer...</option>
+                    {engineers.map((emp: any) => (
+                      <option key={emp.user?.id} value={emp.user?.id}>
+                        {emp.user?.name}
+                      </option>
                     ))}
                   </select>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Project Name *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Skyline Residency Tower A"
-                  value={newProject.name}
-                  onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-                  className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700">Contract Value (₹)</label>
                   <input
@@ -500,7 +529,7 @@ export default function ProjectsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700">City</label>
                   <input
@@ -568,14 +597,13 @@ export default function ProjectsPage() {
             </div>
 
             <form onSubmit={handleEditSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Project Code *</label>
+                  <label className="text-xs font-semibold text-slate-700">Project Code</label>
                   <input
                     type="text"
-                    required
-                    value={editingProject.code}
-                    onChange={(e) => setEditingProject({ ...editingProject, code: e.target.value.toUpperCase() })}
+                    value={editingProject.projectCode || ''}
+                    onChange={(e) => setEditingProject({ ...editingProject, projectCode: e.target.value.toUpperCase() })}
                     className="w-full px-3 py-2 clay-input text-sm font-heading focus:outline-none"
                   />
                 </div>
@@ -605,7 +633,7 @@ export default function ProjectsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700">Physical Progress (%)</label>
                   <input
@@ -628,7 +656,7 @@ export default function ProjectsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700">Contract Valuation (₹)</label>
                   <input
@@ -649,7 +677,7 @@ export default function ProjectsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700">Expected Completion</label>
                   <input

@@ -4,16 +4,16 @@
 
 // ---- Enums ----
 
-export type Role = 'ADMIN' | 'MANAGER' | 'ENGINEER' | 'ACCOUNTANT' | 'VIEWER';
+export type Role = 'ADMIN' | 'ACCOUNTANT' | 'ENGINEER';
 
 export type LeadStatus =
   | 'NEW'
   | 'CONTACTED'
-  | 'FOLLOW_UP'
   | 'SITE_VISIT'
-  | 'NEGOTIATION'
+  | 'FOLLOW_UP'
   | 'PROPOSAL_SENT'
-  | 'CONVERTED'
+  | 'NEGOTIATION'
+  | 'WON'
   | 'LOST';
 
 export type LeadSource =
@@ -57,7 +57,7 @@ export type ExpenseCategory =
 
 export type PaymentMode = 'CASH' | 'UPI' | 'BANK_TRANSFER' | 'CHEQUE' | 'CARD' | 'OTHER';
 
-export type PaymentStatus = 'PENDING' | 'PARTIAL' | 'COMPLETED' | 'OVERDUE' | 'CANCELLED';
+export type PaymentStatus = 'PENDING' | 'PARTIAL' | 'COMPLETED' | 'OVERDUE';
 
 export type IncomeType =
   | 'CLIENT_PAYMENT'
@@ -67,20 +67,23 @@ export type IncomeType =
   | 'RETENTION'
   | 'OTHER';
 
-export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'COMPLETED' | 'CANCELLED';
+export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 
 export type DocumentType =
-  | 'BLUEPRINT'
-  | 'CONTRACT'
-  | 'INVOICE'
-  | 'RECEIPT'
-  | 'PERMIT'
-  | 'PHOTO'
-  | 'REPORT'
+  | 'SITE_PHOTO'
+  | 'DAILY_REPORT'
   | 'DRAWING'
-  | 'QUOTATION'
+  | 'INVOICE'
+  | 'GST_BILL'
+  | 'PURCHASE_ORDER'
+  | 'VENDOR_RECEIPT'
+  | 'CONTRACT'
+  | 'CLIENT_DOCUMENT'
+  | 'LABOUR_DOCUMENT'
   | 'OTHER';
+
+export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'OVERTIME' | 'LEAVE';
 
@@ -445,7 +448,7 @@ export interface CalendarEvent {
   startDate: string;
   endDate?: string;
   allDay: boolean;
-  type: 'MEETING' | 'SITE_VISIT' | 'DEADLINE' | 'REMINDER' | 'HOLIDAY' | 'OTHER';
+  type: 'MEETING' | 'SITE_VISIT' | 'CLIENT_CALL' | 'PAYMENT_REMINDER' | 'TASK_DEADLINE' | 'OTHER';
   color?: string;
   projectId?: string;
   project?: Project;
@@ -461,7 +464,7 @@ export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'INFO' | 'WARNING' | 'SUCCESS' | 'ERROR';
+  type: 'LABOUR_PAYMENT_DUE' | 'CLIENT_PAYMENT_DUE' | 'UPCOMING_MEETING' | 'SITE_VISIT_REMINDER' | 'MATERIAL_PENDING' | 'TASK_REMINDER' | 'GENERAL';
   isRead: boolean;
   userId: string;
   link?: string;

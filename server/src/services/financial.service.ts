@@ -35,28 +35,28 @@ export class FinancialService {
     return Number(agg._sum?.balance) || 0;
   }
 
-  /**
-   * Client Receivable = Sum of UNPAID and PARTIAL Invoices
-   */
   static async calculateClientReceivable(): Promise<number> {
-    const agg = await prisma.invoice.aggregate({
-      _sum: { totalAmount: true },
-      where: { status: { in: ['UNPAID', 'PARTIAL'] }, isArchived: false }
+    const projects = await prisma.project.findMany({
+      where: { deletedAt: null },
+      select: { contractValue: true, incomes: { select: { amount: true, gstAmount: true } } }
     });
-    return Number(agg._sum.totalAmount) || 0;
+    let receivable = 0;
+    for (const p of projects) {
+      const contractValue = Number(p.contractValue) || 0;
+      const income = p.incomes.reduce((sum, i) => sum + Number(i.amount) + Number(i.gstAmount || 0), 0);
+      receivable += Math.max(0, contractValue - income);
+    }
+    return receivable;
   }
 
-  /**
-   * Vendor Payable = Total Material Orders - Total Vendor Payments
-   */
   static async calculateVendorPayable(): Promise<number> {
-    const agg = await prisma.journalLine.aggregate({
-      _sum: { creditAmount: true, debitAmount: true },
-      where: { description: 'Accounts Payable' },
-    });
-    const credit = Number(agg._sum.creditAmount) || 0;
-    const debit = Number(agg._sum.debitAmount) || 0;
-    return Math.round((credit - debit) * 100) / 100;
+    const [ordersAgg, paymentsAgg] = await Promise.all([
+      prisma.materialOrder.aggregate({ _sum: { totalAmount: true }, where: { status: { not: 'CANCELLED' } } }),
+      prisma.vendorPayment.aggregate({ _sum: { amount: true } })
+    ]);
+    const orders = Number(ordersAgg._sum.totalAmount) || 0;
+    const payments = Number(paymentsAgg._sum.amount) || 0;
+    return Math.max(0, orders - payments);
   }
 
   /**
@@ -64,41 +64,25 @@ export class FinancialService {
    */
   static async calculateMonthlyIncome(startDate?: Date, endDate?: Date): Promise<number> {
     const agg = await prisma.income.aggregate({
-      _sum: { amount: true },
+      _sum: { amount: true, gstAmount: true },
       where: {
         ...(startDate && endDate && { paymentDate: { gte: startDate, lte: endDate } })
       }
     });
-    return Number(agg._sum.amount) || 0;
+    return (Number(agg._sum.amount) || 0) + (Number(agg._sum.gstAmount) || 0);
   }
 
   static async calculateMonthlyExpenses(startDate?: Date, endDate?: Date): Promise<number> {
     const dateFilter = startDate && endDate ? { paymentDate: { gte: startDate, lte: endDate } } : {};
     
-    const [expenseAgg, vendorAgg, labourAgg, salaryAgg] = await Promise.all([
+    const [expenseAgg] = await Promise.all([
       prisma.expense.aggregate({
-        _sum: { amount: true },
-        where: dateFilter
-      }),
-      prisma.vendorPayment.aggregate({
-        _sum: { amount: true },
-        where: dateFilter
-      }),
-      prisma.labourPayment.aggregate({
-        _sum: { amount: true },
-        where: dateFilter
-      }),
-      prisma.salaryPayment.aggregate({
-        _sum: { amount: true },
+        _sum: { amount: true, gstAmount: true },
         where: dateFilter
       })
     ]);
 
-    const total = 
-      (Number(expenseAgg._sum.amount) || 0) +
-      (Number(vendorAgg._sum.amount) || 0) +
-      (Number(labourAgg._sum.amount) || 0) +
-      (Number(salaryAgg._sum.amount) || 0);
+    const total = (Number(expenseAgg._sum.amount) || 0) + (Number(expenseAgg._sum.gstAmount) || 0);
 
     return total;
   }

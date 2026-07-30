@@ -15,6 +15,7 @@ const ProjectsPage = lazy(() => import('@/pages/ProjectsPage'));
 const ProjectDetailsPage = lazy(() => import('@/pages/ProjectDetailsPage'));
 const SiteDashboardPage = lazy(() => import('@/pages/SiteDashboardPage'));
 const SitesPage = lazy(() => import('@/pages/SitesPage'));
+const SiteMaterialsView = lazy(() => import('@/pages/SiteMaterialsView'));
 const ExpensesPage = lazy(() => import('@/pages/ExpensesPage'));
 const IncomePage = lazy(() => import('@/pages/IncomePage'));
 const AccountsPage = lazy(() => import('@/pages/AccountsPage'));
@@ -151,6 +152,7 @@ export default function App() {
               <Route path="attendance" element={<RoleRoute allowedRoles={['ADMIN', 'ENGINEER', 'ACCOUNTANT']} pageName="Attendance"><AttendancePage /></RoleRoute>} />
               <Route path="clients" element={<RoleRoute allowedRoles={['ADMIN']} pageName="Clients"><ClientsPage /></RoleRoute>} />
               <Route path="materials" element={<RoleRoute allowedRoles={['ADMIN', 'ENGINEER']} pageName="Materials"><MaterialsPage /></RoleRoute>} />
+              <Route path="materials/:id" element={<RoleRoute allowedRoles={['ADMIN', 'ENGINEER']} pageName="Materials"><SiteMaterialsView /></RoleRoute>} />
               <Route path="projects/:id/materials" element={<RoleRoute allowedRoles={['ADMIN', 'ENGINEER']} pageName="Materials"><MaterialsPage /></RoleRoute>} />
               <Route path="sites/:id/materials" element={<RoleRoute allowedRoles={['ADMIN', 'ENGINEER']} pageName="Materials"><MaterialsPage /></RoleRoute>} />
               <Route path="purchase-orders" element={<RoleRoute allowedRoles={['ADMIN', 'ACCOUNTANT', 'ENGINEER']} pageName="Purchase Orders"><PurchaseOrdersPage /></RoleRoute>} />

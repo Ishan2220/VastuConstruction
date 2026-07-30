@@ -83,6 +83,7 @@ export const getById = async (id: string, userId?: string, userRole?: Role) => {
       _count: {
         select: { expenses: true, incomes: true, documents: true, materialOrders: true, labourAssignments: true },
       },
+      milestones: { orderBy: { order: 'asc' } },
     },
   });
 

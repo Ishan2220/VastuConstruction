@@ -351,13 +351,15 @@ export default function AccountsPage() {
                   <option value="OD_CC">OD / CC Limit</option>
                 </select>
               </div>
-              <input
-                type="number"
-                placeholder="Ledger Balance (₹)"
-                value={editingAcc.balance || ''}
-                onChange={(e) => setEditingAcc({ ...editingAcc, balance: e.target.value })}
-                className="clay-input w-full text-sm font-mono font-bold text-[#5CB77E]"
-              />
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-slate-500 font-semibold">Ledger Balance (Calculated)</span>
+                <input
+                  type="text"
+                  disabled
+                  value={formatCurrency(Number(editingAcc.balance || 0))}
+                  className="clay-input w-full text-sm font-mono font-bold text-[#5CB77E] bg-slate-50 cursor-not-allowed"
+                />
+              </div>
               <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
                 <button type="button" onClick={() => setEditingAcc(null)} className="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-violet-50 transition-colors">Cancel</button>
                 <button type="submit" disabled={updateMutation.isPending} className="clay-btn px-5 py-2 text-white text-sm font-semibold">Save Updates</button>

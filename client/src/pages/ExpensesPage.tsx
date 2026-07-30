@@ -125,7 +125,7 @@ export default function ExpensesPage() {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newExpense.projectId || !newExpense.amount) {
+    if ((newExpense.type !== 'PERSONAL' && !newExpense.projectId) || !newExpense.amount) {
       toast.error('Project Site and Amount are required');
       return;
     }
@@ -237,8 +237,9 @@ export default function ExpensesPage() {
                     </span>
                     <div className="font-bold text-slate-800 mt-2">{exp.vendor?.name || 'Direct Disburse'}</div>
                   </div>
-                  <div className="font-mono font-extrabold text-[#E5636C] text-lg">
-                    {formatCurrency(Number(exp.amount))}
+                  <div className="font-mono font-extrabold text-[#E5636C] text-lg text-right">
+                    {formatCurrency(Number(exp.totalAmount || exp.amount))}
+                    {Number(exp.gstAmount) > 0 && <span className="block text-[10px] text-slate-400 font-sans font-normal mt-0.5">incl. {formatCurrency(Number(exp.gstAmount))} GST</span>}
                   </div>
                 </div>
                 
@@ -320,7 +321,7 @@ export default function ExpensesPage() {
                 placeholder="Select Payment Method..."
               />
 
-              {['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CREDIT_CARD'].includes(newExpense.paymentMethod) && (
+              {['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CREDIT_CARD', 'CASH'].includes(newExpense.paymentMethod) && (
                 <select
                   required
                   value={newExpense.accountId}

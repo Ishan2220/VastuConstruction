@@ -228,8 +228,9 @@ export default function IncomePage() {
                     <div className="font-mono font-bold text-[#7C6EF0]">{inc.invoiceNo || inc.reference || 'INV-001'}</div>
                     <div className="font-bold text-slate-800 mt-1">{inc.client?.name || 'Corporate Client'}</div>
                   </div>
-                  <div className="font-mono font-extrabold text-[#5CB77E] text-lg">
-                    {formatCurrency(Number(inc.amount))}
+                  <div className="font-mono font-extrabold text-[#5CB77E] text-lg text-right">
+                    {formatCurrency(Number(inc.totalAmount || inc.amount))}
+                    {Number(inc.gstAmount) > 0 && <span className="block text-[10px] text-slate-400 font-sans font-normal mt-0.5">incl. {formatCurrency(Number(inc.gstAmount))} GST</span>}
                   </div>
                 </div>
                 
@@ -364,7 +365,7 @@ export default function IncomePage() {
                 placeholder="Select Payment Method..."
               />
 
-              {['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CREDIT_CARD'].includes(newIncome.paymentMethod) && (
+              {['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CREDIT_CARD', 'CASH'].includes(newIncome.paymentMethod) && (
                 <select
                   required
                   value={newIncome.accountId}

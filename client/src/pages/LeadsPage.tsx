@@ -91,6 +91,9 @@ export default function LeadsPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       toast.success('Lead pipeline status updated');
     },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Failed to update lead status');
+    },
   });
 
   const updateMutation = useMutation({

@@ -95,7 +95,7 @@ export const create = async (data: Prisma.LeadUncheckedCreateInput & { idempoten
 
 export const update = async (id: string, data: Prisma.LeadUncheckedUpdateInput & { idempotencyKey?: string }, userId: string) => {
   const existing = await getById(id);
-  const { idempotencyKey, ...restData } = data;
+  const { idempotencyKey, assignee, createdBy, client, timeline, documents, _count, id: _id, createdAt, updatedAt, deletedAt, ...restData } = data as any;
   const lead = await prisma.lead.update({
     where: { id },
     data: restData,
@@ -112,8 +112,8 @@ export const updateStatus = async (id: string, status: LeadStatus, userId: strin
 
   // Lead status transition validation
   const invalidTransitions: Record<string, string[]> = {
-    'CONVERTED': ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'LOST', 'ON_HOLD'], // From converted, you can't go anywhere else? Let's say can't go back to early stages
-    'LOST': ['NEW', 'CONTACTED', 'QUALIFIED'],
+    'WON': ['NEW', 'CONTACTED', 'SITE_VISIT', 'FOLLOW_UP', 'PROPOSAL_SENT', 'NEGOTIATION', 'LOST'],
+    'LOST': ['NEW', 'CONTACTED', 'SITE_VISIT', 'FOLLOW_UP', 'PROPOSAL_SENT', 'NEGOTIATION'],
   };
   
   if (invalidTransitions[existing.status] && invalidTransitions[existing.status].includes(status)) {
@@ -172,8 +172,9 @@ export const convertToClient = async (id: string, userId: string) => {
         phone: existing.phone || '0000000000',
         email: existing.email,
         address: existing.plotAddress,
+        leadId: existing.id,
         notes: {
-          create: [{ content: `Converted from lead ${existing.id}`, userId }]
+          create: [{ content: `Converted from lead ${existing.id}`, createdById: userId }]
         },
         createdById: userId,
       }

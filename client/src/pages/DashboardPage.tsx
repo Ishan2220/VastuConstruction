@@ -286,7 +286,7 @@ export default function DashboardPage() {
     if (!serverDashboard?.recentActivities) return [];
     return serverDashboard.recentActivities.map((a: any) => ({
       id: a.id,
-      desc: `${a.user?.name || 'System'} ${a.action.toLowerCase()} ${a.module.toLowerCase()}`,
+      desc: `${a.user?.name || 'System'} ${a.action?.toLowerCase() || ''} ${a.module?.toLowerCase() || ''}`,
       time: new Date(a.date).toLocaleString(),
       type: a.module
     }));

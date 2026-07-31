@@ -102,9 +102,19 @@ export const softDeleteFile = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const getStorageDashboardStats = asyncHandler(async (req: Request, res: Response) => {
+  // Get all non-deleted File records
   const files = await prisma.file.findMany({ where: { deletedAt: null } });
-  
-  const totalFiles = files.length;
+
+  // Get all Document records to cross-reference which files are actually in use
+  const documents = await prisma.document.findMany({
+    select: { fileUrl: true, fileSize: true, mimeType: true },
+  });
+  const documentFileUrls = new Set(documents.map(d => d.fileUrl));
+
+  // Only count files that are actually referenced by a Document record
+  const activeFiles = files.filter(f => documentFileUrls.has(f.publicUrl));
+
+  const totalFiles = activeFiles.length;
   let totalOriginalSize = 0;
   let totalCompressedSize = 0;
   
@@ -116,7 +126,7 @@ export const getStorageDashboardStats = asyncHandler(async (req: Request, res: R
   let duplicateFilesPrevented = 0;
   const uniquePhysicalFiles = new Set<string>();
 
-  files.forEach(f => {
+  activeFiles.forEach(f => {
     totalOriginalSize += f.fileSizeOriginal;
     
     if (!uniquePhysicalFiles.has(f.checksum)) {
@@ -125,7 +135,6 @@ export const getStorageDashboardStats = asyncHandler(async (req: Request, res: R
     }
     
     if (f.referenceCount > 1) {
-      // For every reference > 1, we saved original size
       duplicateFilesPrevented += (f.referenceCount - 1);
     }
 
@@ -135,8 +144,27 @@ export const getStorageDashboardStats = asyncHandler(async (req: Request, res: R
     else other++;
   });
 
+  // Also count Document records that use external links (e.g., Google Drive)
+  // and don't have a corresponding File record
+  documents.forEach(d => {
+    if (!files.some(f => f.publicUrl === d.fileUrl)) {
+      if (d.fileSize) totalOriginalSize += d.fileSize;
+      if (d.fileSize) totalCompressedSize += d.fileSize;
+
+      const mime = d.mimeType || '';
+      if (mime.startsWith('image/')) images++;
+      else if (mime === 'application/pdf') pdfs++;
+      else if (mime.includes('officedocument') || mime.includes('msword') || mime.includes('excel')) office++;
+      else other++;
+    }
+  });
+
+  // Recalculate totalFiles to include external document links
+  const externalDocs = documents.filter(d => !files.some(f => f.publicUrl === d.fileUrl));
+  const finalTotalFiles = activeFiles.length + externalDocs.length;
+
   const storageSavedByCompression = totalOriginalSize - totalCompressedSize;
-  const storageSavedByDeduplication = files.reduce((acc, f) => acc + (f.fileSizeOriginal * (f.referenceCount - 1)), 0);
+  const storageSavedByDeduplication = activeFiles.reduce((acc, f) => acc + (f.fileSizeOriginal * (f.referenceCount - 1)), 0);
   const totalStorageSaved = storageSavedByCompression + storageSavedByDeduplication;
   
   const overallCompressionRatio = totalOriginalSize > 0 
@@ -144,7 +172,7 @@ export const getStorageDashboardStats = asyncHandler(async (req: Request, res: R
     : 0;
 
   res.status(200).json(new ApiResponse(200, {
-    totalFiles,
+    totalFiles: finalTotalFiles,
     images,
     pdfs,
     office,

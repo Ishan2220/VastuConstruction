@@ -4,7 +4,7 @@ import { useCustomCategories } from '@/hooks/useCustomCategories';
 import { toast } from 'sonner';
 
 interface CategorySelectProps {
-  module: 'labour' | 'materials' | 'tasks' | 'expenses' | 'vendors' | 'incomes' | 'sites' | 'payment_method' | 'lead_source' | 'material_unit';
+  module: 'labour' | 'materials' | 'tasks' | 'expenses' | 'vendors' | 'incomes' | 'sites' | 'payment_method' | 'lead_source' | 'material_unit' | 'lead_requirement';
   value: string;
   onChange: (value: string) => void;
   defaultOptions?: string[];

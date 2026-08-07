@@ -58,13 +58,13 @@ export default function PurchaseOrdersPage() {
   const fetchFormOptions = async () => {
     try {
       const [vRes, pRes, mRes] = await Promise.all([
-        api.get('/vendors'),
+        api.get('/vendors?limit=1000'),
         api.get('/projects'),
         api.get('/materials')
       ]);
-      setVendors(vRes.data?.data?.vendors || []);
-      setProjects(pRes.data?.data?.projects || []);
-      setMaterials(mRes.data?.data?.materials || []);
+      setVendors(vRes.data?.data?.data || vRes.data?.data || []);
+      setProjects(pRes.data?.data?.data || pRes.data?.data || []);
+      setMaterials(mRes.data?.data?.data || mRes.data?.data || []);
     } catch (err) {
       console.error('Failed to fetch options', err);
     }
@@ -152,13 +152,13 @@ export default function PurchaseOrdersPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-800 flex items-center gap-3 font-heading">
             <Package className="w-6 h-6 text-[#F2A65A]" />
-            Purchase Orders
+            Material Entries
           </h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Manage procurement and material orders</p>
+          <p className="text-sm text-slate-500 mt-1 font-medium">Manage procurement and material entries</p>
         </div>
         <button onClick={handleCreateClick} className="clay-btn flex items-center gap-2 px-4 py-2 text-sm font-bold shadow-md">
           <Plus className="w-4 h-4" />
-          Create PO
+          Create Entry
         </button>
       </div>
 
@@ -170,7 +170,7 @@ export default function PurchaseOrdersPage() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search PO number or vendor..."
+              placeholder="Search entry number or vendor..."
               className="clay-input pl-10 bg-white"
             />
           </div>
@@ -184,7 +184,7 @@ export default function PurchaseOrdersPage() {
             <table className="w-full hidden md:table min-w-max">
               <thead>
                 <tr className="border-b border-violet-100/40 bg-white/50">
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">PO Number</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Entry Number</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Payable To (Vendor)</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Project</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
@@ -195,9 +195,9 @@ export default function PurchaseOrdersPage() {
               </thead>
               <tbody className="divide-y divide-violet-100/40">
                 {isLoading ? (
-                  <tr><td colSpan={7} className="p-8 text-center text-slate-500 font-medium">Loading purchase orders...</td></tr>
+                  <tr><td colSpan={7} className="p-8 text-center text-slate-500 font-medium">Loading material entries...</td></tr>
                 ) : filteredPOs.length === 0 ? (
-                  <tr><td colSpan={7} className="p-8 text-center text-slate-500 font-medium">No purchase orders found.</td></tr>
+                  <tr><td colSpan={7} className="p-8 text-center text-slate-500 font-medium">No material entries found.</td></tr>
                 ) : (
                   filteredPOs.map((po) => (
                     <tr key={po.id} className="hover:bg-white/50 transition-colors">
@@ -237,9 +237,9 @@ export default function PurchaseOrdersPage() {
           {/* Mobile Card View */}
           <div className="flex flex-col gap-3 p-4 bg-slate-50/50 md:hidden">
             {isLoading ? (
-              <div className="text-center text-slate-500 font-medium py-4">Loading purchase orders...</div>
+              <div className="text-center text-slate-500 font-medium py-4">Loading material entries...</div>
             ) : filteredPOs.length === 0 ? (
-              <div className="text-center text-slate-500 font-medium py-4">No purchase orders found.</div>
+              <div className="text-center text-slate-500 font-medium py-4">No material entries found.</div>
             ) : (
               filteredPOs.map((po) => (
                 <div key={po.id} className="clay-card-sm p-4 flex flex-col gap-3">
@@ -272,14 +272,14 @@ export default function PurchaseOrdersPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm">
           <div className="clay-card w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto rounded-2xl p-6 space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
-              <h3 className="font-bold text-lg font-heading text-slate-800">Create Purchase Order</h3>
+              <h3 className="font-bold text-lg font-heading text-slate-800">Create Material Entry</h3>
               <button onClick={() => setIsCreateModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
             </div>
             
             <form onSubmit={handleCreateSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">PO Number *</label>
+                  <label className="text-xs font-semibold text-slate-700">Entry Number *</label>
                   <input
                     required
                     value={newPO.poNumber}
@@ -456,7 +456,7 @@ export default function PurchaseOrdersPage() {
                   disabled={isSubmitting}
                   className="clay-btn px-6 py-2 text-white font-bold text-sm disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Creating...' : 'Create Purchase Order'}
+                  {isSubmitting ? 'Creating...' : 'Create Material Entry'}
                 </button>
               </div>
             </form>

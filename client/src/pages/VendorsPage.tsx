@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { CategorySelect } from '@/components/common/CategorySelect';
 import { useQuickAddListener } from '@/hooks/useQuickAddListener';
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { MAHARASHTRA_CITIES } from '@/lib/cities';
 
 export default function VendorsPage() {
     const confirmDialog = useConfirm();
@@ -57,6 +58,7 @@ export default function VendorsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendors-list'] });
+      queryClient.invalidateQueries({ queryKey: ['vendors-select'] });
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       toast.success('Vendor agency added successfully');
       setIsAddOpen(false);
@@ -73,6 +75,7 @@ export default function VendorsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendors-list'] });
+      queryClient.invalidateQueries({ queryKey: ['vendors-select'] });
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       toast.success('Vendor profile updated successfully');
       setEditingVendor(null);
@@ -89,6 +92,7 @@ export default function VendorsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendors-list'] });
+      queryClient.invalidateQueries({ queryKey: ['vendors-select'] });
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       toast.success('Vendor agency deleted successfully');
     },
@@ -370,14 +374,18 @@ export default function VendorsPage() {
                   defaultOptions={['CEMENT', 'STEEL', 'AGGREGATE', 'BRICKS', 'ELECTRICAL', 'PLUMBING']}
                   placeholder="Select Category..."
                 />
-                  <input
-                  type="text"
-                  placeholder="City"
-                  value={newVendor.city}
-                  onChange={(e) => setNewVendor({ ...newVendor, city: e.target.value })}
-                  className="w-full clay-input text-sm"
-                />
-              </div>
+                  <select
+                    required
+                    value={newVendor.city}
+                    onChange={(e) => setNewVendor({ ...newVendor, city: e.target.value })}
+                    className="w-full clay-input text-sm"
+                  >
+                    <option value="">Select City *</option>
+                    {MAHARASHTRA_CITIES.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
                 <input
                   type="text"
                   placeholder="State"
@@ -422,20 +430,13 @@ export default function VendorsPage() {
                 onChange={(e) => setNewVendor({ ...newVendor, address: e.target.value })}
                 className="w-full clay-input text-sm"
               />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <input
                   type="text"
                   placeholder="PAN Number"
                   value={(newVendor as any).pan || ''}
                   onChange={(e) => setNewVendor({ ...newVendor, pan: e.target.value.toUpperCase() } as any)}
                   className="w-full clay-input text-sm font-mono uppercase"
-                />
-                <input
-                  type="number"
-                  placeholder="Opening Balance (₹)"
-                  value={newVendor.openingBalance}
-                  onChange={(e) => setNewVendor({ ...newVendor, openingBalance: e.target.value })}
-                  className="w-full clay-input text-sm font-mono text-rose-600"
                 />
               </div>
               <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">
@@ -480,14 +481,18 @@ export default function VendorsPage() {
                   defaultOptions={['CEMENT', 'STEEL', 'BRICKS', 'PLUMBING', 'ELECTRICAL', 'AGGREGATES']}
                   placeholder="Select Category..."
                 />
-                  <input
-                  type="text"
-                  placeholder="City"
-                  value={editingVendor.city || ''}
-                  onChange={(e) => setEditingVendor({ ...editingVendor, city: e.target.value })}
-                  className="w-full clay-input text-sm"
-                />
-              </div>
+                  <select
+                    required
+                    value={editingVendor.city || ''}
+                    onChange={(e) => setEditingVendor({ ...editingVendor, city: e.target.value })}
+                    className="w-full clay-input text-sm"
+                  >
+                    <option value="">Select City *</option>
+                    {MAHARASHTRA_CITIES.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
                 <input
                   type="text"
                   placeholder="State"
@@ -532,20 +537,13 @@ export default function VendorsPage() {
                 onChange={(e) => setEditingVendor({ ...editingVendor, address: e.target.value })}
                 className="w-full clay-input text-sm"
               />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <input
                   type="text"
                   placeholder="PAN Number"
                   value={editingVendor.pan || ''}
                   onChange={(e) => setEditingVendor({ ...editingVendor, pan: e.target.value.toUpperCase() })}
                   className="w-full clay-input text-sm font-mono uppercase"
-                />
-                <input
-                  type="number"
-                  placeholder="Opening Balance (₹)"
-                  value={editingVendor.openingBalance || ''}
-                  onChange={(e) => setEditingVendor({ ...editingVendor, openingBalance: e.target.value })}
-                  className="w-full clay-input text-sm font-mono text-rose-600"
                 />
               </div>
               <div className="flex justify-end gap-3 pt-4 border-t border-violet-100/30">

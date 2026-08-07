@@ -32,15 +32,11 @@ export default function CalendarPage() {
   }, [todayStr]);
 
   const [currentDate, setCurrentDate] = useState(() => {
-    const savedDate = localStorage.getItem('vastu_calendar_month_v2');
-    if (savedDate) return new Date(savedDate);
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
 
-  const [selectedDateStr, setSelectedDateStr] = useState(() => {
-    return localStorage.getItem('vastu_calendar_selected_date_v2') || todayStr;
-  });
+  const [selectedDateStr, setSelectedDateStr] = useState(() => todayStr);
 
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<any>(null);
@@ -586,7 +582,42 @@ export default function CalendarPage() {
             )}
           </div>
 
-          {/* Section 2: Upcoming Future Tasks & Deadlines */}
+          {/* Section 2: Done Activities for Selected Date */}
+          <div className="clay-card p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-3">
+              <h3 className="text-base font-bold text-slate-800 font-heading">Activities Logged</h3>
+              <span className="text-xs text-slate-400 font-semibold">{selectedDateStr}</span>
+            </div>
+
+            <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1 scrollbar-hide">
+              {loadingActivities ? (
+                <div className="py-4 text-center text-slate-400 text-xs animate-pulse">Loading activities...</div>
+              ) : dailyActivities.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 text-xs">No activities logged on this date.</div>
+              ) : (
+                dailyActivities.map((act: any) => (
+                  <div key={act.id} className="p-3 rounded-xl bg-white/60 border border-violet-100/30 flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-clay-violet text-[#7C6EF0] flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800 font-heading">{act.description || `${act.action} ${act.module}`}</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">
+                        {new Date(act.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {act.user?.name || 'System'}
+                      </div>
+                      {(act.project?.name || act.client?.name) && (
+                        <span className="text-[9px] font-bold text-[#7C6EF0] bg-clay-violet px-1.5 py-0.5 rounded mt-1 inline-block">
+                          {act.project?.name || act.client?.name}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Section 3: Upcoming Future Tasks & Deadlines */}
           <div className="clay-card p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-3">
               <h3 className="text-base font-bold text-slate-800 font-heading">Upcoming Deadlines</h3>
@@ -631,41 +662,6 @@ export default function CalendarPage() {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* Section 3: Done Activities for Selected Date */}
-          <div className="clay-card p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-violet-100/30 pb-3">
-              <h3 className="text-base font-bold text-slate-800 font-heading">Activities Logged</h3>
-              <span className="text-xs text-slate-400 font-semibold">{selectedDateStr}</span>
-            </div>
-
-            <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1 scrollbar-hide">
-              {loadingActivities ? (
-                <div className="py-4 text-center text-slate-400 text-xs animate-pulse">Loading activities...</div>
-              ) : dailyActivities.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 text-xs">No activities logged on this date.</div>
-              ) : (
-                dailyActivities.map((act: any) => (
-                  <div key={act.id} className="p-3 rounded-xl bg-white/60 border border-violet-100/30 flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-clay-violet text-[#7C6EF0] flex items-center justify-center shrink-0">
-                      <CheckCircle2 className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-slate-800 font-heading">{act.description || `${act.action} ${act.module}`}</div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">
-                        {new Date(act.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {act.user?.name || 'System'}
-                      </div>
-                      {(act.project?.name || act.client?.name) && (
-                        <span className="text-[9px] font-bold text-[#7C6EF0] bg-clay-violet px-1.5 py-0.5 rounded mt-1 inline-block">
-                          {act.project?.name || act.client?.name}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
             </div>
           </div>
         </div>

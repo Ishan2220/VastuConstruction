@@ -320,6 +320,11 @@ export default function DashboardPage() {
     return serverDashboard.topOutstandingClients;
   }, [serverDashboard]);
 
+  const leadReceivables = useMemo(() => {
+    if (!serverDashboard?.leadReceivables) return [];
+    return serverDashboard.leadReceivables;
+  }, [serverDashboard]);
+
   const updateTaskStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { data } = await api.patch(`/tasks/${id}/status`, { status });
@@ -470,7 +475,7 @@ export default function DashboardPage() {
       {/* =========================================== */}
       {/* ROW 4: Today's Tasks + Recent Leads + Activities */}
       {/* =========================================== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Today's Tasks */}
         <div className="clay-card p-5 flex flex-col justify-between">
           <div>
@@ -594,6 +599,51 @@ export default function DashboardPage() {
           </div>
           <div className="mt-4 pt-3 border-t border-slate-100/60 text-center">
             <span className="text-xs font-bold text-slate-400">System Activity Log</span>
+          </div>
+        </div>
+
+        {/* Today's Activities */}
+        <div className="clay-card p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
+              <h3 className="text-base font-bold text-slate-800 font-heading">Today's Activities</h3>
+              <span className="text-xs font-bold text-slate-400">Live Feed</span>
+            </div>
+            <div className="space-y-4 max-h-[280px] overflow-y-auto pr-2 scrollbar-hide">
+              {todayActivities.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 text-xs">No activities recorded today yet.</div>
+              ) : (
+                todayActivities.map((act: any) => (
+                  <div key={act.id} className="flex gap-4 group">
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 group-hover:border-[#7C6EF0]/30 transition-colors">
+                        {act.type === 'EXPENSE' && <Banknote className="w-4 h-4 text-[#E5636C]" />}
+                        {act.type === 'INCOME' && <IndianRupee className="w-4 h-4 text-[#5CB77E]" />}
+                        {act.type === 'CLIENT' && <Users className="w-4 h-4 text-[#4EA8DE]" />}
+                        {act.type === 'LEAD' && <Activity className="w-4 h-4 text-[#F2A65A]" />}
+                        {act.type === 'TASK' && <CheckSquare className="w-4 h-4 text-[#7C6EF0]" />}
+                      </div>
+                      <div className="w-px h-full bg-slate-100 mt-2" />
+                    </div>
+                    <div className="bg-white/60 p-3 rounded-xl border border-violet-100/40 w-full mb-2 group-hover:border-[#7C6EF0]/30 transition-colors">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="text-sm font-bold text-slate-800">{act.title}</div>
+                          <div className="text-[11px] text-slate-500 mt-0.5">
+                            {new Date(act.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                        {act.amount !== undefined && (
+                          <div className={`text-sm font-bold ${act.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {act.type === 'INCOME' ? '+' : '-'}₹{(act.amount || 0).toLocaleString('en-IN')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -874,14 +924,14 @@ export default function DashboardPage() {
       {/* ANALYTICS ROW: Outstanding Ledgers */}
       {/* =========================================== */}
       {user?.role !== 'ENGINEER' && (
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Outstanding Ledgers */}
         <div className="clay-card p-5 border-l-4 border-l-[#7C6EF0] flex flex-col">
           <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
             <h3 className="text-base font-bold text-slate-800 font-heading">Outstanding Ledgers</h3>
             <Link to="/clients" className="text-xs font-bold text-[#7C6EF0] hover:underline">View All Clients</Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[300px] overflow-y-auto scrollbar-hide pr-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 max-h-[300px] overflow-y-auto scrollbar-hide pr-1">
             {topOutstandingClients.length === 0 ? (
               <div className="py-8 text-center text-slate-400 text-xs col-span-full">No outstanding balances.</div>
             ) : (
@@ -902,55 +952,38 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-      </div>
-      )}
 
-      {/* =========================================== */}
-      {/* ACTIVITY FEED */}
-      {/* =========================================== */}
-      <div className="grid grid-cols-1 mt-4">
-        <motion.div variants={fadeInUp} initial="hidden" animate="show" className="clay-card p-5">
+        {/* Lead Payment Receivable */}
+        <div className="clay-card p-5 border-l-4 border-l-[#5CB77E] flex flex-col">
           <div className="flex items-center justify-between border-b border-slate-100/60 pb-3 mb-4">
-            <h3 className="text-base font-bold text-slate-800 font-heading">Today's Activities</h3>
-            <span className="text-xs font-bold text-slate-400">Live Feed</span>
+            <h3 className="text-base font-bold text-slate-800 font-heading">Lead Payment Receivable</h3>
+            <Link to="/leads" className="text-xs font-bold text-[#5CB77E] hover:underline">View All Leads</Link>
           </div>
-          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
-            {todayActivities.length === 0 ? (
-              <div className="py-8 text-center text-slate-400 text-xs">No activities recorded today yet.</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 max-h-[300px] overflow-y-auto scrollbar-hide pr-1">
+            {leadReceivables.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 text-xs col-span-full">No lead payment receivables.</div>
             ) : (
-              todayActivities.map((act: any) => (
-                <div key={act.id} className="flex gap-4 group">
-                  <div className="flex flex-col items-center">
-                    <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 group-hover:border-[#7C6EF0]/30 transition-colors">
-                      {act.type === 'EXPENSE' && <Banknote className="w-4 h-4 text-[#E5636C]" />}
-                      {act.type === 'INCOME' && <IndianRupee className="w-4 h-4 text-[#5CB77E]" />}
-                      {act.type === 'CLIENT' && <Users className="w-4 h-4 text-[#4EA8DE]" />}
-                      {act.type === 'LEAD' && <Activity className="w-4 h-4 text-[#F2A65A]" />}
-                      {act.type === 'TASK' && <CheckSquare className="w-4 h-4 text-[#7C6EF0]" />}
-                    </div>
-                    <div className="w-px h-full bg-slate-100 mt-2" />
+              leadReceivables.map((lead: any) => (
+                <div key={lead.id} className="p-4 rounded-xl bg-white/60 border border-green-100/40 flex flex-col justify-between gap-2 shadow-xs hover:border-[#5CB77E]/30 transition-all cursor-pointer" onClick={() => navigate(`/leads`)}>
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold text-slate-800 truncate font-heading">{lead.name}</div>
+                    <div className="text-[10px] text-slate-500 truncate">{lead.address || 'Lead'}</div>
                   </div>
-                  <div className="bg-white/60 p-3 rounded-xl border border-violet-100/40 w-full mb-2 group-hover:border-[#7C6EF0]/30 transition-colors">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="text-sm font-bold text-slate-800">{act.title}</div>
-                        <div className="text-[11px] text-slate-500 mt-0.5">
-                          {new Date(act.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </div>
-                      {act.amount !== undefined && (
-                        <div className={`text-sm font-bold ${act.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                          {act.type === 'INCOME' ? '+' : '-'}₹{(act.amount || 0).toLocaleString('en-IN')}
-                        </div>
-                      )}
+                  <div className="text-left mt-2 border-t border-slate-100/60 pt-2">
+                    <div className="text-xs text-slate-400 font-medium mb-0.5">Pending Amount</div>
+                    <div className="text-sm font-bold text-[#E5636C] font-heading">
+                      ₹{(lead.pendingAmount || 0).toLocaleString('en-IN')}
                     </div>
                   </div>
                 </div>
               ))
             )}
           </div>
-        </motion.div>
+        </div>
       </div>
+      )}
+
+      {/* ACTIVITY FEED USED TO BE HERE */}
 
       {/* ============================================ */}
       {/* MODALS                                       */}

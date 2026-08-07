@@ -288,8 +288,8 @@ export default function EmployeesPage() {
                       </td>
                       <td className="p-4">
                         <div className="text-sm text-slate-600 flex flex-col gap-1">
-                          <div className="flex items-center gap-2 text-xs"><Phone className="w-3.5 h-3.5" /> {phoneStr}</div>
                           <div className="flex items-center gap-2 text-xs"><Mail className="w-3.5 h-3.5" /> {emailStr}</div>
+                          <div className="flex items-center gap-2 text-xs"><Phone className="w-3.5 h-3.5" /> {phoneStr}</div>
                         </div>
                       </td>
                       <td className="p-4">

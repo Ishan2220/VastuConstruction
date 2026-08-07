@@ -9,8 +9,10 @@ router.use(authenticate, authorize('ADMIN', 'ACCOUNTANT', { page: 'Leads' }));
 
 router.get('/', ctrl.list);
 router.get('/export', ctrl.exportLeads);
+router.get('/check-duplicate', ctrl.checkDuplicate);
 router.get('/:id', ctrl.getById);
 router.post('/', ctrl.create);
+router.post('/:id/payment', ctrl.recordPayment);
 router.post('/:id/convert', ctrl.convertToClient);
 router.put('/:id', ctrl.update);
 router.patch('/:id/status', ctrl.updateStatus);

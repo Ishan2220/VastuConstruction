@@ -106,7 +106,7 @@ export default function MaterialsPage() {
   const { data: vendorsList = [] } = useQuery({
     queryKey: ['vendors-select'],
     queryFn: async () => {
-      const { data } = await api.get('/vendors');
+      const { data } = await api.get('/vendors?limit=1000');
       return data.data?.data || [];
     },
   });
@@ -127,11 +127,11 @@ export default function MaterialsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['material-orders'] });
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
-      toast.success('Material purchase order dispatched');
+      toast.success('Material entry logged successfully');
       setIsOrderOpen(false);
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Failed to dispatch order');
+      toast.error(err.response?.data?.message || 'Failed to log material entry');
     },
   });
 
@@ -142,10 +142,10 @@ export default function MaterialsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['material-orders'] });
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
-      toast.success('Purchase order deleted');
+      toast.success('Material entry deleted successfully');
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Failed to delete order');
+      toast.error(err.response?.data?.message || 'Failed to delete material entry');
     },
   });
 
@@ -260,10 +260,10 @@ export default function MaterialsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight font-heading">
-            Material Inventory & Procurement
+            Material Records
           </h1>
           <p className="text-sm text-slate-600 mt-1">
-            Track site rebar, cement bags, bricks, low stock thresholds, and purchase orders.
+            Track site rebar, cement bags, bricks, low stock thresholds, and material entries.
           </p>
         </div>
 
@@ -272,7 +272,7 @@ export default function MaterialsPage() {
           className="clay-btn inline-flex items-center gap-2 px-4 py-2.5 text-white text-sm font-semibold transition-all"
         >
           <Plus className="w-4 h-4" />
-          <span>Raise Purchase Order</span>
+          <span>Create Material Entry</span>
         </button>
       </div>
 
@@ -280,7 +280,7 @@ export default function MaterialsPage() {
       <div className="flex items-center gap-2 border-b border-violet-100/30 pb-2 overflow-x-auto scrollbar-hide">
         {[
           { id: 'STOCK', label: 'Site Inventory Levels ({count})'.replace('{count}', String(stockData.length)) },
-          { id: 'ORDERS', label: 'Purchase Orders ({count})'.replace('{count}', String(ordersList.length)) },
+          { id: 'ORDERS', label: 'Material Entries ({count})'.replace('{count}', String(ordersList.length)) },
           { id: 'DIRECTORY', label: 'Material Catalog ({count})'.replace('{count}', String(materialsList.length)) },
         ].map((tab) => (
           <button
@@ -363,7 +363,7 @@ export default function MaterialsPage() {
               <tbody className="divide-y divide-violet-100/30 text-sm">
                 {ordersList.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-400">No purchase orders dispatched yet.</td>
+                    <td colSpan={7} className="p-8 text-center text-slate-400">No material entries logged yet.</td>
                   </tr>
                 ) : (
                   ordersList.map((o: any) => (
@@ -387,12 +387,12 @@ export default function MaterialsPage() {
                       <td className="p-4 text-right">
                         <button
                           onClick={async () => {
-                            if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete PO ${o.orderNumber}?` })) {
+                            if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete material entry ${o.orderNumber}?` })) {
                               deleteOrderMutation.mutate(o.id);
                             }
                           }}
                           className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-rose-50 hover:bg-rose-100 text-[#E5636C] transition-all shadow-sm border border-rose-100/50"
-                          title="Delete Purchase Order"
+                          title="Delete Material Entry"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -406,7 +406,7 @@ export default function MaterialsPage() {
           
           <div className="flex flex-col gap-3 p-4 bg-slate-50/50 md:hidden">
             {ordersList.length === 0 ? (
-              <div className="text-center text-slate-400 p-8">No purchase orders dispatched yet.</div>
+              <div className="text-center text-slate-400 p-8">No material entries logged yet.</div>
             ) : (
               ordersList.map((o: any) => (
                 <div key={o.id} className="clay-card-sm p-4 flex flex-col gap-3">
@@ -433,12 +433,12 @@ export default function MaterialsPage() {
                   <div className="flex justify-end pt-1">
                     <button
                       onClick={async () => {
-                        if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete PO ${o.orderNumber}?` })) {
+                        if (await confirmDialog({ title: 'Confirm Action', message: `Are you sure you want to delete material entry ${o.orderNumber}?` })) {
                           deleteOrderMutation.mutate(o.id);
                         }
                       }}
                       className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-rose-50 hover:bg-rose-100 text-[#E5636C] transition-all shadow-sm border border-rose-100/50"
-                      title="Delete Purchase Order"
+                      title="Delete Material Entry"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -504,12 +504,12 @@ export default function MaterialsPage() {
         </div>
       )}
 
-      {/* New Purchase Order Modal */}
+      {/* New Material Entry Modal */}
       {isOrderOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm">
           <div className="clay-card w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
-              <h3 className="text-lg font-bold text-slate-800 font-heading">Raise Material Purchase Order</h3>
+              <h3 className="text-lg font-bold text-slate-800 font-heading">Create Material Entry</h3>
               <button onClick={() => setIsOrderOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">
                 Close ✕
               </button>
@@ -739,16 +739,6 @@ export default function MaterialsPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Item Code</label>
-                  <input
-                     type="text"
-                    placeholder="e.g. CEM-53"
-                    value={newDir.code}
-                    onChange={(e) => setNewDir({ ...newDir, code: e.target.value })}
-                    className="clay-input w-full text-sm mt-1"
-                  />
-                </div>
-                <div>
                   <label className="text-xs font-semibold text-slate-700">Category</label>
                   <CategorySelect
                     module="materials"
@@ -762,12 +752,12 @@ export default function MaterialsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-slate-700">Unit</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. BAGS, TONNE, SQFT"
+                  <CategorySelect
+                    module="material_unit"
                     value={newDir.unit}
-                    onChange={(e) => setNewDir({ ...newDir, unit: e.target.value })}
-                    className="clay-input w-full text-sm mt-1"
+                    onChange={(val) => setNewDir({ ...newDir, unit: val })}
+                    defaultOptions={['BAGS', 'TONNE', 'SQFT', 'NOS', 'KGS', 'CUM', 'LTR']}
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -835,24 +825,16 @@ export default function MaterialsPage() {
                     className="mt-1"
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-700">Item Code</label>
-                  <input
-                    type="text"
-                    value={editDir.code || ''}
-                    onChange={(e) => setEditDir({ ...editDir, code: e.target.value })}
-                    className="clay-input w-full text-sm mt-1"
-                  />
-                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-slate-700">Unit</label>
-                  <input
-                    type="text"
-                    value={editDir.unit}
-                    onChange={(e) => setEditDir({ ...editDir, unit: e.target.value })}
-                    className="clay-input w-full text-sm mt-1"
+                  <CategorySelect
+                    module="material_unit"
+                    value={editDir.unit || ''}
+                    onChange={(val) => setEditDir({ ...editDir, unit: val })}
+                    defaultOptions={['BAGS', 'TONNE', 'SQFT', 'NOS', 'KGS', 'CUM', 'LTR']}
+                    className="mt-1"
                   />
                 </div>
                 <div>

@@ -11,6 +11,8 @@ interface ListParams {
   page?: number;
   limit?: number;
   clientId?: string;
+  leadId?: string;
+  vendorId?: string;
   projectId?: string;
   startDate?: string;
   endDate?: string;
@@ -19,16 +21,20 @@ interface ListParams {
 }
 
 export const list = async (params: ListParams) => {
-  const { page = 1, limit = 10, clientId, projectId, startDate, endDate, sortBy = 'paymentDate', sortOrder = 'desc' } = params;
+  const { page = 1, limit = 10, clientId, leadId, vendorId, projectId, startDate, endDate, sortBy = 'paymentDate', sortOrder = 'desc' } = params;
   const pageNum = Number(page) || 1;
   const limitNum = Number(limit) || 10;
   const skip = (pageNum - 1) * limitNum;
 
   const cleanedClientId = cleanRelationId(clientId);
+  const cleanedLeadId = cleanRelationId(leadId);
+  const cleanedVendorId = cleanRelationId(vendorId);
   const cleanedProjectId = cleanRelationId(projectId);
 
   const where: Prisma.IncomeWhereInput = {
     ...(cleanedClientId && { clientId: cleanedClientId }),
+    ...(cleanedLeadId && { leadId: cleanedLeadId }),
+    ...(cleanedVendorId && { vendorId: cleanedVendorId }),
     ...(cleanedProjectId && { projectId: cleanedProjectId }),
     ...(startDate && endDate && {
       paymentDate: {
@@ -47,6 +53,8 @@ export const list = async (params: ListParams) => {
       orderBy: { [sortBy]: sortOrder },
       include: {
         client: { select: { id: true, name: true, phone: true } },
+        lead: { select: { id: true, name: true, phone: true } },
+        vendor: { select: { id: true, name: true, phone: true } },
         project: { select: { id: true, name: true } },
         account: { select: { id: true, bankName: true, accountNo: true } },
         createdBy: { select: { id: true, name: true } },
@@ -63,6 +71,8 @@ export const getById = async (id: string) => {
     where: { id },
     include: {
       client: true,
+      lead: true,
+      vendor: true,
       project: true,
       account: true,
       createdBy: { select: { id: true, name: true, email: true } },
@@ -74,7 +84,9 @@ export const getById = async (id: string) => {
 
 export const create = async (
   data: {
-    clientId: string;
+    clientId?: string | null;
+    leadId?: string | null;
+    vendorId?: string | null;
     projectId?: string | null;
     amount: number;
     gstMode?: 'NONE' | 'PERCENTAGE' | 'AMOUNT';
@@ -92,7 +104,7 @@ export const create = async (
   },
   userId: string
 ) => {
-  const { idempotencyKey, ...restData } = data as any;
+  const { idempotencyKey, receivedFromType, ...restData } = data as any;
   const gstMode = data.gstMode || 'NONE';
   const gstAmount = Number(data.gstAmount) || 0;
   const amount = Number(data.amount) || 0;
@@ -100,7 +112,9 @@ export const create = async (
   
   const cleanedData = {
     ...restData,
-    clientId: data.clientId,
+    clientId: cleanRelationId(data.clientId) || null,
+    leadId: cleanRelationId(data.leadId) || null,
+    vendorId: cleanRelationId(data.vendorId) || null,
     projectId: cleanRelationId(data.projectId) || null,
     accountId: cleanRelationId(data.accountId) || null,
     amount,
@@ -129,6 +143,22 @@ export const create = async (
         createdById: userId,
       },
     });
+
+    if (cleanedData.leadId) {
+      const leadObj = await tx.lead.findUnique({ where: { id: cleanedData.leadId } });
+      if (leadObj) {
+        const currentPending = Number(leadObj.pendingAmount || leadObj.budget || 0);
+        const newPending = Math.max(0, currentPending - cleanedData.totalAmount);
+        await tx.lead.update({
+          where: { id: cleanedData.leadId },
+          data: {
+            paymentStatus: newPending === 0 ? 'PAID' : 'PARTIAL',
+            paymentMode: cleanedData.paymentMethod,
+            pendingAmount: newPending,
+          }
+        });
+      }
+    }
 
     // Double-Entry Ledger with Flexible GST split
     const lines = [];

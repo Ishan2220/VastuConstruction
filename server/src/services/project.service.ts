@@ -126,6 +126,10 @@ export const create = async (payload: any, userId: string) => {
     address: validData.address || null,
     city: validData.city || 'Mumbai',
     state: validData.state || 'Maharashtra',
+    areaAddress: validData.areaAddress || null,
+    primaryNumber: validData.primaryNumber || null,
+    secondaryNumber: validData.secondaryNumber || null,
+    siteEngineerName: validData.siteEngineerName || null,
     createdById: userId,
   };
 
@@ -163,6 +167,10 @@ export const update = async (id: string, payload: any, userId: string, userRole?
     ...(validData.address !== undefined && { address: validData.address || null }),
     ...(validData.city !== undefined && { city: validData.city || null }),
     ...(validData.state !== undefined && { state: validData.state || null }),
+    ...(validData.areaAddress !== undefined && { areaAddress: validData.areaAddress || null }),
+    ...(validData.primaryNumber !== undefined && { primaryNumber: validData.primaryNumber || null }),
+    ...(validData.secondaryNumber !== undefined && { secondaryNumber: validData.secondaryNumber || null }),
+    ...(validData.siteEngineerName !== undefined && { siteEngineerName: validData.siteEngineerName || null }),
   };
 
   const project = await prisma.project.update({ where: { id }, data });

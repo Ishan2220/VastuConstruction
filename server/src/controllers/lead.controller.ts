@@ -2,6 +2,8 @@ import type { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import * as leadService from '../services/lead.service.js';
+import { generateLeadInvoicePDF } from '../utils/invoiceGenerator.js';
+import path from 'path';
 
 export const list = asyncHandler(async (req: Request, res: Response) => {
   const result = await leadService.list(req.query as any);
@@ -13,6 +15,12 @@ export const getById = asyncHandler(async (req: Request, res: Response) => {
   res.json(new ApiResponse(200, lead, 'Lead fetched successfully'));
 });
 
+export const checkDuplicate = asyncHandler(async (req: Request, res: Response) => {
+  const name = req.query.name as string;
+  const result = await leadService.checkDuplicate(name);
+  res.json(new ApiResponse(200, result, 'Duplicate check completed'));
+});
+
 export const create = asyncHandler(async (req: Request, res: Response) => {
   const lead = await leadService.create(req.body, req.user!.userId);
   res.status(201).json(new ApiResponse(201, lead, 'Lead created successfully'));
@@ -21,6 +29,25 @@ export const create = asyncHandler(async (req: Request, res: Response) => {
 export const update = asyncHandler(async (req: Request, res: Response) => {
   const lead = await leadService.update(req.params.id as string, req.body, req.user!.userId);
   res.json(new ApiResponse(200, lead, 'Lead updated successfully'));
+});
+
+export const recordPayment = asyncHandler(async (req: Request, res: Response) => {
+  const leadId = req.params.id as string;
+  const paymentData = req.body;
+  
+  // Update lead payment status
+  const lead = await leadService.update(leadId, {
+    paymentStatus: paymentData.status || 'COMPLETED',
+    paymentMode: paymentData.paymentMethod,
+    pendingAmount: paymentData.pendingAmount || 0,
+  }, req.user!.userId);
+  
+  // Generate invoice
+  const fileName = `Lead_Invoice_${leadId}_${Date.now()}.pdf`;
+  const outputPath = path.join(process.cwd(), 'uploads', 'invoices', fileName);
+  await generateLeadInvoicePDF(lead, { ...paymentData, id: leadId }, outputPath);
+  
+  res.json(new ApiResponse(200, { lead, invoiceUrl: `/uploads/invoices/${fileName}` }, 'Payment recorded and invoice generated'));
 });
 
 export const convertToClient = asyncHandler(async (req: Request, res: Response) => {

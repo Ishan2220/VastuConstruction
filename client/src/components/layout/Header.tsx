@@ -168,7 +168,8 @@ export default function Header() {
       case 'Vendor': return `/vendors`;
       case 'Employee': return `/employees`;
       case 'Invoice': return `/invoices`;
-      case 'Purchase Order': return `/purchase-orders`;
+      case 'Purchase Order':
+      case 'Material Entry': return `/purchase-orders`;
       default: return `/`;
     }
   }
@@ -180,7 +181,8 @@ export default function Header() {
       case 'Vendor': return PackageCheck;
       case 'Employee': return Briefcase;
       case 'Invoice': return FileText;
-      case 'Purchase Order': return PackageCheck;
+      case 'Purchase Order':
+      case 'Material Entry': return PackageCheck;
       default: return Search;
     }
   }
@@ -188,6 +190,15 @@ export default function Header() {
   useEffect(() => {
     setSelectedIndex(0);
   }, [searchQuery, isSearchOpen]);
+
+  useEffect(() => {
+    if (isSearchOpen) {
+      const el = document.getElementById(`search-item-${selectedIndex}`);
+      if (el) {
+        el.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [selectedIndex, isSearchOpen]);
 
   // Keyboard shortcuts and arrow key navigation
   useEffect(() => {
@@ -615,6 +626,7 @@ export default function Header() {
                     return (
                       <div
                         key={item.title + idx}
+                        id={`search-item-${idx}`}
                         onClick={() => {
                           setIsSearchOpen(false);
                           setSearchQuery('');

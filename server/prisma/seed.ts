@@ -16,7 +16,7 @@ async function main() {
   await prisma.task.deleteMany();
   await prisma.document.deleteMany();
   await prisma.labourPayment.deleteMany();
-  await prisma.attendance.deleteMany();
+  await prisma.unifiedAttendance.deleteMany();
   await prisma.labourAssignment.deleteMany();
   await prisma.labour.deleteMany();
   await prisma.materialOrderItem.deleteMany();

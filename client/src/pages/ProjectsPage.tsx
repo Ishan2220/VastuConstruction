@@ -44,14 +44,16 @@ export default function ProjectsPage() {
   // New project state
   const [newProject, setNewProject] = useState({
     name: '',
-    projectCode: '',
     clientId: '',
-    engineerId: '',
+    siteEngineerName: '',
     status: 'IN_PROGRESS',
     budget: '',
     contractValue: '',
     city: 'Mumbai',
     state: 'Maharashtra',
+    areaAddress: '',
+    primaryNumber: '',
+    secondaryNumber: '',
     description: '',
   });
 
@@ -92,14 +94,16 @@ export default function ProjectsPage() {
       setIsCreateOpen(false);
       setNewProject({
         name: '',
-        projectCode: '',
         clientId: '',
-        engineerId: '',
+        siteEngineerName: '',
         status: 'IN_PROGRESS',
         budget: '',
         contractValue: '',
         city: 'Mumbai',
         state: 'Maharashtra',
+        areaAddress: '',
+        primaryNumber: '',
+        secondaryNumber: '',
         description: '',
       });
     },
@@ -155,7 +159,7 @@ export default function ProjectsPage() {
     if (!editingProject) return;
     updateMutation.mutate({
       name: editingProject.name,
-      projectCode: editingProject.projectCode,
+      siteEngineerName: editingProject.siteEngineerName,
       status: editingProject.status,
       budget: Number(editingProject.budget) || 0,
       contractValue: Number(editingProject.contractValue) || 0,
@@ -163,6 +167,10 @@ export default function ProjectsPage() {
       description: editingProject.description,
       expectedCompletion: editingProject.expectedCompletion,
       actualCompletion: editingProject.actualCompletion,
+      city: editingProject.city,
+      areaAddress: editingProject.areaAddress,
+      primaryNumber: editingProject.primaryNumber,
+      secondaryNumber: editingProject.secondaryNumber,
     });
   };
 
@@ -263,7 +271,6 @@ export default function ProjectsPage() {
                   <tr key={project.id} onClick={() => navigate(`/projects/${project.id}/dashboard`)} className="hover:bg-white/60 transition-colors group cursor-pointer">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <span className="text-xs font-heading font-bold text-[#7C6EF0]">{project.projectCode}</span>
                         <span className="text-sm font-bold text-slate-800">{project.name}</span>
                       </div>
                     </td>
@@ -275,8 +282,8 @@ export default function ProjectsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col text-xs text-slate-600">
-                        <span>{project.startDate ? formatDate(project.startDate) : 'TBD'} - </span>
-                        <span>{project.expectedCompletion ? formatDate(project.expectedCompletion) : 'TBD'}</span>
+                        <span>{project.startDate ? formatDate(project.startDate) : 'Not Set'} - </span>
+                        <span>{project.expectedCompletion ? formatDate(project.expectedCompletion) : 'Not Set'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -354,10 +361,7 @@ export default function ProjectsPage() {
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <span className="text-xs font-heading font-bold px-2 py-0.5 rounded bg-clay-violet/20 text-[#7C6EF0] border border-violet-100/40">
-                        {project.projectCode}
-                      </span>
-                      <h3 className="text-base font-bold text-slate-900 mt-1 font-heading transition-colors">
+                      <h3 className="text-base font-bold text-slate-900 font-heading transition-colors">
                         {project.name}
                       </h3>
                     </div>
@@ -457,13 +461,14 @@ export default function ProjectsPage() {
             <form onSubmit={handleCreateSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Project Code</label>
+                  <label className="text-xs font-semibold text-slate-700">Project Name *</label>
                   <input
                     type="text"
-                    placeholder="Leave blank to auto-generate"
-                    value={newProject.projectCode}
-                    onChange={(e) => setNewProject({ ...newProject, projectCode: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2 clay-input text-sm font-heading focus:outline-none"
+                    required
+                    placeholder="e.g. Skyline Residency Tower A"
+                    value={newProject.name}
+                    onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                    className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -479,30 +484,37 @@ export default function ProjectsPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Project Name *</label>
+                  <label className="text-xs font-semibold text-slate-700">Site Engineer Name</label>
                   <input
                     type="text"
-                    required
-                    placeholder="e.g. Skyline Residency Tower A"
-                    value={newProject.name}
-                    onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                    placeholder="e.g. Rahul Sharma"
+                    value={newProject.siteEngineerName}
+                    onChange={(e) => setNewProject({ ...newProject, siteEngineerName: e.target.value })}
+                    className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Primary Contact Number</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. +91 9876543210"
+                    value={newProject.primaryNumber}
+                    onChange={(e) => setNewProject({ ...newProject, primaryNumber: e.target.value })}
                     className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Assign Site Engineer</label>
-                  <select
-                    value={newProject.engineerId}
-                    onChange={(e) => setNewProject({ ...newProject, engineerId: e.target.value })}
+                  <label className="text-xs font-semibold text-slate-700">Secondary Contact Number</label>
+                  <input
+                    type="text"
+                    placeholder="Optional backup contact"
+                    value={newProject.secondaryNumber}
+                    onChange={(e) => setNewProject({ ...newProject, secondaryNumber: e.target.value })}
                     className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
-                  >
-                    <option value="">Select Engineer...</option>
-                    {engineers.map((emp: any) => (
-                      <option key={emp.user?.id} value={emp.user?.id}>
-                        {emp.user?.name}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
               </div>
 
@@ -531,20 +543,34 @@ export default function ProjectsPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">City</label>
-                  <input
-                    type="text"
+                  <label className="text-xs font-semibold text-slate-700">City (Maharashtra)</label>
+                  <select
                     value={newProject.city}
                     onChange={(e) => setNewProject({ ...newProject, city: e.target.value })}
                     className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
-                  />
+                  >
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Pune">Pune</option>
+                    <option value="Nagpur">Nagpur</option>
+                    <option value="Thane">Thane</option>
+                    <option value="Nashik">Nashik</option>
+                    <option value="Aurangabad">Aurangabad</option>
+                    <option value="Solapur">Solapur</option>
+                  </select>
+                  {/* Show existing projects in this city as a small hint */}
+                  {newProject.city && (
+                    <div className="text-[10px] text-slate-500 mt-1">
+                      {projects.filter((p: any) => p.city === newProject.city).length} existing projects in {newProject.city}.
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">State</label>
+                  <label className="text-xs font-semibold text-slate-700">Area Address</label>
                   <input
                     type="text"
-                    value={newProject.state}
-                    onChange={(e) => setNewProject({ ...newProject, state: e.target.value })}
+                    placeholder="e.g. Andheri East"
+                    value={newProject.areaAddress}
+                    onChange={(e) => setNewProject({ ...newProject, areaAddress: e.target.value })}
                     className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
                   />
                 </div>
@@ -599,12 +625,12 @@ export default function ProjectsPage() {
             <form onSubmit={handleEditSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Project Code</label>
+                  <label className="text-xs font-semibold text-slate-700">Site Engineer Name</label>
                   <input
                     type="text"
-                    value={editingProject.projectCode || ''}
-                    onChange={(e) => setEditingProject({ ...editingProject, projectCode: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2 clay-input text-sm font-heading focus:outline-none"
+                    value={editingProject.siteEngineerName || ''}
+                    onChange={(e) => setEditingProject({ ...editingProject, siteEngineerName: e.target.value })}
+                    className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -646,17 +672,54 @@ export default function ProjectsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">City</label>
+                  <label className="text-xs font-semibold text-slate-700">City (Maharashtra)</label>
+                  <select
+                    value={editingProject.city || 'Mumbai'}
+                    onChange={(e) => setEditingProject({ ...editingProject, city: e.target.value })}
+                    className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
+                  >
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Pune">Pune</option>
+                    <option value="Nagpur">Nagpur</option>
+                    <option value="Thane">Thane</option>
+                    <option value="Nashik">Nashik</option>
+                    <option value="Aurangabad">Aurangabad</option>
+                    <option value="Solapur">Solapur</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Area Address</label>
                   <input
                     type="text"
-                    value={editingProject.city}
-                    onChange={(e) => setEditingProject({ ...editingProject, city: e.target.value })}
+                    value={editingProject.areaAddress || ''}
+                    onChange={(e) => setEditingProject({ ...editingProject, areaAddress: e.target.value })}
+                    className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Primary Number</label>
+                  <input
+                    type="text"
+                    value={editingProject.primaryNumber || ''}
+                    onChange={(e) => setEditingProject({ ...editingProject, primaryNumber: e.target.value })}
                     className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Secondary Number</label>
+                  <input
+                    type="text"
+                    value={editingProject.secondaryNumber || ''}
+                    onChange={(e) => setEditingProject({ ...editingProject, secondaryNumber: e.target.value })}
+                    className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
+                  />
+                </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700">Contract Valuation (₹)</label>
                   <input
@@ -666,6 +729,8 @@ export default function ProjectsPage() {
                     className="w-full px-3 py-2 clay-input text-sm font-heading focus:outline-none"
                   />
                 </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700">Estimated Budget (₹)</label>
                   <input

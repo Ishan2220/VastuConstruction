@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, Key, Mail, X, Shield, Users, Search, MoreVertical, Clock } from 'lucide-react';
+import { Plus, Edit2, Trash2, Key, Mail, X, Shield, Users, Search, MoreVertical, Clock, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import api from '@/lib/api';
@@ -121,6 +121,12 @@ export default function UsersPage() {
                     <Mail className="h-3.5 w-3.5 text-slate-400" /> 
                     <span className="truncate">{user.email}</span>
                   </p>
+                  {user.phone && (
+                    <p className="text-slate-500 text-xs font-medium flex items-center gap-2">
+                      <Phone className="h-3.5 w-3.5 text-slate-400" /> 
+                      <span className="truncate">{user.phone}</span>
+                    </p>
+                  )}
                 </div>
               </div>
               

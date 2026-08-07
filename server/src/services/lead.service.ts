@@ -16,6 +16,19 @@ interface ListParams {
   captureDateEnd?: string;
 }
 
+export const checkDuplicate = async (name: string) => {
+  if (!name) return { isDuplicate: false, projectCount: 0 };
+  const lead = await prisma.lead.findFirst({
+    where: { name: { equals: name, mode: 'insensitive' }, isArchived: false },
+    include: { client: { include: { projects: true } } }
+  });
+  
+  if (!lead) return { isDuplicate: false, projectCount: 0 };
+  
+  const projectCount = lead.client?.projects?.length || 0;
+  return { isDuplicate: true, leadId: lead.id, projectCount };
+};
+
 export const list = async (params: ListParams) => {
   const { page = 1, limit = 10, search, status, source, sortBy = 'createdAt', sortOrder = 'desc', captureDateStart, captureDateEnd } = params;
   const pageNum = Number(page) || 1;
@@ -52,6 +65,7 @@ export const list = async (params: ListParams) => {
       include: {
         assignee: { select: { id: true, name: true } },
         createdBy: { select: { name: true } },
+        incomes: { where: { deletedAt: null } },
         _count: { select: { timeline: true, documents: true } },
       },
     }),
@@ -70,6 +84,7 @@ export const getById = async (id: string) => {
       timeline: { orderBy: { createdAt: 'desc' } },
       documents: { orderBy: { createdAt: 'desc' } },
       client: { select: { id: true, name: true } },
+      incomes: { where: { deletedAt: null }, orderBy: { paymentDate: 'desc' } },
     },
   });
 
@@ -110,14 +125,20 @@ export const updateStatus = async (id: string, status: LeadStatus, userId: strin
   const existing = await prisma.lead.findFirst({ where: { id, deletedAt: null } });
   if (!existing) throw new ApiError(404, 'Lead not found');
 
-  // Lead status transition validation
-  const invalidTransitions: Record<string, string[]> = {
-    'WON': ['NEW', 'CONTACTED', 'SITE_VISIT', 'FOLLOW_UP', 'PROPOSAL_SENT', 'NEGOTIATION', 'LOST'],
-    'LOST': ['NEW', 'CONTACTED', 'SITE_VISIT', 'FOLLOW_UP', 'PROPOSAL_SENT', 'NEGOTIATION'],
-  };
-  
-  if (invalidTransitions[existing.status] && invalidTransitions[existing.status].includes(status)) {
-    throw new ApiError(400, `Invalid lead status transition from ${existing.status} to ${status}`);
+  // Fetch user to check role
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const isAdmin = user?.role === 'ADMIN';
+
+  // Lead status transition validation (bypassed for ADMIN)
+  if (!isAdmin) {
+    const invalidTransitions: Record<string, string[]> = {
+      'WON': ['NEW', 'CONTACTED', 'SITE_VISIT', 'FOLLOW_UP', 'PROPOSAL_SENT', 'NEGOTIATION', 'LOST'],
+      'LOST': ['NEW', 'CONTACTED', 'SITE_VISIT', 'FOLLOW_UP', 'PROPOSAL_SENT', 'NEGOTIATION'],
+    };
+    
+    if (invalidTransitions[existing.status] && invalidTransitions[existing.status].includes(status)) {
+      throw new ApiError(400, `Invalid lead status transition from ${existing.status} to ${status}`);
+    }
   }
 
   const lead = await prisma.lead.update({
@@ -172,6 +193,8 @@ export const convertToClient = async (id: string, userId: string) => {
         phone: existing.phone || '0000000000',
         email: existing.email,
         address: existing.plotAddress,
+        city: existing.city || 'Mumbai',
+        state: existing.state || 'Maharashtra',
         leadId: existing.id,
         notes: {
           create: [{ content: `Converted from lead ${existing.id}`, userId: userId }]

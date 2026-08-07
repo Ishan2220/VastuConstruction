@@ -106,7 +106,7 @@ export default function SiteMaterialsView({ projectId: propProjectId }: { projec
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight font-heading">
-            Site Materials
+            Material Entry
           </h1>
           <p className="text-sm text-slate-600 mt-1">
             Track material inward and outward for this site.
@@ -320,10 +320,7 @@ export default function SiteMaterialsView({ projectId: propProjectId }: { projec
                 <input type="number" required min="0" step="0.01" value={receiveData.amount} onChange={e => setReceiveData({...receiveData, amount: e.target.value})} className="w-full px-3 py-2 clay-input text-sm bg-slate-50 font-bold" />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Challan / Bill No.</label>
-                <input type="text" value={receiveData.reference} onChange={e => setReceiveData({...receiveData, reference: e.target.value})} className="w-full px-3 py-2 clay-input text-sm" />
-              </div>
+
 
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-700">Remarks</label>

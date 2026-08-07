@@ -250,9 +250,15 @@ export const getAdminDashboard = async () => {
       id: c.id,
       name: c.name,
       companyName: c.companyName,
-      outstanding: Number(c.outstanding)
+      outstanding: Number(c.outstanding),
     }));
 
+  const leadReceivables = await prisma.lead.findMany({
+    where: { deletedAt: null, pendingAmount: { gt: 0 } },
+    select: { id: true, name: true, address: true, pendingAmount: true, requirement: true },
+    orderBy: { pendingAmount: 'desc' },
+    take: 5
+  });
   // Merge calendar events and upcoming tasks into upcomingReminders
   const mergedReminders = [
     ...upcomingReminders.map((r: any) => ({ id: r.id, title: r.title, startTime: r.startTime, type: 'Meeting' })),
@@ -291,6 +297,7 @@ export const getAdminDashboard = async () => {
     recentLeads,
     upcomingReminders: mergedReminders,
     topOutstandingClients,
+    leadReceivables,
   };
 };
 

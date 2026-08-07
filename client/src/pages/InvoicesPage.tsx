@@ -4,8 +4,6 @@ import api from '@/lib/api';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { useAuthStore } from '@/store/authStore';
 import { AutocompleteInput } from '@/components/ui/AutocompleteInput';
 import { useConfirm } from "@/components/ui/ConfirmProvider";
@@ -78,7 +76,7 @@ export default function InvoicesPage() {
       const [cRes, pRes, vRes] = await Promise.all([
         api.get('/clients'),
         api.get('/projects'),
-        api.get('/vendors')
+        api.get('/vendors?limit=1000')
       ]);
       setClients(cRes.data?.data?.data || cRes.data?.data || []);
       setProjects(pRes.data?.data?.data || pRes.data?.data || []);
@@ -222,107 +220,24 @@ export default function InvoicesPage() {
     setNewInvoice({ ...newInvoice, items: [...newInvoice.items, { description: '', quantity: '1', rate: '', amount: '' }] });
   };
 
-  const handleDownloadPDF = (invoice: any) => {
+  const handleDownloadPDF = async (invoice: any) => {
     toast.success(`Generating PDF for ${invoice.invoiceNumber}...`);
     try {
-      const doc = new jsPDF();
-      
-      // Professional Header with Background Accent
-      doc.setFillColor(124, 110, 240);
-      doc.rect(0, 0, 210, 40, 'F');
-      
-      doc.setFontSize(26);
-      doc.setTextColor(255, 255, 255);
-      doc.text('VASTU CONSTRUCTIONS', 14, 20);
-      doc.setFontSize(10);
-      doc.text('Enterprise Grade Construction ERP', 14, 28);
-      
-      // Invoice Details
-      doc.setFontSize(24);
-      doc.setTextColor(255, 255, 255);
-      doc.text('INVOICE', 150, 25);
-      
-      // Company Info (Below header)
-      doc.setFontSize(10);
-      doc.setTextColor(80, 80, 80);
-      doc.text('Sudarshan Chouk, Rp Road, Satpute Galli', 14, 50);
-      doc.text('Ichalkaranji-416115, Maharashtra', 14, 55);
-      doc.text('Contact: +91 9604459628', 14, 60);
-      doc.text('Email: vastuconstructionich@gmail.com', 14, 65);
-
-      // Invoice Meta Info
-      doc.setFontSize(10);
-      doc.setTextColor(50, 50, 50);
-      doc.text(`Invoice No: ${invoice.invoiceNumber}`, 150, 50);
-      doc.text(`Issue Date: ${format(new Date(invoice.issueDate), 'dd MMM yyyy')}`, 150, 55);
-      doc.text(`Status: ${invoice.status}`, 150, 60);
-
-      // Party Info Box
-      doc.setFillColor(245, 244, 255);
-      doc.rect(14, 75, 182, 35, 'F');
-      doc.setFontSize(11);
-      doc.setTextColor(124, 110, 240);
-      doc.text(`INVOICE ${invoice.type === 'CLIENT' ? 'FOR CLIENT' : 'FROM VENDOR'}`, 20, 85);
-      
-      doc.setFontSize(12);
-      doc.setTextColor(40, 40, 40);
-      const partyName = invoice.type === 'CLIENT' 
-        ? (invoice.client?.companyName || invoice.client?.name || 'Client')
-        : (invoice.vendor?.name || 'Vendor');
-      doc.text(partyName, 20, 93);
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      if (invoice.project?.name) {
-        doc.text(`Project: ${invoice.project.name}`, 20, 100);
-      }
-
-      // Items Table
-      const tableBody = invoice.items && invoice.items.length > 0 
-        ? invoice.items.map((i: any) => [
-            i.description || 'Item', 
-            i.quantity || '1', 
-            Number(i.rate || 0).toLocaleString('en-IN'),
-            Number(i.amount || 0).toLocaleString('en-IN')
-          ])
-        : [['Consulting, Labour & Material Services', '1', Number(invoice.subtotal).toLocaleString('en-IN'), Number(invoice.subtotal).toLocaleString('en-IN')]];
-
-      const gstText = invoice.gstMode === 'PERCENTAGE' 
-        ? `GST (${invoice.gstPercentage}%)`
-        : invoice.gstMode === 'AMOUNT' ? 'GST' : 'GST (0%)';
-
-      autoTable(doc, {
-        startY: 120,
-        headStyles: { fillColor: [124, 110, 240], textColor: [255, 255, 255], fontStyle: 'bold' },
-        bodyStyles: { textColor: [50, 50, 50] },
-        alternateRowStyles: { fillColor: [250, 249, 255] },
-        head: [['Description', 'Qty', 'Rate (INR)', 'Total (INR)']],
-        body: tableBody,
-        foot: [
-          ['', '', 'Subtotal', `Rs. ${Number(invoice.subtotal).toLocaleString('en-IN')}`],
-          ['', '', gstText, `Rs. ${Number(invoice.taxAmount).toLocaleString('en-IN')}`],
-          ['', '', 'Total Due', `Rs. ${Number(invoice.totalAmount).toLocaleString('en-IN')}`]
-        ],
-        footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-        theme: 'striped',
-        margin: { top: 10, left: 14, right: 14 }
+      const response = await api.get(`/invoices/${invoice.id}/pdf`, {
+        responseType: 'blob'
       });
-
-      // Footer
-      const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
       
-      doc.setDrawColor(124, 110, 240);
-      doc.setLineWidth(0.5);
-      doc.line(14, pageHeight - 30, 196, pageHeight - 30);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice-${invoice.invoiceNumber}.pdf`);
+      document.body.appendChild(link);
+      link.click();
       
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text('Thank you for your business!', 14, pageHeight - 20);
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text('Generated digitally by Vastu x ConstraCore ERP System.', 14, pageHeight - 12);
-
-      // Save PDF
-      doc.save(`${invoice.invoiceNumber}.pdf`);
+      // Clean up
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (e) {
       console.error(e);
       toast.error('Failed to generate PDF');

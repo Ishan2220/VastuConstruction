@@ -234,6 +234,8 @@ model Lead {
   phone              String?
   email              String?
   address            String?
+  city               String?
+  state              String?
   mapLocation        String?    @map("map_location")
   source             String     @default("OTHER")
   budget             Decimal?   @db.Decimal(12, 2)
@@ -250,6 +252,9 @@ model Lead {
   status             LeadStatus @default(NEW)
   followUpDate       DateTime?  @map("follow_up_date")
   remarks            String?
+  paymentStatus      String?    @map("payment_status")
+  paymentMode        String?    @map("payment_mode")
+  pendingAmount      Decimal?   @db.Decimal(12, 2) @map("pending_amount")
   isArchived         Boolean    @default(false) @map("is_archived")
 
   assigneeId  String? @map("assignee_id")
@@ -265,6 +270,7 @@ model Lead {
   timeline  LeadTimeline[]
   documents Document[]     @relation("LeadDocuments")
   client    Client?
+  incomes   Income[]
 
   @@index([status])
   @@index([followUpDate])
@@ -353,6 +359,10 @@ model Project {
   address            String?
   city               String?
   state              String?
+  areaAddress        String?       @map("area_address")
+  primaryNumber      String?       @map("primary_number")
+  secondaryNumber    String?       @map("secondary_number")
+  siteEngineerName   String?       @map("site_engineer_name")
   projectCode        String?       @unique @map("project_code")
   isArchived         Boolean       @default(false) @map("is_archived")
 
@@ -461,6 +471,7 @@ model Vendor {
   expenses       Expense[]
   documents      Document[]         @relation("VendorDocuments")
   invoices       Invoice[]
+  incomes        Income[]
 
   isArchived         Boolean            @default(false) @map("is_archived")
   businessActivities BusinessActivity[]
@@ -730,8 +741,12 @@ model BankAccount {
 
 model Income {
   id            String       @id @default(uuid())
-  clientId      String       @map("client_id")
-  client        Client       @relation(fields: [clientId], references: [id])
+  clientId      String?      @map("client_id")
+  client        Client?      @relation(fields: [clientId], references: [id])
+  leadId        String?      @map("lead_id")
+  lead          Lead?        @relation(fields: [leadId], references: [id])
+  vendorId      String?      @map("vendor_id")
+  vendor        Vendor?      @relation(fields: [vendorId], references: [id])
   projectId     String?      @map("project_id")
   project       Project?     @relation(fields: [projectId], references: [id])
   amount        Decimal      @db.Decimal(12, 2)
@@ -757,6 +772,8 @@ model Income {
   deletedAt DateTime? @map("deleted_at")
 
   @@index([clientId])
+  @@index([leadId])
+  @@index([vendorId])
   @@index([projectId])
   @@index([paymentDate])
   @@index([deletedAt])

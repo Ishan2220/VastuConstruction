@@ -24,7 +24,7 @@ export const VendorAttendanceView: React.FC<VendorAttendanceViewProps> = ({ sele
   const { data: vendorsList = [], isLoading: loadingVendors } = useQuery({
     queryKey: ['vendors-labour-contractors'],
     queryFn: async () => {
-      const { data } = await api.get('/vendors?category=LABOUR_CONTRACTOR');
+      const { data } = await api.get('/vendors?limit=1000');
       return data.data?.data || [];
     },
   });

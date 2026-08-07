@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
+import { validateBackdating } from '../utils/dateValidation.js';
 import * as orderService from '../services/materialOrder.service.js';
 
 export const list = asyncHandler(async (req: Request, res: Response) => {
@@ -14,7 +15,11 @@ export const getById = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const create = asyncHandler(async (req: Request, res: Response) => {
-  const order = await orderService.create(req.body, req.user!.userId);
+  const orderDate = req.body.orderDate || new Date();
+  validateBackdating(orderDate, req.user!.role);
+  
+  const data = { ...req.body, orderDate: new Date(orderDate) };
+  const order = await orderService.create(data, req.user!.userId);
   res.status(201).json(new ApiResponse(201, order, 'Material order created successfully'));
 });
 

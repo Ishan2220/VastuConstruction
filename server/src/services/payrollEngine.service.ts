@@ -37,9 +37,14 @@ export class PayrollEngine {
 
     const settings = await tx.payrollSettings.findFirst() || await getSettings();
 
-    // Overrides
-    const standardDays = employee.workingDaysOverride || settings.standardWorkingDays;
-    const standardHours = employee.workingHoursOverride || settings.standardWorkingHours;
+    // Dynamic Working Days (Total days in month - 4 holidays)
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const totalDaysInMonth = new Date(year, month, 0).getDate();
+    const standardDays = employee.workingDaysOverride || (totalDaysInMonth - 4);
+
+    // Standard Hours defaulted to 8
+    const standardHours = employee.workingHoursOverride || 8;
 
     // Calculate base daily salary
     let dailySalaryBase = 0;
@@ -144,7 +149,13 @@ export class PayrollEngine {
     let baseSalary = 0;
 
     const settings = await getSettings();
-    const workingDays = employee.workingDaysOverride || settings.standardWorkingDays;
+    
+    // Dynamic Working Days (Total days in month - 4 holidays)
+    const totalDaysInMonth = new Date(year, month, 0).getDate();
+    const workingDays = employee.workingDaysOverride || (totalDaysInMonth - 4);
+    
+    // Standard Hours defaulted to 8
+    const standardHours = employee.workingHoursOverride || 8;
 
     // Calculate the base daily salary (used for proportional calculations)
     let dailySalaryBase = 0;
@@ -187,10 +198,10 @@ export class PayrollEngine {
           if (!workLogDates.has(attDateStr)) {
             if (att.status === 'PRESENT') {
               baseSalary += dailySalaryBase;
-              totalWorkingHours += (employee.workingHoursOverride || settings.standardWorkingHours);
+              totalWorkingHours += standardHours;
             } else if (att.status === 'HALF_DAY') {
               baseSalary += (dailySalaryBase / 2);
-              totalWorkingHours += (employee.workingHoursOverride || settings.standardWorkingHours) / 2;
+              totalWorkingHours += (standardHours / 2);
             }
           }
         }

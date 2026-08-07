@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Plus, Search, Phone, Mail, Building2, MapPin, Edit3, Trash2 } from 'lucide-react';
+import { Users, Plus, Search, Phone, Mail, Building2, MapPin, Edit3, Trash2, Eye, X } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { useConfirm } from "@/components/ui/ConfirmProvider";
+import { formatCurrency, formatDate } from '@/lib/utils';
+import { MAHARASHTRA_CITIES } from '@/lib/cities';
 
 export default function ClientsPage() {
     const confirmDialog = useConfirm();
@@ -11,6 +13,7 @@ export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
+  const [viewingClient, setViewingClient] = useState<any>(null);
   const [newClient, setNewClient] = useState({
     name: '',
     companyName: '',
@@ -29,6 +32,16 @@ export default function ClientsPage() {
       const { data } = await api.get('/clients');
       return data.data?.data || [];
     },
+  });
+
+  const { data: clientIncomes = [], isLoading: isLoadingIncomes } = useQuery({
+    queryKey: ['client-incomes', viewingClient?.id],
+    queryFn: async () => {
+      if (!viewingClient) return [];
+      const { data } = await api.get(`/income?clientId=${viewingClient.id}&limit=1000`);
+      return data.data?.data || [];
+    },
+    enabled: !!viewingClient,
   });
 
   const createMutation = useMutation({
@@ -167,6 +180,13 @@ export default function ClientsPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <button
+                        onClick={() => setViewingClient(client)}
+                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                        title="View Client Details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() => setEditingClient(client)}
                         className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
                         title="Edit Client Details"
@@ -269,6 +289,13 @@ export default function ClientsPage() {
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
+                          onClick={() => setViewingClient(client)}
+                          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                          title="View Client Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => setEditingClient(client)}
                           className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
                           title="Edit Client Details"
@@ -328,18 +355,29 @@ export default function ClientsPage() {
                 onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
                 className="w-full clay-input text-sm"
               />
+              <input
+                type="text"
+                placeholder="Full Address"
+                value={newClient.address || ''}
+                onChange={(e) => setNewClient({ ...newClient, address: e.target.value })}
+                className="w-full clay-input text-sm"
+              />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="City"
+                <select
+                  required
                   value={newClient.city}
                   onChange={(e) => setNewClient({ ...newClient, city: e.target.value })}
                   className="w-full clay-input text-sm"
-                />
+                >
+                  <option value="">Select City *</option>
+                  {MAHARASHTRA_CITIES.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
                 <input
                   type="text"
                   placeholder="State"
-                  value={newClient.state}
+                  value={newClient.state || ''}
                   onChange={(e) => setNewClient({ ...newClient, state: e.target.value })}
                   className="w-full clay-input text-sm"
                 />
@@ -389,14 +427,25 @@ export default function ClientsPage() {
                   className="w-full clay-input text-sm"
                 />
               </div>
+              <input
+                type="text"
+                placeholder="Full Address"
+                value={editingClient.address || ''}
+                onChange={(e) => setEditingClient({ ...editingClient, address: e.target.value })}
+                className="w-full clay-input text-sm"
+              />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="City"
+                <select
+                  required
                   value={editingClient.city || ''}
                   onChange={(e) => setEditingClient({ ...editingClient, city: e.target.value })}
                   className="w-full clay-input text-sm"
-                />
+                >
+                  <option value="">Select City *</option>
+                  {MAHARASHTRA_CITIES.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
                 <input
                   type="text"
                   placeholder="State"
@@ -411,6 +460,77 @@ export default function ClientsPage() {
                 <button type="submit" disabled={updateMutation.isPending} className="clay-btn px-5 py-2">Save Updates</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Modal */}
+      {viewingClient && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="clay-card w-full max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 rounded-2xl">
+            <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
+              <h3 className="font-bold text-lg font-heading text-slate-800">Client Profile & Payment History</h3>
+              <button onClick={() => setViewingClient(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer"><X className="w-5 h-5" /></button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <div className="space-y-2">
+                <h4 className="text-sm font-bold text-slate-800">{viewingClient.name}</h4>
+                {viewingClient.companyName && <div className="text-xs text-slate-500 font-medium">Company: <span className="text-slate-700">{viewingClient.companyName}</span></div>}
+                <div className="text-xs text-slate-500 font-medium flex items-center gap-2"><Phone className="w-3.5 h-3.5" /> <span className="text-slate-700">{viewingClient.phone}</span></div>
+                {viewingClient.email && <div className="text-xs text-slate-500 font-medium flex items-center gap-2"><Mail className="w-3.5 h-3.5" /> <span className="text-slate-700">{viewingClient.email}</span></div>}
+              </div>
+              <div className="space-y-2">
+                <div className="text-xs text-slate-500 font-medium">GSTIN/PAN: <span className="text-slate-700 font-mono">{viewingClient.gst || viewingClient.gstin || viewingClient.pan || 'N/A'}</span></div>
+                <div className="text-xs text-slate-500 font-medium flex items-start gap-2">
+                  <MapPin className="w-3.5 h-3.5 mt-0.5" /> 
+                  <span className="text-slate-700 leading-relaxed">
+                    {viewingClient.address ? `${viewingClient.address}, ` : ''}{viewingClient.city ? `${viewingClient.city}, ` : ''}{viewingClient.state || 'N/A'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="font-bold text-md text-slate-800 font-heading border-b border-slate-100 pb-2">Payment History</h4>
+              {isLoadingIncomes ? (
+                <div className="py-8 text-center text-slate-400 animate-pulse">Loading payment history...</div>
+              ) : clientIncomes.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 text-sm">No payment history found for this client.</div>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-slate-100">
+                  <table className="w-full text-left text-sm text-slate-600">
+                    <thead className="bg-slate-50 border-b border-slate-100">
+                      <tr>
+                        <th className="p-3 font-semibold">Date</th>
+                        <th className="p-3 font-semibold">Amount</th>
+                        <th className="p-3 font-semibold">Mode</th>
+                        <th className="p-3 font-semibold">Type</th>
+                        <th className="p-3 font-semibold">Ref / Project</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {clientIncomes.map((inc: any) => (
+                        <tr key={inc.id} className="hover:bg-slate-50/50">
+                          <td className="p-3">{formatDate(inc.paymentDate || inc.createdAt)}</td>
+                          <td className="p-3 font-bold text-emerald-600">{formatCurrency(inc.totalAmount || inc.amount)}</td>
+                          <td className="p-3">
+                            <span className="px-2 py-1 bg-slate-100 text-slate-600 text-[11px] font-bold rounded-md uppercase">
+                              {inc.paymentMethod?.replace('_', ' ') || '-'}
+                            </span>
+                          </td>
+                          <td className="p-3 text-xs">{inc.type?.replace('_', ' ') || '-'}</td>
+                          <td className="p-3 text-xs">
+                            {inc.reference && <div className="font-mono text-slate-500">{inc.reference}</div>}
+                            {inc.project?.name && <div className="text-[#7C6EF0] font-medium truncate max-w-[150px]" title={inc.project.name}>{inc.project.name}</div>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -141,6 +141,11 @@ export default function EmployeeDetailsPage() {
                             }`}>
                               {att.status}
                             </span>
+                            {att.status === 'ABSENT' && att.absentReason && (
+                              <div className="text-[10px] text-gray-500 font-medium italic mt-1 max-w-[200px] truncate" title={att.absentReason}>
+                                Reason: {att.absentReason}
+                              </div>
+                            )}
                           </td>
                           <td className="p-3 text-slate-600 font-medium">{att.checkIn ? new Date(att.checkIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-'}</td>
                           <td className="p-3 text-slate-600 font-medium">{att.checkOut ? new Date(att.checkOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-'}</td>
@@ -154,13 +159,20 @@ export default function EmployeeDetailsPage() {
                     <div key={att.id} className="clay-card-sm p-4 flex flex-col gap-3">
                       <div className="flex justify-between items-start">
                         <div className="font-mono font-bold text-slate-700">{formatDate(att.date)}</div>
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                          att.status === 'PRESENT' ? 'bg-clay-green/10 text-[#5CB77E] border-[#5CB77E]/30' :
-                          att.status === 'ABSENT' ? 'bg-clay-rose/10 text-[#E5636C] border-[#E5636C]/30' :
-                          'bg-clay-amber/10 text-[#F2A65A] border-[#F2A65A]/30'
-                        }`}>
-                          {att.status}
-                        </span>
+                        <div className="flex flex-col items-end">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                            att.status === 'PRESENT' ? 'bg-clay-green/10 text-[#5CB77E] border-[#5CB77E]/30' :
+                            att.status === 'ABSENT' ? 'bg-clay-rose/10 text-[#E5636C] border-[#E5636C]/30' :
+                            'bg-clay-amber/10 text-[#F2A65A] border-[#F2A65A]/30'
+                          }`}>
+                            {att.status}
+                          </span>
+                          {att.status === 'ABSENT' && att.absentReason && (
+                            <span className="text-[10px] text-gray-500 font-medium italic mt-1 text-right max-w-[150px] truncate" title={att.absentReason}>
+                              {att.absentReason}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center justify-between text-xs text-slate-600 pt-2 border-t border-violet-100/30">
                         <div><span className="text-slate-400">Check In:</span> <span className="font-semibold">{att.checkIn ? new Date(att.checkIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-'}</span></div>

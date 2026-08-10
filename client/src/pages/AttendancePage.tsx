@@ -16,6 +16,7 @@ interface Person {
   role: string;
   status: AttendanceStatus;
   overtimeHours: number;
+  absentReason?: string | null;
 }
 
 interface AttendanceData {
@@ -94,7 +95,7 @@ export default function AttendancePage() {
 
   // Mutations
   const updateMutation = useMutation({
-    mutationFn: async (payload: { personId: string; personType: PersonType; date: string; status: AttendanceStatus; overtimeHours: number }) => {
+    mutationFn: async (payload: { personId: string; personType: PersonType; date: string; status: AttendanceStatus; overtimeHours: number; absentReason?: string | null }) => {
       const res = await api.put('/attendance', payload);
       return res.data;
     },
@@ -141,7 +142,8 @@ export default function AttendancePage() {
     const newPeople = localPeople.map(p => {
       if (p.personId === personId) {
         const newOvertime = status === 'ABSENT' ? 0 : p.overtimeHours;
-        return { ...p, status, overtimeHours: newOvertime };
+        const newReason = status === 'ABSENT' ? p.absentReason : null;
+        return { ...p, status, overtimeHours: newOvertime, absentReason: newReason };
       }
       return p;
     });
@@ -150,7 +152,33 @@ export default function AttendancePage() {
     const person = newPeople.find(p => p.personId === personId);
     if (person) {
       updateMutation.mutate(
-        { personId, personType, date: selectedDateStr, status, overtimeHours: status === 'ABSENT' ? 0 : person.overtimeHours },
+        { personId, personType, date: selectedDateStr, status, overtimeHours: status === 'ABSENT' ? 0 : person.overtimeHours, absentReason: person.absentReason },
+        { 
+          onError: (err: any) => {
+            toast.error(err.response?.data?.message || err.message || 'Failed to update attendance');
+            setLocalPeople(prevPeople);
+          }
+        }
+      );
+    }
+  };
+
+  const handleAbsentReasonChange = (personId: string, val: string) => {
+    if (attendanceData?.isLocked || isPast) return;
+    
+    const prevPeople = [...localPeople];
+    const newPeople = localPeople.map(p => {
+      if (p.personId === personId) {
+        return { ...p, absentReason: val };
+      }
+      return p;
+    });
+    setLocalPeople(newPeople);
+    
+    const person = newPeople.find(p => p.personId === personId);
+    if (person && person.status === 'ABSENT') {
+      updateMutation.mutate(
+        { personId, personType, date: selectedDateStr, status: 'ABSENT', overtimeHours: 0, absentReason: val },
         { 
           onError: (err: any) => {
             toast.error(err.response?.data?.message || err.message || 'Failed to update attendance');
@@ -475,27 +503,47 @@ export default function AttendancePage() {
                               </button>
                             </div>
 
-                            {/* Overtime */}
-                            <div className={`flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] transition-opacity ${showOt ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                              <span className="text-[10px] text-gray-400 font-medium">OT</span>
-                              <input
-                                type="number"
-                                step="0.5"
-                                min="0"
-                                max="12"
-                                disabled={isLocked || !showOt}
-                                value={person.overtimeHours === 0 ? '' : person.overtimeHours}
-                                onChange={(e) => {
-                                  const prev = [...localPeople];
-                                  setLocalPeople(prev.map(p => p.personId === person.personId ? { ...p, overtimeHours: parseFloat(e.target.value) || 0 } : p));
-                                }}
-                                onBlur={(e) => handleOvertimeChange(person.personId, e.target.value)}
-                                placeholder="0"
-                                className={`w-14 rounded-lg border border-gray-200 text-center text-sm font-semibold py-1 outline-none focus:ring-2 focus:ring-violet-400 transition-shadow ${
-                                  isLocked ? 'bg-gray-50 text-gray-300' : 'bg-white text-gray-800'
-                                }`}
-                              />
-                            </div>
+                             {/* Absent Reason */}
+                             {person.status === 'ABSENT' && (
+                               <div className="flex items-center gap-2 w-full sm:w-auto">
+                                 <input
+                                   type="text"
+                                   placeholder="Reason for absence..."
+                                   disabled={isLocked}
+                                   value={person.absentReason || ''}
+                                   onChange={(e) => {
+                                     const prev = [...localPeople];
+                                     setLocalPeople(prev.map(p => p.personId === person.personId ? { ...p, absentReason: e.target.value } : p));
+                                   }}
+                                   onBlur={(e) => handleAbsentReasonChange(person.personId, e.target.value)}
+                                   className={`w-full sm:w-44 rounded-lg border border-gray-200 text-xs font-semibold px-2 py-1.5 outline-none focus:ring-2 focus:ring-[#7C6EF0]/40 transition-shadow ${
+                                     isLocked ? 'bg-gray-50 text-gray-300' : 'bg-white text-gray-800'
+                                   }`}
+                                 />
+                               </div>
+                             )}
+
+                             {/* Overtime */}
+                             <div className={`flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] transition-opacity ${showOt ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                               <span className="text-[10px] text-gray-400 font-medium">OT</span>
+                               <input
+                                 type="number"
+                                 step="0.5"
+                                 min="0"
+                                 max="12"
+                                 disabled={isLocked || !showOt}
+                                 value={person.overtimeHours === 0 ? '' : person.overtimeHours}
+                                 onChange={(e) => {
+                                   const prev = [...localPeople];
+                                   setLocalPeople(prev.map(p => p.personId === person.personId ? { ...p, overtimeHours: parseFloat(e.target.value) || 0 } : p));
+                                 }}
+                                 onBlur={(e) => handleOvertimeChange(person.personId, e.target.value)}
+                                 placeholder="0"
+                                 className={`w-14 rounded-lg border border-gray-200 text-center text-sm font-semibold py-1 outline-none focus:ring-2 focus:ring-violet-400 transition-shadow ${
+                                   isLocked ? 'bg-gray-50 text-gray-300' : 'bg-white text-gray-800'
+                                 }`}
+                               />
+                             </div>
                             
                           </div>
                         </motion.div>

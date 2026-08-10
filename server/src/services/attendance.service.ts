@@ -55,7 +55,8 @@ export const getAttendanceByDate = async (date: string, type: 'EMPLOYEE' | 'LABO
       name,
       role,
       status: record ? record.status : null,
-      overtimeHours: record ? Number(record.overtimeHours) || 0 : 0
+      overtimeHours: record ? Number(record.overtimeHours) || 0 : 0,
+      absentReason: record ? record.absentReason : null
     };
   });
 
@@ -72,7 +73,8 @@ export const upsertAttendance = async (
   date: string,
   status: 'PRESENT' | 'HALF_DAY' | 'ABSENT',
   overtimeHours: number = 0,
-  markedBy: string
+  absentReason: string | null = null,
+  markedBy: string = ''
 ) => {
   const targetDate = new Date(date);
   targetDate.setUTCHours(0, 0, 0, 0);
@@ -92,6 +94,7 @@ export const upsertAttendance = async (
   }
 
   const finalOvertime = status === 'ABSENT' ? 0 : overtimeHours;
+  const finalReason = status === 'ABSENT' ? (absentReason || null) : null;
 
   const att = await prisma.unifiedAttendance.upsert({
     where: {
@@ -104,6 +107,7 @@ export const upsertAttendance = async (
     update: {
       status,
       overtimeHours: finalOvertime,
+      absentReason: finalReason,
       markedBy
     },
     create: {
@@ -112,6 +116,7 @@ export const upsertAttendance = async (
       date: targetDate,
       status,
       overtimeHours: finalOvertime,
+      absentReason: finalReason,
       markedBy
     }
   });
@@ -145,7 +150,7 @@ export const upsertAttendance = async (
 export const bulkMarkPresent = async (
   date: string,
   personType: 'EMPLOYEE' | 'LABOR',
-  updates: Array<{ personId: string; status: 'PRESENT' | 'HALF_DAY' | 'ABSENT' | 'LEAVE' | 'HOLIDAY'; overtimeHours?: number }>,
+  updates: Array<{ personId: string; status: 'PRESENT' | 'HALF_DAY' | 'ABSENT' | 'LEAVE' | 'HOLIDAY'; overtimeHours?: number; absentReason?: string }>,
   markedBy: string
 ) => {
   const targetDate = new Date(date);
@@ -173,6 +178,7 @@ export const bulkMarkPresent = async (
   await prisma.$transaction(async (tx) => {
     for (const update of updates) {
       const finalOvertime = update.status === 'ABSENT' || update.status === 'LEAVE' || update.status === 'HOLIDAY' ? 0 : (update.overtimeHours || 0);
+      const finalReason = update.status === 'ABSENT' ? (update.absentReason || null) : null;
       
       const att = await tx.unifiedAttendance.upsert({
         where: {
@@ -185,6 +191,7 @@ export const bulkMarkPresent = async (
         update: {
           status: update.status,
           overtimeHours: finalOvertime,
+          absentReason: finalReason,
           markedBy
         },
         create: {
@@ -193,6 +200,7 @@ export const bulkMarkPresent = async (
           date: targetDate,
           status: update.status,
           overtimeHours: finalOvertime,
+          absentReason: finalReason,
           markedBy
         }
       });

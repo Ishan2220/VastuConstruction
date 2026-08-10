@@ -17,7 +17,7 @@ export const getByDate = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const upsertOne = asyncHandler(async (req: Request, res: Response) => {
-  const { personId, personType, date, status, overtimeHours } = req.body;
+  const { personId, personType, date, status, overtimeHours, absentReason } = req.body;
   
   if (!personId || !personType || !date || !status) {
     res.status(400).json(new ApiResponse(400, null, 'personId, personType, date, status are required'));
@@ -30,6 +30,7 @@ export const upsertOne = asyncHandler(async (req: Request, res: Response) => {
     date,
     status,
     overtimeHours,
+    absentReason,
     req.user!.userId
   );
   

@@ -680,6 +680,7 @@ model UnifiedAttendance {
   date          DateTime         @db.Date
   status        AttendanceStatus
   overtimeHours Float?           @default(0) @map("overtime_hours")
+  absentReason  String?          @map("absent_reason")
 
   checkIn             DateTime? @map("check_in")
   checkOut            DateTime? @map("check_out")

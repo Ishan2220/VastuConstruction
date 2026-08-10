@@ -26,9 +26,11 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   const [isManaging, setIsManaging] = useState(false);
   const [newCatName, setNewCatName] = useState('');
 
-  const handleAddSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleAddSubmit = (e?: React.FormEvent | React.KeyboardEvent | React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (!newCatName.trim()) return;
     const formatted = newCatName.trim().toUpperCase();
     addCategory(formatted);
@@ -107,11 +109,16 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
 
             {/* Add Custom Category Form */}
             {isAdding ? (
-              <form onSubmit={handleAddSubmit} className="p-1 space-y-2">
+              <div className="p-1 space-y-2">
                 <input
                   type="text"
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddSubmit(e);
+                    }
+                  }}
                   placeholder="Type category name..."
                   autoFocus
                   className="w-full rounded-lg border border-indigo-200 bg-indigo-50/30 px-2.5 py-1.5 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -128,13 +135,16 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                     Cancel
                   </button>
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={(e) => {
+                      handleAddSubmit(e);
+                    }}
                     className="rounded-lg bg-indigo-600 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-indigo-500"
                   >
                     Save
                   </button>
                 </div>
-              </form>
+              </div>
             ) : (
               <div className="space-y-1">
                 <button

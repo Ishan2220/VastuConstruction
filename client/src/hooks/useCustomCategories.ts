@@ -29,7 +29,7 @@ export function useCustomCategories(module: string, defaultCategories: string[] 
   });
 
   const addCategory = (categoryName: string) => {
-    const cleaned = categoryName.trim().toUpperCase();
+    const cleaned = module === 'cities' ? categoryName.trim() : categoryName.trim().toUpperCase();
     if (!cleaned) return;
     if (!customList.includes(cleaned) && !defaultCategories.includes(cleaned)) {
       addMutation.mutate(cleaned);

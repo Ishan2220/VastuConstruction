@@ -4,7 +4,7 @@ import { useCustomCategories } from '@/hooks/useCustomCategories';
 import { toast } from 'sonner';
 
 interface CategorySelectProps {
-  module: 'labour' | 'materials' | 'tasks' | 'expenses' | 'vendors' | 'incomes' | 'sites' | 'payment_method' | 'lead_source' | 'material_unit' | 'lead_requirement';
+  module: 'labour' | 'materials' | 'tasks' | 'expenses' | 'vendors' | 'incomes' | 'sites' | 'payment_method' | 'lead_source' | 'material_unit' | 'lead_requirement' | 'cities';
   value: string;
   onChange: (value: string) => void;
   defaultOptions?: string[];
@@ -32,7 +32,9 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
       e.stopPropagation();
     }
     if (!newCatName.trim()) return;
-    const formatted = newCatName.trim().toUpperCase();
+    const formatted = module === 'cities'
+      ? newCatName.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+      : newCatName.trim().toUpperCase();
     addCategory(formatted);
     onChange(formatted);
     setNewCatName('');

@@ -29,6 +29,45 @@ import { AutocompleteInput } from '@/components/ui/AutocompleteInput';
 import { useQuickAddListener } from '@/hooks/useQuickAddListener';
 import { useConfirm } from "@/components/ui/ConfirmProvider";
 import { PageSkeleton } from '@/components/ui/PageSkeleton';
+import { CategorySelect } from '@/components/common/CategorySelect';
+
+const MAHARASHTRA_CITIES = [
+  'Mumbai',
+  'Pune',
+  'Nagpur',
+  'Thane',
+  'Nashik',
+  'Chhatrapati Sambhajinagar',
+  'Solapur',
+  'Kalyan-Dombivli',
+  'Vasai-Virar',
+  'Pimpri-Chinchwad',
+  'Navi Mumbai',
+  'Amravati',
+  'Nanded',
+  'Kolhapur',
+  'Ulhasnagar',
+  'Sangli',
+  'Malegaon',
+  'Akola',
+  'Latur',
+  'Dhule',
+  'Ahmednagar',
+  'Chandrapur',
+  'Parbhani',
+  'Ichalkaranji',
+  'Jalna',
+  'Ambarnath',
+  'Bhusawal',
+  'Panvel',
+  'Ratnagiri',
+  'Beed',
+  'Gondia',
+  'Satara',
+  'Yavatmal',
+  'Wardha',
+  'Bhandara'
+];
 
 export default function ProjectsPage() {
     const confirmDialog = useConfirm();
@@ -544,19 +583,13 @@ export default function ProjectsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700">City (Maharashtra)</label>
-                  <select
+                  <CategorySelect
+                    module="cities"
                     value={newProject.city}
-                    onChange={(e) => setNewProject({ ...newProject, city: e.target.value })}
-                    className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
-                  >
-                    <option value="Mumbai">Mumbai</option>
-                    <option value="Pune">Pune</option>
-                    <option value="Nagpur">Nagpur</option>
-                    <option value="Thane">Thane</option>
-                    <option value="Nashik">Nashik</option>
-                    <option value="Aurangabad">Aurangabad</option>
-                    <option value="Solapur">Solapur</option>
-                  </select>
+                    onChange={(val) => setNewProject({ ...newProject, city: val })}
+                    defaultOptions={MAHARASHTRA_CITIES}
+                    placeholder="Select or add city..."
+                  />
                   {/* Show existing projects in this city as a small hint */}
                   {newProject.city && (
                     <div className="text-[10px] text-slate-500 mt-1">
@@ -673,19 +706,13 @@ export default function ProjectsPage() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700">City (Maharashtra)</label>
-                  <select
+                  <CategorySelect
+                    module="cities"
                     value={editingProject.city || 'Mumbai'}
-                    onChange={(e) => setEditingProject({ ...editingProject, city: e.target.value })}
-                    className="w-full px-3 py-2 clay-input text-sm focus:outline-none"
-                  >
-                    <option value="Mumbai">Mumbai</option>
-                    <option value="Pune">Pune</option>
-                    <option value="Nagpur">Nagpur</option>
-                    <option value="Thane">Thane</option>
-                    <option value="Nashik">Nashik</option>
-                    <option value="Aurangabad">Aurangabad</option>
-                    <option value="Solapur">Solapur</option>
-                  </select>
+                    onChange={(val) => setEditingProject({ ...editingProject, city: val })}
+                    defaultOptions={MAHARASHTRA_CITIES}
+                    placeholder="Select or add city..."
+                  />
                 </div>
               </div>
 

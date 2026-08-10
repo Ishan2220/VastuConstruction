@@ -2,21 +2,14 @@ import { PrismaClient } from '@prisma/client';
 import { ApiError } from '../utils/ApiError.js';
 import { eventBus } from '../events/EventBus.js';
 import { randomUUID } from 'crypto';
+import { validateAttendanceEditWindow } from '../utils/dateValidation.js';
 
 const prisma = new PrismaClient();
 
 export const submitHeadcount = async (data: any, userId: string) => {
   const { vendorId, projectId, date, details, notes } = data;
 
-  const attendanceDate = new Date(date);
-  attendanceDate.setUTCHours(0, 0, 0, 0);
-
-  const now = new Date();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-
-  if (date !== todayStr) {
-    throw new ApiError(403, 'Cannot modify attendance for past or future dates');
-  }
+  const attendanceDate = validateAttendanceEditWindow(date);
 
   // Calculate total wage
   const totalWage = details.reduce((sum: number, detail: any) => sum + Number(detail.count) * Number(detail.rate), 0);

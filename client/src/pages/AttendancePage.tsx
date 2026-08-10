@@ -15,7 +15,7 @@ interface Person {
   name: string;
   role: string;
   status: AttendanceStatus;
-  overtimeHours: number;
+  overtimeHours: number | string;
   absentReason?: string | null;
 }
 
@@ -61,9 +61,7 @@ export default function AttendancePage() {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date(today.getFullYear(), today.getMonth(), 1));
   const [personType, setPersonType] = useState<PersonType>('EMPLOYEE');
   
-  const isToday = selectedDateStr === todayStr;
-  const isPast = selectedDateStr < todayStr;
-  
+  const isToday = selectedDateStr === todayStr;  
   // Local state for optimistic updates
   const [localPeople, setLocalPeople] = useState<Person[]>([]);
   const [successIds, setSuccessIds] = useState<Set<string>>(new Set());
@@ -136,12 +134,12 @@ export default function AttendancePage() {
 
   // Handlers
   const handleStatusChange = (personId: string, status: AttendanceStatus) => {
-    if (attendanceData?.isLocked || isPast) return;
+    if (attendanceData?.isLocked) return;
     
-    const prevPeople = [...localPeople];
+    const prevPeople = attendanceData?.people || [...localPeople];
     const newPeople = localPeople.map(p => {
       if (p.personId === personId) {
-        const newOvertime = status === 'ABSENT' ? 0 : p.overtimeHours;
+        const newOvertime = status === 'ABSENT' ? 0 : (parseFloat(String(p.overtimeHours)) || 0);
         const newReason = status === 'ABSENT' ? p.absentReason : null;
         return { ...p, status, overtimeHours: newOvertime, absentReason: newReason };
       }
@@ -152,7 +150,7 @@ export default function AttendancePage() {
     const person = newPeople.find(p => p.personId === personId);
     if (person) {
       updateMutation.mutate(
-        { personId, personType, date: selectedDateStr, status, overtimeHours: status === 'ABSENT' ? 0 : person.overtimeHours, absentReason: person.absentReason },
+        { personId, personType, date: selectedDateStr, status, overtimeHours: person.status === 'ABSENT' ? 0 : (parseFloat(String(person.overtimeHours)) || 0), absentReason: person.absentReason },
         { 
           onError: (err: any) => {
             toast.error(err.response?.data?.message || err.message || 'Failed to update attendance');
@@ -164,9 +162,9 @@ export default function AttendancePage() {
   };
 
   const handleAbsentReasonChange = (personId: string, val: string) => {
-    if (attendanceData?.isLocked || isPast) return;
+    if (attendanceData?.isLocked) return;
     
-    const prevPeople = [...localPeople];
+    const prevPeople = attendanceData?.people || [...localPeople];
     const newPeople = localPeople.map(p => {
       if (p.personId === personId) {
         return { ...p, absentReason: val };
@@ -190,13 +188,13 @@ export default function AttendancePage() {
   };
 
   const handleOvertimeChange = (personId: string, val: string) => {
-    if (attendanceData?.isLocked || isPast) return;
+    if (attendanceData?.isLocked) return;
     let num = parseFloat(val);
     if (isNaN(num)) num = 0;
     if (num < 0) num = 0;
     if (num > 12) num = 12;
 
-    const prevPeople = [...localPeople];
+    const prevPeople = attendanceData?.people || [...localPeople];
     const newPeople = localPeople.map(p => {
       if (p.personId === personId) {
         return { ...p, overtimeHours: num };
@@ -223,6 +221,8 @@ export default function AttendancePage() {
     const unmarked = localPeople.filter(p => p.status === null);
     if (unmarked.length === 0) return;
     
+    const prevPeople = [...localPeople];
+    
     const updates = unmarked.map(p => ({
       personId: p.personId,
       status: 'PRESENT',
@@ -233,6 +233,10 @@ export default function AttendancePage() {
       date: selectedDateStr,
       personType,
       updates
+    }, {
+      onError: () => {
+        setLocalPeople(prevPeople);
+      }
     });
     
     setLocalPeople(prev => prev.map(p => p.status === null ? { ...p, status: 'PRESENT', overtimeHours: 0 } : p));
@@ -261,7 +265,7 @@ export default function AttendancePage() {
       if (p.status === 'PRESENT') present++;
       if (p.status === 'HALF_DAY') half++;
       if (p.status === 'ABSENT') absent++;
-      totalOt += p.overtimeHours || 0;
+      totalOt += (parseFloat(String(p.overtimeHours)) || 0);
     });
     return { present, half, absent, totalOt };
   }, [localPeople]);
@@ -356,24 +360,20 @@ export default function AttendancePage() {
         </div>
 
         {personType === 'VENDOR_TEAMS' ? (
-          <VendorAttendanceView selectedDateStr={selectedDateStr} isLocked={!!attendanceData?.isLocked || isPast} />
-        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-6">
+          <VendorAttendanceView selectedDateStr={selectedDateStr} isLocked={!!attendanceData?.isLocked} />
+        </div>) : (
           <>
             {/* Date Banner */}
-            <div className="mb-4 flex items-center">
-              {isToday ? (
-                <h2 className="text-base font-bold text-gray-900 font-heading">
-                  Marking attendance for Today, {selectedDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
-                </h2>
-              ) : (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <h2 className="text-base font-bold text-gray-900 font-heading">
-                    Viewing attendance for {selectedDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </h2>
-                  <div className="inline-flex items-center gap-1 text-xs text-amber-600 bg-amber-50 rounded-full px-3 py-1 w-fit border border-amber-100">
-                    <Lock size={12} />
-                    <span>This date is locked — past attendance cannot be edited</span>
-                  </div>
+            <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <h2 className="text-base font-bold text-gray-900 font-heading">
+                {isToday ? 'Marking attendance for Today, ' : 'Viewing attendance for '}
+                {selectedDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </h2>
+              {attendanceData?.isLocked && (
+                <div className="inline-flex items-center gap-1 text-xs text-amber-600 bg-amber-50 rounded-full px-3 py-1 w-fit border border-amber-100">
+                  <Lock size={12} />
+                  <span>This date is locked and cannot be edited</span>
                 </div>
               )}
             </div>
@@ -432,7 +432,7 @@ export default function AttendancePage() {
                 <div className="space-y-2 pb-20 overflow-hidden">
                   <AnimatePresence mode="popLayout">
                     {localPeople.map((person) => {
-                      const isLocked = !!attendanceData?.isLocked || isPast;
+                      const isLocked = !!attendanceData?.isLocked;
                       const showOt = person.status === 'PRESENT' || person.status === 'HALF_DAY';
                       const isSuccess = successIds.has(person.personId);
 
@@ -527,15 +527,12 @@ export default function AttendancePage() {
                              <div className={`flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] transition-opacity ${showOt ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                                <span className="text-[10px] text-gray-400 font-medium">OT</span>
                                <input
-                                 type="number"
-                                 step="0.5"
-                                 min="0"
-                                 max="12"
+                                 type="text"
                                  disabled={isLocked || !showOt}
                                  value={person.overtimeHours === 0 ? '' : person.overtimeHours}
                                  onChange={(e) => {
-                                   const prev = [...localPeople];
-                                   setLocalPeople(prev.map(p => p.personId === person.personId ? { ...p, overtimeHours: parseFloat(e.target.value) || 0 } : p));
+                                   const val = e.target.value;
+                                   setLocalPeople(prev => prev.map(p => p.personId === person.personId ? { ...p, overtimeHours: val } : p));
                                  }}
                                  onBlur={(e) => handleOvertimeChange(person.personId, e.target.value)}
                                  placeholder="0"

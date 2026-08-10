@@ -3,14 +3,10 @@ import { ApiError } from '../utils/ApiError.js';
 import { PersonType, AttendanceStatus } from '@prisma/client';
 import { PayrollEngine } from './payrollEngine.service.js';
 import { getSettings } from './payroll.service.js';
+import { getAttendanceLockStatus, validateAttendanceEditWindow } from '../utils/dateValidation.js';
 
 export const getAttendanceByDate = async (date: string, type: 'EMPLOYEE' | 'LABOR') => {
-  const targetDate = new Date(date);
-  targetDate.setUTCHours(0, 0, 0, 0); // Strip time
-  
-  const now = new Date();
-  const diffHours = Math.abs(targetDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-  const isLocked = diffHours > 48; // Lock if trying to modify more than 48 hours in past/future
+  const { isLocked, targetDate } = getAttendanceLockStatus(date);
 
   let activePeople: any[] = [];
 
@@ -71,20 +67,12 @@ export const upsertAttendance = async (
   personId: string,
   personType: 'EMPLOYEE' | 'LABOR',
   date: string,
-  status: 'PRESENT' | 'HALF_DAY' | 'ABSENT',
+  status: 'PRESENT' | 'HALF_DAY' | 'ABSENT' | 'LEAVE' | 'HOLIDAY',
   overtimeHours: number = 0,
   absentReason: string | null = null,
   markedBy: string = ''
 ) => {
-  const targetDate = new Date(date);
-  targetDate.setUTCHours(0, 0, 0, 0);
-
-  const now = new Date();
-  const diffHours = Math.abs(targetDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-  if (diffHours > 48) {
-    throw new ApiError(403, 'Cannot modify attendance beyond a 48-hour window from today');
-  }
+  const targetDate = validateAttendanceEditWindow(date);
   
   if (personType === 'EMPLOYEE') {
     const isLocked = await PayrollEngine.isPayrollLocked(personId, targetDate);
@@ -124,22 +112,36 @@ export const upsertAttendance = async (
   if (personType === 'EMPLOYEE') {
     const employee = await prisma.employee.findUnique({ where: { id: personId } });
     if (employee && (employee.salary || employee.dailyRate)) {
-      const settings = await getSettings();
-      const stdHours = employee.workingHoursOverride || settings.standardWorkingHours;
-      let workingHours = 0;
-      if (status === 'PRESENT') workingHours = stdHours + finalOvertime;
-      else if (status === 'HALF_DAY') workingHours = (stdHours / 2) + finalOvertime;
-      
-      const workLog = await PayrollEngine.calculateDailyWorkLog(personId, targetDate, workingHours, markedBy);
-      if (workLog) {
+      if (status === 'ABSENT' || status === 'LEAVE' || status === 'HOLIDAY') {
+        await prisma.dailyWorkLog.deleteMany({
+          where: { employeeId: personId, date: targetDate }
+        });
         await prisma.unifiedAttendance.update({
           where: { id: att.id },
           data: {
-            workingHours,
-            dailySalaryEarned: workLog.finalDaySalary,
-            dailyOvertimeAmount: workLog.overtimeAmount
+            workingHours: 0,
+            dailySalaryEarned: 0,
+            dailyOvertimeAmount: 0
           }
         });
+      } else {
+        const settings = await getSettings();
+        const stdHours = employee.workingHoursOverride || settings.standardWorkingHours;
+        let workingHours = 0;
+        if (status === 'PRESENT') workingHours = stdHours + finalOvertime;
+        else if (status === 'HALF_DAY') workingHours = (stdHours / 2) + finalOvertime;
+        
+        const workLog = await PayrollEngine.calculateDailyWorkLog(personId, targetDate, workingHours, markedBy);
+        if (workLog) {
+          await prisma.unifiedAttendance.update({
+            where: { id: att.id },
+            data: {
+              workingHours,
+              dailySalaryEarned: workLog.finalDaySalary,
+              dailyOvertimeAmount: workLog.overtimeAmount
+            }
+          });
+        }
       }
     }
   }
@@ -153,15 +155,7 @@ export const bulkMarkPresent = async (
   updates: Array<{ personId: string; status: 'PRESENT' | 'HALF_DAY' | 'ABSENT' | 'LEAVE' | 'HOLIDAY'; overtimeHours?: number; absentReason?: string }>,
   markedBy: string
 ) => {
-  const targetDate = new Date(date);
-  targetDate.setUTCHours(0, 0, 0, 0);
-
-  const now = new Date();
-  const diffHours = Math.abs(targetDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-  if (diffHours > 48) {
-    throw new ApiError(403, 'Cannot modify attendance beyond a 48-hour window from today');
-  }
+  const targetDate = validateAttendanceEditWindow(date);
 
   // Step 1: Pre-Validation
   if (personType === 'EMPLOYEE') {
@@ -208,22 +202,36 @@ export const bulkMarkPresent = async (
       if (personType === 'EMPLOYEE') {
         const employee = await tx.employee.findUnique({ where: { id: update.personId } });
         if (employee && (employee.salary || employee.dailyRate)) {
-          const settings = await tx.payrollSettings.findFirst() || await getSettings();
-          const stdHours = employee.workingHoursOverride || settings.standardWorkingHours;
-          let workingHours = 0;
-          if (update.status === 'PRESENT') workingHours = stdHours + finalOvertime;
-          else if (update.status === 'HALF_DAY') workingHours = (stdHours / 2) + finalOvertime;
-          
-          const workLog = await PayrollEngine.calculateDailyWorkLog(update.personId, targetDate, workingHours, markedBy, tx);
-          if (workLog) {
+          if (update.status === 'ABSENT' || update.status === 'LEAVE' || update.status === 'HOLIDAY') {
+            await tx.dailyWorkLog.deleteMany({
+              where: { employeeId: update.personId, date: targetDate }
+            });
             await tx.unifiedAttendance.update({
               where: { id: att.id },
               data: {
-                workingHours,
-                dailySalaryEarned: workLog.finalDaySalary,
-                dailyOvertimeAmount: workLog.overtimeAmount
+                workingHours: 0,
+                dailySalaryEarned: 0,
+                dailyOvertimeAmount: 0
               }
             });
+          } else {
+            const settings = await tx.payrollSettings.findFirst() || await getSettings();
+            const stdHours = employee.workingHoursOverride || settings.standardWorkingHours;
+            let workingHours = 0;
+            if (update.status === 'PRESENT') workingHours = stdHours + finalOvertime;
+            else if (update.status === 'HALF_DAY') workingHours = (stdHours / 2) + finalOvertime;
+            
+            const workLog = await PayrollEngine.calculateDailyWorkLog(update.personId, targetDate, workingHours, markedBy, tx);
+            if (workLog) {
+              await tx.unifiedAttendance.update({
+                where: { id: att.id },
+                data: {
+                  workingHours,
+                  dailySalaryEarned: workLog.finalDaySalary,
+                  dailyOvertimeAmount: workLog.overtimeAmount
+                }
+              });
+            }
           }
         }
       }

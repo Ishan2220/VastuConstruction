@@ -177,12 +177,12 @@ export class PayrollEngine {
     } else {
       // Attendance based — monthly payroll = sum of each day's calculated salary
       if (workLogs.length === 0 && attendances.length === 0) {
-        // If no attendance is logged at all, assume full attendance at standard hours
-        presentDays = workingDays;
-        baseSalary = dailySalaryBase * presentDays;
+        // If no attendance is logged at all, do NOT assume full attendance.
+        throw new ApiError(400, 'No attendance records found for this period. Mark attendance before generating payroll.');
       } else {
+        const formatUtcDate = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
         // Map workLogs by date to avoid double counting
-        const workLogDates = new Set(workLogs.map(l => l.date.toISOString().split('T')[0]));
+        const workLogDates = new Set(workLogs.map(l => formatUtcDate(l.date)));
         
         // Add up logged daily work logs
         for (const log of workLogs) {
@@ -194,7 +194,7 @@ export class PayrollEngine {
 
         // Add up attendances that DO NOT have a corresponding work log
         for (const att of attendances) {
-          const attDateStr = att.date.toISOString().split('T')[0];
+          const attDateStr = formatUtcDate(att.date);
           if (!workLogDates.has(attDateStr)) {
             if (att.status === 'PRESENT') {
               baseSalary += dailySalaryBase;
@@ -217,7 +217,7 @@ export class PayrollEngine {
     }) : [];
 
     const totalAdjustments = adjustments.reduce((sum, adj) => {
-      if (adj.type === 'BONUS' || adj.type === 'INCENTIVE' || adj.type === 'ARREARS') return sum + Number(adj.amount);
+      if (adj.type === 'BONUS' || adj.type === 'INCENTIVE' || adj.type === 'ARREARS' || adj.type === 'CORRECTION') return sum + Number(adj.amount);
       if (adj.type === 'DEDUCTION' || adj.type === 'PENALTY' || adj.type === 'ADVANCE_DEDUCTION') return sum - Number(adj.amount);
       return sum;
     }, 0);
@@ -230,7 +230,7 @@ export class PayrollEngine {
     
     // Auto-calculate attendance deductions
     const theoreticalFullSalary = employee.salary ? Number(employee.salary) : dailySalaryBase * workingDays;
-    const attendanceDeductions = Math.max(0, theoreticalFullSalary - baseSalary - overtimeEarnings);
+    const attendanceDeductions = Math.max(0, theoreticalFullSalary - baseSalary);
 
     const payroll = await prisma.payroll.upsert({
       where: { employeeId_month_year: { employeeId, month, year } },

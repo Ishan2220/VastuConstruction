@@ -73,7 +73,10 @@ export const generateLeadInvoicePDF = async (
         .text('Near Ram Mandir, Sakharpe Hospital Area', textX, 117)
         .text('Ichalkaranji. 416115', textX, 129);
 
-      const iconsDir = path.join(__dirname, '../assets/icons');
+      let iconsDir = path.join(__dirname, '../assets/icons');
+      if (!fs.existsSync(iconsDir)) {
+        iconsDir = path.join(process.cwd(), 'src/assets/icons');
+      }
       const iconSize = 10;
       const iconX = rightX + 5;
 
@@ -288,7 +291,10 @@ export const generateInvoicePDF = async (
         .text('Near Ram Mandir, Sakharpe Hospital Area', textX, 117)
         .text('Ichalkaranji. 416115', textX, 129);
 
-      const iconsDir = path.join(__dirname, '../assets/icons');
+      let iconsDir = path.join(__dirname, '../assets/icons');
+      if (!fs.existsSync(iconsDir)) {
+        iconsDir = path.join(process.cwd(), 'src/assets/icons');
+      }
       const iconSize = 10;
 
       doc.image(path.join(iconsDir, 'phone.png'), iconX - iconSize/2, 76, { width: iconSize, height: iconSize });

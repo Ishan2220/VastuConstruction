@@ -122,7 +122,21 @@ export const update = async (id: string, payload: any, userId: string) => {
   const existing = await prisma.vendor.findFirst({ where: { id, deletedAt: null } });
   if (!existing) throw new ApiError(404, 'Vendor not found');
 
-  const { gstin, idempotencyKey, ...rest } = payload;
+  const { 
+    gstin, 
+    idempotencyKey, 
+    _count, 
+    id: _id, 
+    createdAt, 
+    updatedAt, 
+    deletedAt, 
+    purchaseOrders, 
+    expenses, 
+    vendorAttendances, 
+    materials, 
+    ...rest 
+  } = payload;
+
   const data: Prisma.VendorUncheckedUpdateInput = {
     ...rest,
     ...(gstin !== undefined && rest.gst === undefined ? { gst: gstin } : {}),

@@ -296,6 +296,7 @@ export default function SiteDashboardPage() {
               ) : incomes.length === 0 ? (
                 <div className="text-center py-4 text-slate-500">No incomes recorded.</div>
               ) : (
+                <div className="w-full overflow-x-auto">
                 <table className="w-full text-left text-sm text-slate-600">
                   <thead className="text-xs text-slate-400 uppercase bg-slate-50">
                     <tr>
@@ -316,6 +317,7 @@ export default function SiteDashboardPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
             </div>
           </div>
@@ -336,6 +338,7 @@ export default function SiteDashboardPage() {
               ) : expenses.length === 0 ? (
                 <div className="text-center py-4 text-slate-500">No expenses recorded.</div>
               ) : (
+                <div className="w-full overflow-x-auto">
                 <table className="w-full text-left text-sm text-slate-600">
                   <thead className="text-xs text-slate-400 uppercase bg-slate-50">
                     <tr>
@@ -356,6 +359,7 @@ export default function SiteDashboardPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
             </div>
           </div>

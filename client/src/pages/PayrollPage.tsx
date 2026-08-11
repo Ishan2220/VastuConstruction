@@ -294,7 +294,7 @@ export default function PayrollPage() {
       {/* Adjustment Modal */}
       {isAdjustmentOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6">
+          <div className="bg-white rounded-3xl w-full max-h-[90vh] overflow-y-auto max-w-md overflow-hidden shadow-2xl p-6">
             <h3 className="text-xl font-bold text-slate-800 mb-4">Add Adjustment</h3>
             <div className="space-y-4">
               <div>
@@ -378,7 +378,7 @@ export default function PayrollPage() {
       {/* Pay Modal */}
       {isPayOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6">
+          <div className="bg-white rounded-3xl w-full max-h-[90vh] overflow-y-auto max-w-md overflow-hidden shadow-2xl p-6">
             <h3 className="text-xl font-bold text-slate-800 mb-4">Pay & Reconcile Salary</h3>
             <div className="space-y-4">
               <div>

@@ -447,7 +447,7 @@ export default function DocumentsPage() {
       {/* Upload Document Modal */}
       {isUploadOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-lg p-6 space-y-6">
+          <div className="clay-card w-full max-h-[90vh] overflow-y-auto max-w-lg p-6 space-y-6">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Upload Site Document & Engineering Blueprint</h3>
               <button onClick={() => setIsUploadOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>
@@ -588,7 +588,7 @@ export default function DocumentsPage() {
       {/* Edit Document Modal */}
       {isEditOpen && editDoc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 space-y-6">
+          <div className="clay-card w-full max-h-[90vh] overflow-y-auto max-w-md p-6 space-y-6">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="font-bold text-lg font-heading text-slate-800">Edit Document Info</h3>
               <button onClick={() => setIsEditOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">✕</button>

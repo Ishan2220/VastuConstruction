@@ -670,7 +670,7 @@ export default function CalendarPage() {
       {/* Schedule New Milestone Modal */}
       {isScheduleOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-lg p-6 space-y-6">
+          <div className="clay-card w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 space-y-6">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="text-lg font-bold text-slate-800 font-heading">Schedule Task</h3>
               <button
@@ -788,7 +788,7 @@ export default function CalendarPage() {
       {/* Edit Event Modal */}
       {editingEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-lg p-6 space-y-6">
+          <div className="clay-card w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 space-y-6">
             <div className="flex items-center justify-between border-b border-violet-100/30 pb-4">
               <h3 className="text-lg font-bold text-slate-800 font-heading">Edit Event</h3>
               <button

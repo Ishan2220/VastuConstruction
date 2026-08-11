@@ -246,7 +246,7 @@ export default function SiteMaterialsView({ projectId: propProjectId }: { projec
       {/* Consume Modal */}
       {isConsumeOpen && activeMaterial && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-          <div className="clay-card w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200">
+          <div className="clay-card w-full max-h-[90vh] overflow-y-auto max-w-md p-6 animate-in fade-in zoom-in-95 duration-200">
             <h3 className="text-lg font-bold text-slate-900 font-heading mb-4">Consume {activeMaterial.name}</h3>
             <p className="text-xs text-slate-500 mb-4">Current Stock: <strong className="text-slate-800">{activeMaterial.remaining} {activeMaterial.unit}</strong></p>
             <form onSubmit={(e) => { e.preventDefault(); consumeMutation.mutate({ materialId: activeMaterial.id, ...consumeData }); }} className="space-y-4">

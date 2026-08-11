@@ -43,7 +43,7 @@ export const list = async (params: ListParams) => {
       include: {
         _count: { select: { materials: true } },
         purchaseOrders: { select: { totalAmount: true } },
-        expenses: { select: { amount: true } },
+        expenses: { select: { amount: true, paymentMethod: true } },
         vendorAttendances: { select: { totalWage: true } }
       },
     }),
@@ -95,7 +95,7 @@ export const getById = async (id: string) => {
         select: { id: true, totalAmount: true, projectId: true, project: { select: { id: true, name: true } } },
       },
       expenses: {
-        select: { id: true, amount: true, projectId: true, paymentDate: true, remarks: true, description: true, project: { select: { id: true, name: true } } },
+        select: { id: true, amount: true, projectId: true, paymentDate: true, remarks: true, description: true, paymentMethod: true, project: { select: { id: true, name: true } } },
       },
       vendorAttendances: {
         select: { id: true, date: true, totalWage: true, projectId: true, project: { select: { id: true, name: true } } },

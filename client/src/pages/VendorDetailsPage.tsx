@@ -63,6 +63,8 @@ export default function VendorDetailsPage() {
 
   // 2. Add Expenses (Payments)
   vendor.expenses?.forEach((exp: any) => {
+    if (exp.paymentMethod === 'ACCRUED') return;
+
     const pId = exp.projectId || 'global';
     const pName = exp.project?.name || 'Global / No Specific Site';
     if (!siteMap.has(pId)) {

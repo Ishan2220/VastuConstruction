@@ -243,9 +243,9 @@ export default function VendorsPage() {
                     </div>
                   </div>
 
-                  <h3 className="text-lg font-bold text-slate-800 font-heading">{vendor.name}</h3>
+                  <h3 className="text-lg font-bold text-slate-800 font-heading">{vendor.contactPerson || vendor.name}</h3>
                   <div className="text-xs text-slate-500 space-y-1">
-                    <div>Contact: <strong className="text-slate-700">{vendor.contactPerson}</strong></div>
+                    <div>Agency: <strong className="text-slate-700">{vendor.name}</strong></div>
                     <div className="flex items-center gap-2 min-w-[44px] min-h-[44px] flex items-center justify-center pt-1">
                       <Phone className="w-3.5 h-3.5 text-slate-400" /> <span>{vendor.phone || 'N/A'}</span>
                     </div>
@@ -280,8 +280,8 @@ export default function VendorsPage() {
             <table className="w-full text-left">
               <thead className="bg-slate-50 border-b border-violet-100/30">
                 <tr>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase">Vendor</th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase">Contact</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase">Contact / Main</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 uppercase">Agency Info</th>
                   <th className="p-4 text-xs font-bold text-slate-500 uppercase">Financials</th>
                   <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">Actions</th>
                 </tr>
@@ -290,7 +290,7 @@ export default function VendorsPage() {
                 {filteredVendors.map((vendor: any) => (
                   <tr key={vendor.id} onClick={() => navigate(`/vendors/${vendor.id}`)} className="hover:bg-slate-50/50 transition-colors cursor-pointer group">
                     <td className="p-4">
-                      <div className="font-bold text-slate-800">{vendor.name}</div>
+                      <div className="font-bold text-slate-800">{vendor.contactPerson || vendor.name}</div>
                       <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
                         <span className="font-bold text-[#7C6EF0] bg-[#7C6EF0]/10 px-2 py-0.5 rounded border border-[#7C6EF0]/20 font-mono">
                           {vendor.category}
@@ -300,7 +300,7 @@ export default function VendorsPage() {
                     </td>
                     <td className="p-4">
                       <div className="text-sm text-slate-600 flex flex-col gap-1">
-                        <div><strong className="text-slate-700">{vendor.contactPerson}</strong></div>
+                        <div>Agency: <strong className="text-slate-700">{vendor.name}</strong></div>
                         <div className="flex items-center gap-2 text-xs"><Phone className="w-3.5 h-3.5" /> {vendor.phone || 'N/A'}</div>
                         {vendor.email && <div className="flex items-center gap-2 text-xs"><Mail className="w-3.5 h-3.5" /> {vendor.email}</div>}
                         <div className="flex items-center gap-2 text-xs text-slate-400 mt-1"><MapPin className="w-3.5 h-3.5" /> {vendor.city || 'Mumbai'}</div>

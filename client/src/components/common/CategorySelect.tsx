@@ -25,6 +25,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   const [isAdding, setIsAdding] = useState(false);
   const [isManaging, setIsManaging] = useState(false);
   const [newCatName, setNewCatName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleAddSubmit = (e?: React.FormEvent | React.KeyboardEvent | React.MouseEvent) => {
     if (e) {
@@ -40,6 +41,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
     setNewCatName('');
     setIsAdding(false);
     setIsOpen(false);
+    setSearchQuery('');
     toast.success(`Category "${formatted}" added permanently!`);
   };
 
@@ -51,6 +53,14 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
     }
     toast.success(`Category "${cat}" removed`);
   };
+
+  const filteredCategories = allCategories.filter((cat) =>
+    cat.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const exactMatchExists = allCategories.some(
+    (cat) => cat.toLowerCase() === searchQuery.trim().toLowerCase()
+  );
 
   return (
     <div className="relative w-full text-left">
@@ -71,43 +81,83 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
               setIsOpen(false);
               setIsAdding(false);
               setIsManaging(false);
+              setSearchQuery('');
             }}
           />
           <div className="absolute left-0 top-full z-50 mt-1 max-h-80 w-full min-w-[220px] overflow-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+            {/* Search Input */}
+            <div className="p-1.5 border-b border-slate-100 mb-1 bg-slate-50/50 rounded-t-xl">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+
             {/* Standard and Custom categories */}
-            <div className="max-h-48 overflow-y-auto space-y-1">
-              {allCategories.map((cat) => (
-                <div
-                  key={cat}
-                  onClick={() => {
-                    onChange(cat);
-                    setIsOpen(false);
-                  }}
-                  className={`flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-all ${
-                    value === cat
-                      ? 'bg-indigo-50 text-indigo-600'
-                      : 'text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <span className="truncate">{cat}</span>
-                  <div className="flex items-center gap-1.5">
-                    {value === cat && <Check className="h-3.5 w-3.5 shrink-0 text-indigo-600" />}
-                    {customCategories.includes(cat) && isManaging && (
-                      <button
-                        type="button"
-                        onClick={(e) => handleDelete(cat, e)}
-                        className="rounded p-1 text-rose-500 hover:bg-rose-50"
-                        title="Delete custom category"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    )}
+            <div className="max-h-44 overflow-y-auto space-y-1">
+              {filteredCategories.length === 0 ? (
+                <div className="p-2 text-xs text-slate-400 text-center font-medium">No results found</div>
+              ) : (
+                filteredCategories.map((cat) => (
+                  <div
+                    key={cat}
+                    onClick={() => {
+                      onChange(cat);
+                      setIsOpen(false);
+                      setSearchQuery('');
+                    }}
+                    className={`flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-all ${
+                      value === cat
+                        ? 'bg-indigo-50 text-indigo-600'
+                        : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className="truncate">{cat}</span>
+                    <div className="flex items-center gap-1.5">
+                      {value === cat && <Check className="h-3.5 w-3.5 shrink-0 text-indigo-600" />}
+                      {customCategories.includes(cat) && isManaging && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleDelete(cat, e)}
+                          className="rounded p-1 text-rose-500 hover:bg-rose-50"
+                          title="Delete custom category"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
             <div className="my-1.5 border-t border-slate-100" />
+
+            {/* Quick Add from Search */}
+            {!exactMatchExists && searchQuery.trim() && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const formatted = module === 'cities'
+                    ? searchQuery.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+                    : searchQuery.trim().toUpperCase();
+                  addCategory(formatted);
+                  onChange(formatted);
+                  setSearchQuery('');
+                  setIsOpen(false);
+                  toast.success(`Category "${formatted}" added permanently!`);
+                }}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-indigo-600 transition-all hover:bg-indigo-50"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add "{searchQuery.trim()}"...</span>
+              </button>
+            )}
 
             {/* Add Custom Category Form */}
             {isAdding ? (
@@ -148,32 +198,34 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="space-y-1">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsAdding(true);
-                  }}
-                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-indigo-600 transition-all hover:bg-indigo-50"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Add Custom Category...</span>
-                </button>
-                {customCategories.length > 0 && (
+              !searchQuery.trim() && (
+                <div className="space-y-1">
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setIsManaging(!isManaging);
+                      setIsAdding(true);
                     }}
-                    className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-[11px] font-semibold text-slate-500 hover:bg-slate-50"
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-indigo-600 transition-all hover:bg-indigo-50"
                   >
-                    <Trash2 className="h-3 w-3" />
-                    <span>{isManaging ? 'Done Deleting' : 'Delete Custom Category...'}</span>
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Add Custom Category...</span>
                   </button>
-                )}
-              </div>
+                  {customCategories.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsManaging(!isManaging);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-[11px] font-semibold text-slate-500 hover:bg-slate-50"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      <span>{isManaging ? 'Done Deleting' : 'Delete Custom Category...'}</span>
+                    </button>
+                  )}
+                </div>
+              )
             )}
           </div>
         </>

@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useConfirm } from "@/components/ui/ConfirmProvider";
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { MAHARASHTRA_CITIES } from '@/lib/cities';
+import { CategorySelect } from '@/components/common/CategorySelect';
 
 export default function ClientsPage() {
     const confirmDialog = useConfirm();
@@ -363,17 +364,13 @@ export default function ClientsPage() {
                 className="w-full clay-input text-sm"
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <select
-                  required
+                <CategorySelect
+                  module="cities"
                   value={newClient.city}
-                  onChange={(e) => setNewClient({ ...newClient, city: e.target.value })}
-                  className="w-full clay-input text-sm"
-                >
-                  <option value="">Select City *</option>
-                  {MAHARASHTRA_CITIES.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setNewClient({ ...newClient, city: val })}
+                  defaultOptions={MAHARASHTRA_CITIES}
+                  placeholder="Select City *"
+                />
                 <input
                   type="text"
                   placeholder="State"
@@ -435,17 +432,13 @@ export default function ClientsPage() {
                 className="w-full clay-input text-sm"
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <select
-                  required
+                <CategorySelect
+                  module="cities"
                   value={editingClient.city || ''}
-                  onChange={(e) => setEditingClient({ ...editingClient, city: e.target.value })}
-                  className="w-full clay-input text-sm"
-                >
-                  <option value="">Select City *</option>
-                  {MAHARASHTRA_CITIES.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setEditingClient({ ...editingClient, city: val })}
+                  defaultOptions={MAHARASHTRA_CITIES}
+                  placeholder="Select City *"
+                />
                 <input
                   type="text"
                   placeholder="State"

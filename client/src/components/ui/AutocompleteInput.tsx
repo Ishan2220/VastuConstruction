@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, ChevronDown, Search } from 'lucide-react';
+import { Check, ChevronDown, Search, Plus } from 'lucide-react';
 
 interface AutocompleteInputProps {
   options: { id: string; name: string; [key: string]: any }[];
@@ -8,6 +8,8 @@ interface AutocompleteInputProps {
   placeholder?: string;
   className?: string;
   renderOption?: (option: any) => React.ReactNode;
+  onAddNew?: () => void;
+  addNewLabel?: string;
 }
 
 export function AutocompleteInput({
@@ -16,7 +18,9 @@ export function AutocompleteInput({
   onChange,
   placeholder = 'Select...',
   className = '',
-  renderOption
+  renderOption,
+  onAddNew,
+  addNewLabel = 'Add New'
 }: AutocompleteInputProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -85,6 +89,20 @@ export function AutocompleteInput({
                   {value === opt.id && <Check className="w-4 h-4 text-indigo-600" />}
                 </button>
               ))
+            )}
+            
+            {onAddNew && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onAddNew();
+                }}
+                className="w-full mt-1 text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 text-[#7C6EF0] font-bold hover:bg-violet-50"
+              >
+                <Plus className="w-4 h-4" />
+                {addNewLabel}
+              </button>
             )}
           </div>
         </div>

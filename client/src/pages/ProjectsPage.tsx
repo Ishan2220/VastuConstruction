@@ -517,6 +517,8 @@ export default function ProjectsPage() {
                     onChange={(val: string) => setNewProject({ ...newProject, clientId: val })}
                     options={clients.map((c: any) => ({ id: c.id, name: `${c.name} (${c.companyName || 'Private'})` }))}
                     placeholder="Search Client..."
+                    onAddNew={() => navigate('/clients')}
+                    addNewLabel="Add New Client"
                   />
                 </div>
               </div>

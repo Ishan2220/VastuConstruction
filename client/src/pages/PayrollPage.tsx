@@ -265,7 +265,7 @@ export default function PayrollPage() {
                            </>
                         )}
                         <button onClick={() => { setSelectedPayroll(p); setIsAuditLogOpen(true); }} className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold">Audit</button>
-                        {user?.role === 'ADMIN' && p.status !== 'PAID' && (
+                        {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && p.status !== 'PAID' && (
                           <button onClick={() => handleDelete(p.id)} className="px-3 py-1 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors">Delete</button>
                         )}
                       </td>

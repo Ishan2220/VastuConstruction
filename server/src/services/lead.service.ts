@@ -127,7 +127,7 @@ export const updateStatus = async (id: string, status: LeadStatus, userId: strin
 
   // Fetch user to check role
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN');
 
   // Lead status transition validation (bypassed for ADMIN)
   if (!isAdmin) {

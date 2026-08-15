@@ -123,7 +123,7 @@ export default function Sidebar() {
   };
 
   const filteredNav = navItems.filter(
-    (item) => !item.roles || item.roles.includes(userRole) || hasTempAdmin(item.label)
+    (item) => !item.roles || item.roles.includes(userRole) || userRole === 'SUPER_ADMIN' || hasTempAdmin(item.label)
   );
 
   const isActive = (href: string) => {

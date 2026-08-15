@@ -453,7 +453,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Personal Expenses (Admin Only) */}
-        {user?.role === 'ADMIN' && (
+        {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
           <motion.div
             variants={fadeInUp}
             onClick={() => navigate('/expenses')}
@@ -1055,7 +1055,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {user?.role === 'ADMIN' && (
+      {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
         <div className="flex justify-center mt-8 pb-4">
           <button 
             onClick={async () => {

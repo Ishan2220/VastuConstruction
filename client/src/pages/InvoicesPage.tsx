@@ -24,7 +24,7 @@ export default function InvoicesPage() {
     const confirmDialog = useConfirm();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);

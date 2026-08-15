@@ -366,7 +366,7 @@ export default function ExpensesPage() {
                 value={newExpense.type}
                 onChange={(val) => setNewExpense({ ...newExpense, type: val, projectId: val === 'PERSONAL' ? '' : newExpense.projectId })}
                 defaultOptions={
-                  user?.role === 'ADMIN' 
+                  (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') 
                     ? ['MATERIAL', 'LABOUR', 'EQUIPMENT', 'SUBCONTRACTOR', 'TRANSPORT', 'UTILITY', 'OFFICE', 'PERSONAL', 'FINANCIAL_EXPENSES', 'OTHER'] 
                     : ['MATERIAL', 'LABOUR', 'EQUIPMENT', 'SUBCONTRACTOR', 'TRANSPORT', 'UTILITY', 'OFFICE', 'FINANCIAL_EXPENSES', 'OTHER']
                 }

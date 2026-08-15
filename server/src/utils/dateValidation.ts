@@ -8,7 +8,7 @@ export function validateBackdating(dateString: string | Date | undefined, role: 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  if (inputDate < today && role !== 'ADMIN') {
+  if (inputDate < today && (role !== 'ADMIN' && role !== 'SUPER_ADMIN')) {
     throw new ApiError(403, 'Only admins can add or edit records for past dates.');
   }
 }

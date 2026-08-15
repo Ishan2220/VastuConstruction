@@ -42,7 +42,7 @@ export const getFiles = asyncHandler(async (req: Request, res: Response) => {
     where.originalFileName = { contains: search as string, mode: 'insensitive' };
   }
   
-  if (user && user.role !== 'ADMIN') {
+  if (user && user.(role !== 'ADMIN' && role !== 'SUPER_ADMIN')) {
     where.uploadedById = user.userId;
   }
 
@@ -65,7 +65,7 @@ export const getFileDownloadUrl = asyncHandler(async (req: Request, res: Respons
   if (!file) throw new ApiError(404, 'File not found');
   
   const user = req.user as any;
-  if (user && file.uploadedById !== user.userId && user.role !== 'ADMIN') {
+  if (user && file.uploadedById !== user.userId && user.(role !== 'ADMIN' && role !== 'SUPER_ADMIN')) {
       throw new ApiError(403, 'Unauthorized access to file');
   }
 
@@ -79,7 +79,7 @@ export const softDeleteFile = asyncHandler(async (req: Request, res: Response) =
   if (!file) throw new ApiError(404, 'File not found');
 
   const user = req.user as any;
-  if (user && file.uploadedById !== user.userId && user.role !== 'ADMIN') {
+  if (user && file.uploadedById !== user.userId && user.(role !== 'ADMIN' && role !== 'SUPER_ADMIN')) {
     throw new ApiError(403, 'You do not have permission to delete this file');
   }
 

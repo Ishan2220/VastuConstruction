@@ -85,7 +85,7 @@ export default function AccountPage() {
                 </div>
               </div>
               
-              {user?.role === 'ADMIN' ? (
+              {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') ? (
                 <Link to="/settings/users" className="group flex items-center gap-4 text-slate-600 bg-gradient-to-br from-rose-50 to-orange-50 p-4 rounded-2xl border border-rose-100 shadow-sm hover:shadow-md hover:border-rose-200 transition-all cursor-pointer">
                   <div className="p-2 bg-white rounded-xl text-rose-500 shadow-sm group-hover:scale-110 transition-transform">
                     <Shield className="w-5 h-5" />

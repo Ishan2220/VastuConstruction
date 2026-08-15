@@ -105,11 +105,11 @@ export default function UsersPage() {
                 </div>
                 <div className={cn(
                   "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1",
-                  user.role === 'ADMIN' ? 'bg-rose-100 text-rose-700 border border-rose-200' :
+                  (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') ? 'bg-rose-100 text-rose-700 border border-rose-200' :
                   user.role === 'ENGINEER' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
                   'bg-emerald-100 text-emerald-700 border border-emerald-200'
                 )}>
-                  {user.role === 'ADMIN' && <Shield className="w-3 h-3" />}
+                  {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && <Shield className="w-3 h-3" />}
                   {user.role}
                 </div>
               </div>

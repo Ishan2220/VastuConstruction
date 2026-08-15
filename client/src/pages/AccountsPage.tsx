@@ -167,11 +167,11 @@ export default function AccountsPage() {
                     </td>
                     <td className="p-4 font-bold text-slate-800">{acc.bankName}</td>
                     <td className="p-4 font-mono text-slate-600">
-                      {user?.role === 'ADMIN' ? acc.accountNo : `••••••••••${String(acc.accountNo || '').slice(-4)}`}
+                      {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') ? acc.accountNo : `••••••••••${String(acc.accountNo || '').slice(-4)}`}
                     </td>
                     <td className="p-4 font-mono font-extrabold text-[#5CB77E]">{formatCurrency(Number(acc.balance || 0))}</td>
                     <td className="p-4 text-center space-x-2">
-                      {user?.role === 'ADMIN' ? (
+                      {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') ? (
                         <>
                           <button
                             onClick={(e) => { e.stopPropagation(); setEditingAcc(acc); }}
@@ -217,7 +217,7 @@ export default function AccountsPage() {
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#7C6EF0]/10 text-[#7C6EF0] uppercase">
                         {acc.accountType}
                       </span>
-                      {user?.role === 'ADMIN' && (
+                      {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
                         <button
                           onClick={(e) => { e.stopPropagation(); setEditingAcc(acc); }}
                           className="p-1 text-slate-400 hover:text-[#7C6EF0] hover:bg-violet-50 rounded-lg transition-colors cursor-pointer"
@@ -226,7 +226,7 @@ export default function AccountsPage() {
                           <Edit3 className="w-4 h-4" />
                         </button>
                       )}
-                      {user?.role === 'ADMIN' && (
+                      {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
                         <button
                           onClick={async (e) => {
                             e.stopPropagation();
@@ -242,13 +242,13 @@ export default function AccountsPage() {
                       )}
                     </div>
                     <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">
-                      {user?.role === 'ADMIN' ? 'OWNER A/C' : '••••••••'}
+                      {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') ? 'OWNER A/C' : '••••••••'}
                     </span>
                   </div>
 
                   <h3 className="text-base font-bold text-slate-800 font-heading">{acc.bankName}</h3>
                   <div className="text-xs text-slate-600 font-mono">
-                    A/C: {user?.role === 'ADMIN' ? acc.accountNo : `••••••••••${String(acc.accountNo || '').slice(-4)}`}
+                    A/C: {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') ? acc.accountNo : `••••••••••${String(acc.accountNo || '').slice(-4)}`}
                   </div>
                 </div>
 

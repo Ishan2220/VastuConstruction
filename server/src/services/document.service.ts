@@ -78,7 +78,7 @@ export const remove = async (id: string, userId: string, idempotencyKey?: string
   
   // Check if ADMIN or uploader
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if ((user?.(role !== 'ADMIN' && role !== 'SUPER_ADMIN') && user?.role !== 'SUPER_ADMIN') && oldDoc.uploadedById !== userId) {
+  if ((user?.role !== 'ADMIN' && user?.role !== 'SUPER_ADMIN') && oldDoc.uploadedById !== userId) {
     throw new ApiError(403, 'Unauthorized to delete this document');
   }
 

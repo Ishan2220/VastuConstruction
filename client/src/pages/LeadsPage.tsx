@@ -327,7 +327,7 @@ export default function LeadsPage() {
                       </div>
                         <select
                           value={lead.status}
-                          disabled={lead.status === 'WON' && (user?.(role !== 'ADMIN' && role !== 'SUPER_ADMIN') && user?.role !== 'SUPER_ADMIN')}
+                          disabled={lead.status === 'WON' && (user?.role !== 'ADMIN' && user?.role !== 'SUPER_ADMIN')}
                           onChange={(e) => updateStatusMutation.mutate({ id: lead.id, status: e.target.value })}
                           className="text-xs font-bold uppercase px-2 py-1 clay-input text-slate-700 focus:outline-none w-28 sm:w-auto truncate disabled:opacity-50"
                         >
@@ -426,7 +426,7 @@ export default function LeadsPage() {
                       <td className="p-4">
                         <select
                           value={lead.status}
-                          disabled={lead.status === 'WON' && (user?.(role !== 'ADMIN' && role !== 'SUPER_ADMIN') && user?.role !== 'SUPER_ADMIN')}
+                          disabled={lead.status === 'WON' && (user?.role !== 'ADMIN' && user?.role !== 'SUPER_ADMIN')}
                           onChange={(e) => updateStatusMutation.mutate({ id: lead.id, status: e.target.value })}
                           className="text-xs font-bold uppercase px-2 py-1 clay-input text-slate-700 focus:outline-none cursor-pointer disabled:opacity-50"
                         >

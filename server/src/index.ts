@@ -19,8 +19,21 @@ app.set('trust proxy', 1);
 // Security and middleware setup
 app.use(helmet());
 
+const allowedOrigins = [
+  env.CLIENT_URL || 'http://localhost:5173',
+  'https://vastu-construction.vercel.app',
+  'https://erp.vastu-constructions.com'
+];
+
 app.use(cors({
-  origin: env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 

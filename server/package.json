@@ -10,7 +10,8 @@
     "db:migrate": "npx prisma migrate dev",
     "db:push": "npx prisma db push --accept-data-loss",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "npx prisma studio"
+    "db:studio": "npx prisma studio",
+    "create:superadmin": "tsx src/scripts/createSuperAdmin.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1090.0",

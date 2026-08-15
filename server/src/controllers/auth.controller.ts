@@ -70,6 +70,12 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
     secure: isProd,
     sameSite: isProd ? 'none' : 'lax',
   });
+  // Clear support session cookie if present
+  res.clearCookie('support_session_token', {
+    path: '/',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+  });
   res.json(new ApiResponse(200, null, 'Logged out successfully'));
 });
 

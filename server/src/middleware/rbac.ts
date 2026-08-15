@@ -14,6 +14,12 @@ export const authorize = (...args: (Role | { page: string })[]) => {
 
     let hasAccess = allowedRoles.includes(req.user.role);
 
+    // If a SUPER_ADMIN is in a valid presentation session, grant read access
+    // (Mutations are strictly blocked prior to this by the presentationGuard)
+    if (!hasAccess && (req as any).isPresentationMode && req.user.role === Role.SUPER_ADMIN) {
+      hasAccess = true;
+    }
+
     if (!hasAccess && pageArg && req.user.tempAdminUntil && req.user.tempAdminPages) {
       const isNotExpired = new Date(req.user.tempAdminUntil) > new Date();
       if (isNotExpired && req.user.tempAdminPages.includes(pageArg.page)) {

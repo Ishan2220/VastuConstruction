@@ -33,11 +33,20 @@ import attendanceRoutes from './attendance.routes.js';
 import paymentRoutes from './payment.routes.js';
 import payrollRoutes from './payroll.routes.js';
 import devRoutes from './dev.routes.js';
+import supportRoutes from './support.routes.js';
+import { presentationGuard } from '../middleware/presentationGuard.js';
+
 const router = Router();
 
 router.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
+
+// Support routes are exempt from ERP presentation guard since they handle the session lifecycle
+router.use('/support', supportRoutes);
+
+// Apply presentationGuard globally to all ERP routes below
+router.use(presentationGuard);
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);

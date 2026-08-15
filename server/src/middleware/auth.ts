@@ -43,6 +43,26 @@ export const authenticate = asyncHandler(async (req, _res: Response, next: NextF
       tempAdminUntil: user.tempAdminUntil,
       tempAdminPages: user.tempAdminPages,
     };
+    
+    // Check for presentation session
+    const supportToken = req.cookies?.support_session_token;
+    if (supportToken) {
+      try {
+        const supportDecoded = jwt.verify(supportToken, env.ACCESS_TOKEN_SECRET) as { sessionId: string, role: string };
+        
+        // Verify session is active
+        const session = await prisma.supportSession.findUnique({
+          where: { id: supportDecoded.sessionId }
+        });
+        
+        if (session && session.status === 'ACTIVE' && session.expiresAt > new Date()) {
+          (req as any).isPresentationMode = true;
+          (req as any).presentationSessionId = session.id;
+        }
+      } catch (err) {
+        // Just ignore invalid support tokens, but don't fail main auth
+      }
+    }
 
     next();
   } catch (error) {

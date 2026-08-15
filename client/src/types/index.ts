@@ -4,7 +4,7 @@
 
 // ---- Enums ----
 
-export type Role = 'ADMIN' | 'ACCOUNTANT' | 'ENGINEER';
+export type Role = 'ADMIN' | 'ACCOUNTANT' | 'ENGINEER' | 'SUPER_ADMIN';
 
 export type LeadStatus =
   | 'NEW'

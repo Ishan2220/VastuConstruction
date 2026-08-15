@@ -22,6 +22,7 @@ enum Role {
   ADMIN
   ACCOUNTANT
   ENGINEER
+  SUPER_ADMIN
 }
 
 enum LeadStatus {
@@ -145,10 +146,11 @@ model User {
   deletedAt DateTime? @map("deleted_at")
 
   // Relations
-  refreshTokens RefreshToken[]
-  loginHistory  LoginHistory[]
-  auditLogs     AuditLog[]
-  employee      Employee?
+  refreshTokens   RefreshToken[]
+  loginHistory    LoginHistory[]
+  auditLogs       AuditLog[]
+  employee        Employee?
+  supportSessions SupportSession[]
 
   // Assigned entities
   assignedLeads    Lead[]          @relation("LeadAssignee")
@@ -254,7 +256,7 @@ model Lead {
   remarks            String?
   paymentStatus      String?    @map("payment_status")
   paymentMode        String?    @map("payment_mode")
-  pendingAmount      Decimal?   @db.Decimal(12, 2) @map("pending_amount")
+  pendingAmount      Decimal?   @map("pending_amount") @db.Decimal(12, 2)
   isArchived         Boolean    @default(false) @map("is_archived")
 
   assigneeId  String? @map("assignee_id")
@@ -712,6 +714,33 @@ model LabourPayment {
 
   @@index([labourId])
   @@map("labour_payments")
+}
+
+// ─── SYSTEM ADMINISTRATION ───────────────────────────────────
+
+enum SupportSessionStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+  USED
+}
+
+model SupportSession {
+  id           String               @id @default(uuid())
+  superAdminId String               @map("super_admin_id")
+  superAdmin   User                 @relation(fields: [superAdminId], references: [id])
+  reason       String
+  exchangeCode String               @unique @map("exchange_code")
+  status       SupportSessionStatus @default(ACTIVE)
+  expiresAt    DateTime             @map("expires_at")
+  createdAt    DateTime             @default(now()) @map("created_at")
+  updatedAt    DateTime             @updatedAt @map("updated_at")
+  usedAt       DateTime?            @map("used_at")
+  revokedAt    DateTime?            @map("revoked_at")
+
+  @@index([exchangeCode])
+  @@index([superAdminId])
+  @@map("support_sessions")
 }
 
 // ─── FINANCE ─────────────────────────────────────────────────

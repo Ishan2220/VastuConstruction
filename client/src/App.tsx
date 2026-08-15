@@ -43,6 +43,8 @@ const FinancialSettingsPage = lazy(() => import('@/pages/settings/FinancialSetti
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 const PaymentHistoryPage = lazy(() => import('@/pages/PaymentHistoryPage'));
 const PayrollPage = lazy(() => import('@/pages/PayrollPage'));
+const SuperAdminDashboard = lazy(() => import('@/pages/SuperAdminDashboard'));
+const SupportEntryPage = lazy(() => import('@/pages/SupportEntryPage'));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -72,7 +74,7 @@ function RoleRoute({ allowedRoles, pageName, children }: { allowedRoles: string[
     return <Navigate to="/" replace />;
   }
 
-  const hasBaseRole = allowedRoles.includes(user.role);
+  const hasBaseRole = allowedRoles.includes(user.role) || user.role === 'SUPER_ADMIN';
   
   let hasTempAdmin = false;
   if (pageName && user.tempAdminUntil && user.tempAdminPages) {
@@ -109,9 +111,12 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+import PresentationBanner from '@/components/layout/PresentationBanner';
+
 export default function App() {
   return (
     <BrowserRouter>
+      <PresentationBanner />
       <ConfirmProvider>
         <Suspense fallback={<PageSkeleton />}>
           <Routes>
@@ -121,6 +126,16 @@ export default function App() {
               element={
                 <PublicOnlyRoute>
                   <LoginPage />
+                </PublicOnlyRoute>
+              }
+            />
+
+            {/* Support Entry Route */}
+            <Route
+              path="/support-entry"
+              element={
+                <PublicOnlyRoute>
+                  <SupportEntryPage />
                 </PublicOnlyRoute>
               }
             />
@@ -170,6 +185,7 @@ export default function App() {
               <Route path="settings/users" element={<RoleRoute allowedRoles={['ADMIN']} pageName="Settings"><UsersPage /></RoleRoute>} />
               <Route path="settings/financial" element={<RoleRoute allowedRoles={['ADMIN']} pageName="Settings"><FinancialSettingsPage /></RoleRoute>} />
               <Route path="settings/account" element={<AccountPage />} />
+              <Route path="super-admin" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><SuperAdminDashboard /></RoleRoute>} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>

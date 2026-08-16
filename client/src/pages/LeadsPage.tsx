@@ -23,6 +23,7 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { CategorySelect } from '@/components/common/CategorySelect';
+import { MultiCategorySelect } from '@/components/common/MultiCategorySelect';
 import { useQuickAddListener } from '@/hooks/useQuickAddListener';
 import { useConfirm } from "@/components/ui/ConfirmProvider";
 import { useAuthStore } from '@/store/authStore';
@@ -46,6 +47,7 @@ export default function LeadsPage() {
     email: '',
     source: 'REFERRAL',
     budget: '',
+    advancePayment: '',
     plotSize: '',
     requiredService: 'Full Residential G+10 Construction',
     requirement: '',
@@ -89,6 +91,7 @@ export default function LeadsPage() {
         email: '',
         source: 'REFERRAL',
         budget: '',
+        advancePayment: '',
         plotSize: '',
         requiredService: 'Full Residential G+10 Construction',
         requirement: '',
@@ -493,13 +496,36 @@ export default function LeadsPage() {
                 onChange={(e) => setNewLead({ ...newLead, email: e.target.value })}
                 className="w-full clay-input text-sm"
               />
-              <input
-                type="number"
-                placeholder="Estimated Fee (₹)"
-                value={newLead.budget}
-                onChange={(e) => setNewLead({ ...newLead, budget: e.target.value })}
-                className="w-full clay-input text-sm font-heading"
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Estimated Fee (₹)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 5000"
+                    value={newLead.budget}
+                    onChange={(e) => setNewLead({ ...newLead, budget: e.target.value })}
+                    className="w-full clay-input text-sm font-heading"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Advance Payment (₹)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 2000"
+                    value={newLead.advancePayment}
+                    onChange={(e) => setNewLead({ ...newLead, advancePayment: e.target.value })}
+                    className="w-full clay-input text-sm font-heading text-[#F2A65A]"
+                  />
+                </div>
+              </div>
+              {(Number(newLead.budget || 0) > 0 || Number(newLead.advancePayment || 0) > 0) && (
+                <div className="flex justify-between items-center bg-indigo-50/50 p-2 rounded-lg border border-indigo-100/50 px-3">
+                  <span className="text-xs font-bold text-slate-600">Remaining Fee:</span>
+                  <span className="text-sm font-extrabold text-[#7C6EF0] font-heading">
+                    {formatCurrency(Math.max(0, Number(newLead.budget || 0) - Number(newLead.advancePayment || 0)))}
+                  </span>
+                </div>
+              )}
               <input
                 type="text"
                 placeholder="Required Scope / Plot Size"
@@ -508,13 +534,13 @@ export default function LeadsPage() {
                 className="w-full clay-input text-sm"
               />
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Detailed Requirement (Select or add custom)</label>
-                <CategorySelect
+                <label className="text-xs font-semibold text-slate-700">Detailed Requirement (Select multiple or add custom)</label>
+                <MultiCategorySelect
                   module="lead_requirement"
                   value={newLead.requirement}
                   onChange={(val) => setNewLead({ ...newLead, requirement: val })}
                   defaultOptions={['Full Residential G+10 Construction', 'Commercial Complex', 'Interior Designing', 'Renovation', 'Custom Category']}
-                  placeholder="Select or add custom requirement..."
+                  placeholder="Select or add custom requirements..."
                 />
               </div>
               
@@ -561,17 +587,13 @@ export default function LeadsPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <select
-                  required
+                <CategorySelect
+                  module="cities"
                   value={newLead.city}
-                  onChange={(e) => setNewLead({ ...newLead, city: e.target.value })}
-                  className="w-full clay-input text-sm"
-                >
-                  <option value="">Select City *</option>
-                  {MAHARASHTRA_CITIES.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setNewLead({ ...newLead, city: val })}
+                  defaultOptions={MAHARASHTRA_CITIES}
+                  placeholder="Select City *"
+                />
                 <input
                   type="text"
                   placeholder="State"
@@ -641,14 +663,35 @@ export default function LeadsPage() {
                   defaultOptions={['REFERRAL', 'WEBSITE', 'WALK_IN', 'SOCIAL_MEDIA']}
                   placeholder="Select Lead Source..."
                 />
-                <input
-                  type="number"
-                  placeholder="Expected Budget (₹)"
-                  value={editingLead.budget || ''}
-                  onChange={(e) => setEditingLead({ ...editingLead, budget: e.target.value })}
-                  className="w-full clay-input text-sm font-heading"
-                />
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Estimated Fee (₹)</label>
+                  <input
+                    type="number"
+                    placeholder="Expected Budget (₹)"
+                    value={editingLead.budget || ''}
+                    onChange={(e) => setEditingLead({ ...editingLead, budget: e.target.value })}
+                    className="w-full clay-input text-sm font-heading"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Advance Payment (₹)</label>
+                  <input
+                    type="number"
+                    placeholder="Advance Payment (₹)"
+                    value={editingLead.advancePayment || ''}
+                    onChange={(e) => setEditingLead({ ...editingLead, advancePayment: e.target.value })}
+                    className="w-full clay-input text-sm font-heading text-[#F2A65A]"
+                  />
+                </div>
               </div>
+              {(Number(editingLead.budget || 0) > 0 || Number(editingLead.advancePayment || 0) > 0) && (
+                <div className="flex justify-between items-center bg-indigo-50/50 p-2 rounded-lg border border-indigo-100/50 px-3">
+                  <span className="text-xs font-bold text-slate-600">Remaining Fee:</span>
+                  <span className="text-sm font-extrabold text-[#7C6EF0] font-heading">
+                    {formatCurrency(Math.max(0, Number(editingLead.budget || 0) - Number(editingLead.advancePayment || 0)))}
+                  </span>
+                </div>
+              )}
               <input
                 type="text"
                 placeholder="Required Scope / Plot Size"
@@ -657,13 +700,13 @@ export default function LeadsPage() {
                 className="w-full clay-input text-sm"
               />
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Detailed Requirement (Select or add custom)</label>
-                <CategorySelect
+                <label className="text-xs font-semibold text-slate-700">Detailed Requirement (Select multiple or add custom)</label>
+                <MultiCategorySelect
                   module="lead_requirement"
                   value={editingLead.requirement || ''}
                   onChange={(val) => setEditingLead({ ...editingLead, requirement: val })}
                   defaultOptions={['Full Residential G+10 Construction', 'Commercial Complex', 'Interior Designing', 'Renovation', 'Custom Category']}
-                  placeholder="Select or add custom requirement..."
+                  placeholder="Select or add custom requirements..."
                 />
               </div>
 
@@ -710,17 +753,13 @@ export default function LeadsPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <select
-                  required
+                <CategorySelect
+                  module="cities"
                   value={editingLead.city || ''}
-                  onChange={(e) => setEditingLead({ ...editingLead, city: e.target.value })}
-                  className="w-full clay-input text-sm"
-                >
-                  <option value="">Select City *</option>
-                  {MAHARASHTRA_CITIES.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setEditingLead({ ...editingLead, city: val })}
+                  defaultOptions={MAHARASHTRA_CITIES}
+                  placeholder="Select City *"
+                />
                 <input
                   type="text"
                   placeholder="State"
@@ -761,24 +800,25 @@ export default function LeadsPage() {
             {/* Financial Overview Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-violet-50/70 p-4 rounded-xl border border-violet-100/50">
-                <span className="text-xs font-semibold text-slate-500 uppercase">Total Budget</span>
+                <span className="text-xs font-semibold text-slate-500 uppercase">Estimated Fee</span>
                 <div className="text-xl font-bold text-slate-900 font-mono mt-1">
                   {formatCurrency(Number(viewingLead.budget || 0))}
                 </div>
               </div>
               <div className="bg-emerald-50/70 p-4 rounded-xl border border-emerald-100/50">
-                <span className="text-xs font-semibold text-emerald-700 uppercase">Total Payment Done</span>
+                <span className="text-xs font-semibold text-emerald-700 uppercase">Advance / Paid</span>
                 <div className="text-xl font-bold text-emerald-600 font-mono mt-1">
                   {formatCurrency(
-                    viewingLead.incomes?.reduce((acc: number, inc: any) => acc + (Number(inc.totalAmount) || Number(inc.amount) || 0), 0) || 0
+                    Number(viewingLead.advancePayment || 0) + 
+                    (viewingLead.incomes?.reduce((acc: number, inc: any) => acc + (Number(inc.totalAmount) || Number(inc.amount) || 0), 0) || 0)
                   )}
                 </div>
               </div>
               <div className="bg-rose-50/70 p-4 rounded-xl border border-rose-100/50">
-                <span className="text-xs font-semibold text-rose-700 uppercase">Pending Payment</span>
+                <span className="text-xs font-semibold text-rose-700 uppercase">Remaining Fee</span>
                 <div className="text-xl font-bold text-rose-600 font-mono mt-1">
                   {formatCurrency(
-                    Number(viewingLead.pendingAmount ?? Math.max(0, Number(viewingLead.budget || 0) - (viewingLead.incomes?.reduce((acc: number, inc: any) => acc + (Number(inc.totalAmount) || Number(inc.amount) || 0), 0) || 0)))
+                    Math.max(0, Number(viewingLead.budget || 0) - (Number(viewingLead.advancePayment || 0) + (viewingLead.incomes?.reduce((acc: number, inc: any) => acc + (Number(inc.totalAmount) || Number(inc.amount) || 0), 0) || 0)))
                   )}
                 </div>
               </div>

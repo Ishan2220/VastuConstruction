@@ -241,6 +241,7 @@ model Lead {
   mapLocation        String?    @map("map_location")
   source             String     @default("OTHER")
   budget             Decimal?   @db.Decimal(12, 2)
+  advancePayment     Decimal?   @default(0) @map("advance_payment") @db.Decimal(12, 2)
   plotSize           String?    @map("plot_size")
   plotArea           String?    @map("plot_area")
   plotAddress        String?    @map("plot_address")

@@ -12,7 +12,7 @@ export const getByDate = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
   
-  const result = await attendanceService.getAttendanceByDate(date, type);
+  const result = await attendanceService.getAttendanceByDate(date, type, req.user!.role);
   res.json(new ApiResponse(200, result, 'Attendance fetched successfully'));
 });
 
@@ -31,7 +31,8 @@ export const upsertOne = asyncHandler(async (req: Request, res: Response) => {
     status,
     overtimeHours,
     absentReason,
-    req.user!.userId
+    req.user!.userId,
+    req.user!.role
   );
   
   res.status(200).json(new ApiResponse(200, result, 'Attendance record updated successfully'));
@@ -49,7 +50,8 @@ export const bulkUpdate = asyncHandler(async (req: Request, res: Response) => {
     date,
     personType,
     updates,
-    req.user!.userId
+    req.user!.userId,
+    req.user!.role
   );
   
   res.status(200).json(new ApiResponse(200, { count }, `Successfully marked attendance for ${count} people`));

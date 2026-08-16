@@ -5,8 +5,8 @@ import { PayrollEngine } from './payrollEngine.service.js';
 import { getSettings } from './payroll.service.js';
 import { getAttendanceLockStatus, validateAttendanceEditWindow } from '../utils/dateValidation.js';
 
-export const getAttendanceByDate = async (date: string, type: 'EMPLOYEE' | 'LABOR') => {
-  const { isLocked, targetDate } = getAttendanceLockStatus(date);
+export const getAttendanceByDate = async (date: string, type: 'EMPLOYEE' | 'LABOR', userRole: string = '') => {
+  const { isLocked, targetDate } = getAttendanceLockStatus(date, userRole);
 
   let activePeople: any[] = [];
 
@@ -70,9 +70,10 @@ export const upsertAttendance = async (
   status: 'PRESENT' | 'HALF_DAY' | 'ABSENT' | 'LEAVE' | 'HOLIDAY',
   overtimeHours: number = 0,
   absentReason: string | null = null,
-  markedBy: string = ''
+  markedBy: string = '',
+  userRole: string = ''
 ) => {
-  const targetDate = validateAttendanceEditWindow(date);
+  const targetDate = validateAttendanceEditWindow(date, userRole);
   
   if (personType === 'EMPLOYEE') {
     const isLocked = await PayrollEngine.isPayrollLocked(personId, targetDate);
@@ -153,9 +154,10 @@ export const bulkMarkPresent = async (
   date: string,
   personType: 'EMPLOYEE' | 'LABOR',
   updates: Array<{ personId: string; status: 'PRESENT' | 'HALF_DAY' | 'ABSENT' | 'LEAVE' | 'HOLIDAY'; overtimeHours?: number; absentReason?: string }>,
-  markedBy: string
+  markedBy: string,
+  userRole: string = ''
 ) => {
-  const targetDate = validateAttendanceEditWindow(date);
+  const targetDate = validateAttendanceEditWindow(date, userRole);
 
   // Step 1: Pre-Validation
   if (personType === 'EMPLOYEE') {

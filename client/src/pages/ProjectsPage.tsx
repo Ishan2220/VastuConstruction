@@ -571,7 +571,7 @@ export default function ProjectsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Estimated Budget (₹)</label>
+                  <label className="text-xs font-semibold text-slate-700">Estimated Fee (₹)</label>
                   <input
                     type="number"
                     placeholder="e.g. 120000000"
@@ -761,7 +761,7 @@ export default function ProjectsPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Estimated Budget (₹)</label>
+                  <label className="text-xs font-semibold text-slate-700">Estimated Fee (₹)</label>
                   <input
                     type="number"
                     value={editingProject.budget}

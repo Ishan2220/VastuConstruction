@@ -105,7 +105,7 @@ export default function SiteDashboardPage() {
         </div>
 
         <div className="clay-card p-6 space-y-2">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Estimated Budget</span>
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Estimated Fee</span>
           <div className="text-2xl font-extrabold text-[#F2A65A] font-heading">
             {formatCurrency(Number(project.budget || stats.budget || 0))}
           </div>

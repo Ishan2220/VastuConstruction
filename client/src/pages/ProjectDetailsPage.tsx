@@ -261,7 +261,7 @@ export default function ProjectDetailsPage() {
         </div>
 
         <div className="clay-card p-6 space-y-2">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Estimated Budget</span>
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Estimated Fee</span>
           <div className="text-2xl font-extrabold text-[#F2A65A] font-heading">
             {formatCurrency(Number(project.budget || 0))}
           </div>
@@ -662,7 +662,7 @@ export default function ProjectDetailsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Estimated Budget (₹)</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Estimated Fee (₹)</label>
                   <input
                     type="number"
                     value={editForm.budget}

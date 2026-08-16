@@ -6,7 +6,7 @@ import { ApiError } from '../utils/ApiError.js';
 export const submitVendorAttendance = asyncHandler(async (req: Request, res: Response) => {
   // @ts-ignore
   const userId = req.user?.userId || req.user?.id || 'system';
-  const result = await submitHeadcount(req.body, userId);
+  const result = await submitHeadcount(req.body, userId, req.user?.role || '');
   res.status(200).json({
     success: true,
     data: result,

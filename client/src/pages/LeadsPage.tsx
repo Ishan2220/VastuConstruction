@@ -495,7 +495,7 @@ export default function LeadsPage() {
               />
               <input
                 type="number"
-                placeholder="Estimated Budget (₹)"
+                placeholder="Estimated Fee (₹)"
                 value={newLead.budget}
                 onChange={(e) => setNewLead({ ...newLead, budget: e.target.value })}
                 className="w-full clay-input text-sm font-heading"

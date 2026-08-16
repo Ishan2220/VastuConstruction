@@ -13,7 +13,7 @@ export function validateBackdating(dateString: string | Date | undefined, role: 
   }
 }
 
-export function validateAttendanceEditWindow(dateStr: string) {
+export function validateAttendanceEditWindow(dateStr: string, role: string = '') {
   const targetDate = new Date(dateStr);
   if (isNaN(targetDate.getTime())) throw new ApiError(400, 'Invalid date format');
   
@@ -30,16 +30,16 @@ export function validateAttendanceEditWindow(dateStr: string) {
 
   const diffHours = (now.getTime() - targetDate.getTime()) / (1000 * 60 * 60);
   
-  if (diffHours > 48) {
+  if (diffHours > 48 && role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
     throw new ApiError(403, 'Cannot modify attendance beyond a 48-hour window from today');
   }
   
   return targetDate;
 }
 
-export function getAttendanceLockStatus(dateStr: string) {
+export function getAttendanceLockStatus(dateStr: string, role: string = '') {
   try {
-    const targetDate = validateAttendanceEditWindow(dateStr);
+    const targetDate = validateAttendanceEditWindow(dateStr, role);
     return { isLocked: false, targetDate };
   } catch (error: any) {
     const targetDate = new Date(dateStr);

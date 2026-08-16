@@ -269,7 +269,7 @@ export default function SitesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <input
                   type="number"
-                  placeholder="Estimated Budget (₹)"
+                  placeholder="Estimated Fee (₹)"
                   value={newSite.budget}
                   onChange={(e) => setNewSite({ ...newSite, budget: e.target.value })}
                   className="w-full clay-input font-mono"

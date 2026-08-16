@@ -6,10 +6,10 @@ import { validateAttendanceEditWindow } from '../utils/dateValidation.js';
 
 const prisma = new PrismaClient();
 
-export const submitHeadcount = async (data: any, userId: string) => {
+export const submitHeadcount = async (data: any, userId: string, userRole: string = '') => {
   const { vendorId, projectId, date, details, notes } = data;
 
-  const attendanceDate = validateAttendanceEditWindow(date);
+  const attendanceDate = validateAttendanceEditWindow(date, userRole);
 
   // Calculate total wage
   const totalWage = details.reduce((sum: number, detail: any) => sum + Number(detail.count) * Number(detail.rate), 0);

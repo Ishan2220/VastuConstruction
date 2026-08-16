@@ -110,7 +110,7 @@ export const create = async (data: Prisma.LeadUncheckedCreateInput & { idempoten
 
 export const update = async (id: string, data: Prisma.LeadUncheckedUpdateInput & { idempotencyKey?: string }, userId: string) => {
   const existing = await getById(id);
-  const { idempotencyKey, assignee, createdBy, client, timeline, documents, _count, id: _id, createdAt, updatedAt, deletedAt, ...restData } = data as any;
+  const { idempotencyKey, assignee, createdBy, client, timeline, documents, incomes, _count, id: _id, createdAt, updatedAt, deletedAt, ...restData } = data as any;
   const lead = await prisma.lead.update({
     where: { id },
     data: restData,

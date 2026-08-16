@@ -49,7 +49,7 @@ export default function LeadsPage() {
     budget: '',
     advancePayment: '',
     plotSize: '',
-    requiredService: 'Full Residential G+10 Construction',
+    requiredService: '',
     requirement: '',
     remarks: '',
     captureDate: new Date().toISOString(),
@@ -93,7 +93,7 @@ export default function LeadsPage() {
         budget: '',
         advancePayment: '',
         plotSize: '',
-        requiredService: 'Full Residential G+10 Construction',
+        requiredService: '',
         requirement: '',
         remarks: '',
         captureDate: new Date().toISOString(),
@@ -176,6 +176,7 @@ export default function LeadsPage() {
     updateMutation.mutate({
       ...editingLead,
       budget: Number(editingLead.budget) || 0,
+      advancePayment: Number(editingLead.advancePayment) || 0,
     });
   };
 
@@ -188,6 +189,7 @@ export default function LeadsPage() {
     createMutation.mutate({
       ...newLead,
       budget: Number(newLead.budget) || 0,
+      advancePayment: Number(newLead.advancePayment) || 0,
     });
   };
 

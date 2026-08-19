@@ -151,7 +151,7 @@ export default function AttendancePage() {
     const person = newPeople.find(p => p.personId === personId);
     if (person) {
       updateMutation.mutate(
-        { personId, personType, date: selectedDateStr, status, overtimeHours: person.overtimeHours, absentReason: person.absentReason },
+        { personId, personType, date: selectedDateStr, status, overtimeHours: Number(person.overtimeHours) || 0, absentReason: person.absentReason },
         { 
           onError: (err: any) => {
             toast.error(err.response?.data?.message || err.message || 'Failed to update attendance');

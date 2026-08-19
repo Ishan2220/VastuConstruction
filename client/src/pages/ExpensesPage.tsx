@@ -395,7 +395,15 @@ export default function ExpensesPage() {
                 </select>
               )}
 
-              <div>
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="date"
+                  required
+                  value={newExpense.paymentDate}
+                  onChange={(e) => setNewExpense({ ...newExpense, paymentDate: e.target.value })}
+                  className="clay-input w-full text-sm"
+                  title="Payment Date"
+                />
                 <input
                   type="number"
                   required

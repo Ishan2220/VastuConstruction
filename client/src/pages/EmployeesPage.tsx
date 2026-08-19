@@ -94,12 +94,14 @@ export default function EmployeesPage() {
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEmp.name || !newEmp.email) {
-      toast.error('Name and Email are required');
+    if (!newEmp.name) {
+      toast.error('Name is required');
       return;
     }
+    const empEmail = newEmp.email.trim() || `staff_${Date.now()}@vastu.local`;
     createMutation.mutate({
       ...newEmp,
+      email: empEmail,
       designation: newEmp.role,
     });
   };
@@ -348,8 +350,7 @@ export default function EmployeesPage() {
               />
               <input
                 type="email"
-                required
-                placeholder="Work Email Address *"
+                placeholder="Work Email Address (Optional)"
                 value={newEmp.email}
                 onChange={(e) => setNewEmp({ ...newEmp, email: e.target.value })}
                 className="clay-input w-full px-3 py-2 text-sm"

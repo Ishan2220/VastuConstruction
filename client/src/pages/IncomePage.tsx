@@ -412,7 +412,15 @@ export default function IncomePage() {
                 </select>
               )}
 
-              <div>
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="date"
+                  required
+                  value={newIncome.paymentDate}
+                  onChange={(e) => setNewIncome({ ...newIncome, paymentDate: e.target.value })}
+                  className="clay-input w-full text-sm"
+                  title="Payment Date"
+                />
                 <input
                   type="number"
                   required

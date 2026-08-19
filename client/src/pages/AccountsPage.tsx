@@ -295,6 +295,7 @@ export default function AccountsPage() {
                   <option value="CURRENT">Current Account</option>
                   <option value="SAVINGS">Savings Account</option>
                   <option value="ESCROW">Escrow Account</option>
+                  <option value="CASH">Cash Account</option>
                   <option value="OVERDRAFT">Overdraft / OD</option>
                 </select>
               </div>
@@ -348,6 +349,7 @@ export default function AccountsPage() {
                   <option value="CURRENT">Current Account</option>
                   <option value="SAVINGS">Savings Account</option>
                   <option value="ESCROW">Escrow / Project</option>
+                  <option value="CASH">Cash Account</option>
                   <option value="OD_CC">OD / CC Limit</option>
                 </select>
               </div>

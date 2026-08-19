@@ -140,6 +140,7 @@ export const create = async (
       action: 'GENERATED',
       module: 'INVOICE',
       description: `Invoice ${data.invoiceNumber} generated for ${entityName}`,
+      userId: userId,
       clientId: data.clientId || null,
       projectId: data.projectId || null,
       amount: numTotal,

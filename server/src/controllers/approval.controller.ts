@@ -108,6 +108,7 @@ export const actionApprovalStep = async (req: Request, res: Response) => {
         action: overallStatus,
         module: 'OTHER',
         description: `Approval Request for ${step.approvalRequest.entityType} was ${overallStatus}`,
+        userId: req.user?.id,
         referenceNo: step.approvalRequest.entityId
       }
     });

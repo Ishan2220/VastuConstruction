@@ -120,6 +120,7 @@ export const createPurchaseOrder = async (req: Request, res: Response) => {
       action: 'CREATED',
       module: 'MATERIAL',
       description: `Purchase Order ${poNumber} created for vendor ${updatedPo.vendor.name}`,
+      userId: req.user?.id,
       vendorId,
       projectId,
       amount: finalTotalAmount,

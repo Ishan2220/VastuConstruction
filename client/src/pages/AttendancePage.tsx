@@ -133,13 +133,14 @@ export default function AttendancePage() {
   });
 
   // Handlers
-  const handleStatusChange = (personId: string, status: AttendanceStatus) => {
+  const handleStatusChange = (personId: string, status: AttendanceStatus, customOt?: number) => {
     if (attendanceData?.isLocked) return;
     
     const prevPeople = attendanceData?.people || [...localPeople];
     const newPeople = localPeople.map(p => {
       if (p.personId === personId) {
-        const newOvertime = status === 'ABSENT' ? 0 : (parseFloat(String(p.overtimeHours)) || 0);
+        let newOvertime = status === 'ABSENT' ? 0 : (parseFloat(String(p.overtimeHours)) || 0);
+        if (customOt !== undefined) newOvertime = customOt;
         const newReason = status === 'ABSENT' ? p.absentReason : null;
         return { ...p, status, overtimeHours: newOvertime, absentReason: newReason };
       }
@@ -150,7 +151,7 @@ export default function AttendancePage() {
     const person = newPeople.find(p => p.personId === personId);
     if (person) {
       updateMutation.mutate(
-        { personId, personType, date: selectedDateStr, status, overtimeHours: person.status === 'ABSENT' ? 0 : (parseFloat(String(person.overtimeHours)) || 0), absentReason: person.absentReason },
+        { personId, personType, date: selectedDateStr, status, overtimeHours: person.overtimeHours, absentReason: person.absentReason },
         { 
           onError: (err: any) => {
             toast.error(err.response?.data?.message || err.message || 'Failed to update attendance');
@@ -476,25 +477,43 @@ export default function AttendancePage() {
                             <div className="flex items-center gap-1.5 p-1 bg-gray-50/80 rounded-[20px] border border-gray-100/50" style={{ opacity: isLocked ? 0.7 : 1 }}>
                               <button
                                 disabled={isLocked}
-                                onClick={() => handleStatusChange(person.personId, 'PRESENT')}
+                                onClick={() => handleStatusChange(person.personId, 'HALF_DAY', -2)}
+                                className={`min-w-[36px] min-h-[32px] rounded-full text-[11px] font-bold active:scale-95 transition-all ${
+                                  person.status === 'HALF_DAY' && person.overtimeHours === -2 ? 'bg-amber-400 text-white shadow-sm' : 'text-gray-400 hover:bg-gray-200'
+                                }`}
+                              >
+                                2h
+                              </button>
+                              <button
+                                disabled={isLocked}
+                                onClick={() => handleStatusChange(person.personId, 'HALF_DAY', 0)}
+                                className={`min-w-[36px] min-h-[32px] rounded-full text-[11px] font-bold active:scale-95 transition-all ${
+                                  person.status === 'HALF_DAY' && person.overtimeHours === 0 ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-400 hover:bg-gray-200'
+                                }`}
+                              >
+                                4h
+                              </button>
+                              <button
+                                disabled={isLocked}
+                                onClick={() => handleStatusChange(person.personId, 'HALF_DAY', 2)}
+                                className={`min-w-[36px] min-h-[32px] rounded-full text-[11px] font-bold active:scale-95 transition-all ${
+                                  person.status === 'HALF_DAY' && person.overtimeHours === 2 ? 'bg-amber-600 text-white shadow-sm' : 'text-gray-400 hover:bg-gray-200'
+                                }`}
+                              >
+                                6h
+                              </button>
+                              <button
+                                disabled={isLocked}
+                                onClick={() => handleStatusChange(person.personId, 'PRESENT', 0)}
                                 className={`min-w-[36px] min-h-[32px] rounded-full text-[11px] font-bold active:scale-95 transition-all ${
                                   person.status === 'PRESENT' ? 'bg-emerald-500 text-white shadow-sm' : 'text-gray-400 hover:bg-gray-200'
                                 }`}
                               >
-                                P
+                                8h
                               </button>
                               <button
                                 disabled={isLocked}
-                                onClick={() => handleStatusChange(person.personId, 'HALF_DAY')}
-                                className={`min-w-[36px] min-h-[32px] rounded-full text-[11px] font-bold active:scale-95 transition-all ${
-                                  person.status === 'HALF_DAY' ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-400 hover:bg-gray-200'
-                                }`}
-                              >
-                                H
-                              </button>
-                              <button
-                                disabled={isLocked}
-                                onClick={() => handleStatusChange(person.personId, 'ABSENT')}
+                                onClick={() => handleStatusChange(person.personId, 'ABSENT', 0)}
                                 className={`min-w-[36px] min-h-[32px] rounded-full text-[11px] font-bold active:scale-95 transition-all ${
                                   person.status === 'ABSENT' ? 'bg-rose-500 text-white shadow-sm' : 'text-gray-400 hover:bg-gray-200'
                                 }`}

@@ -49,7 +49,7 @@ const navItems: NavItem[] = [
   { label: 'Income / Payments', icon: IndianRupee, href: '/income', roles: ['ADMIN', 'ACCOUNTANT'] },
   { label: 'Payment History', icon: History, href: '/payment-history', roles: ['ADMIN', 'ACCOUNTANT', 'ENGINEER'] },
   { label: 'Accounts', icon: Landmark, href: '/accounts', roles: ['ADMIN', 'ACCOUNTANT'] },
-  { label: 'Invoices', icon: FileText, href: '/invoices', roles: ['ADMIN', 'ACCOUNTANT'] },
+  { label: 'Invoices', icon: FileText, href: '/invoices', roles: ['ADMIN', 'SUPER_ADMIN', 'ACCOUNTANT', 'ENGINEER'] },
   { label: 'Vendors', icon: Truck, href: '/vendors', roles: ['ADMIN', 'ACCOUNTANT', 'ENGINEER'] },
   { label: 'Materials', icon: Package, href: '/materials', roles: ['ADMIN', 'ENGINEER', 'ACCOUNTANT'] },
   { label: 'Material Entries', icon: Receipt, href: '/purchase-orders', roles: ['ADMIN', 'ACCOUNTANT', 'ENGINEER'] },

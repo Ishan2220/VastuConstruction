@@ -8,11 +8,11 @@ const router = Router();
 
 router.use(authenticate);
 
-router.get('/', authorize('ADMIN', 'ACCOUNTANT', 'ENGINEER'), asyncHandler(getInvoices));
-router.get('/:id', authorize('ADMIN', 'ACCOUNTANT', 'ENGINEER'), asyncHandler(getInvoiceById));
-router.get('/:id/pdf', authorize('ADMIN', 'ACCOUNTANT', 'ENGINEER'), asyncHandler(downloadInvoicePDF));
-router.post('/', authorize('ADMIN', 'ACCOUNTANT'), asyncHandler(createInvoice));
-router.patch('/:id/status', authorize('ADMIN', 'ACCOUNTANT'), asyncHandler(updateInvoiceStatus));
-router.delete('/:id', authorize('ADMIN'), asyncHandler(deleteInvoice));
+router.get('/', authorize('ADMIN', 'SUPER_ADMIN', 'ACCOUNTANT', 'ENGINEER'), asyncHandler(getInvoices));
+router.get('/:id', authorize('ADMIN', 'SUPER_ADMIN', 'ACCOUNTANT', 'ENGINEER'), asyncHandler(getInvoiceById));
+router.get('/:id/pdf', authorize('ADMIN', 'SUPER_ADMIN', 'ACCOUNTANT', 'ENGINEER'), asyncHandler(downloadInvoicePDF));
+router.post('/', authorize('ADMIN', 'SUPER_ADMIN', 'ACCOUNTANT', 'ENGINEER'), asyncHandler(createInvoice));
+router.patch('/:id/status', authorize('ADMIN', 'SUPER_ADMIN', 'ACCOUNTANT', 'ENGINEER'), asyncHandler(updateInvoiceStatus));
+router.delete('/:id', authorize('ADMIN', 'SUPER_ADMIN'), asyncHandler(deleteInvoice));
 
 export default router;

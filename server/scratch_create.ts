@@ -1,5 +1,7 @@
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { prisma } from './src/config/database.js';
+
+const prisma = new PrismaClient();
 
 async function main() {
   const email = 'superadmin@vastuconstruction.in';

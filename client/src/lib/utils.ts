@@ -33,7 +33,8 @@ export function formatIndianNumber(num: number): string {
  */
 export function formatCurrency(amount: number | undefined | null): string {
   if (amount == null) return '₹ 0';
-  return `₹ ${formatIndianNumber(amount)}`;
+  const sign = amount < 0 ? '-' : '';
+  return `${sign}₹ ${formatIndianNumber(Math.abs(amount))}`;
 }
 
 /**

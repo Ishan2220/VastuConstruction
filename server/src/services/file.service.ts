@@ -4,7 +4,6 @@ import { env } from '../config/env.js';
 import { storageService } from './storage.service.js';
 import { ApiError } from '../utils/ApiError.js';
 import { logger } from '../utils/logger.js';
-import sharp from 'sharp';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
@@ -105,6 +104,7 @@ export class FileService {
 
     if (isImage && env.FMS_COMPRESSION_ENABLED) {
       try {
+        const { default: sharp } = await import('sharp');
         const image = sharp(filePath);
         const metadata = await image.metadata();
         originalWidth = metadata.width || null;
@@ -175,6 +175,7 @@ export class FileService {
     const thumbStart = Date.now();
     if (isImage) {
       try {
+        const { default: sharp } = await import('sharp');
         const thumbName = `thumb_${storedFileName}`;
         const thumbOutPath = path.join(process.cwd(), 'uploads', thumbName);
         await sharp(processedFilePath)

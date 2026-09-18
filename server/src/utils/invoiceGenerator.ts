@@ -9,19 +9,23 @@ const __dirname = path.dirname(__filename);
 export const generateLeadInvoicePDF = async (
   leadData: any,
   paymentData: any,
-  outputPath: string
-): Promise<string> => {
+  outputPathOrStream: string | NodeJS.WritableStream
+): Promise<string | void> => {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ margin: 50, size: 'A4' });
       
-      // Ensure directory exists
-      const dir = path.dirname(outputPath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+      let writeStream;
+      if (typeof outputPathOrStream === 'string') {
+        const dir = path.dirname(outputPathOrStream);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        writeStream = fs.createWriteStream(outputPathOrStream);
+      } else {
+        writeStream = outputPathOrStream;
       }
-
-      const writeStream = fs.createWriteStream(outputPath);
+      
       doc.pipe(writeStream);
 
       // --- Letterhead ---
@@ -181,8 +185,8 @@ export const generateLeadInvoicePDF = async (
 
       doc.end();
 
-      writeStream.on('finish', () => resolve(outputPath));
-      writeStream.on('error', (err) => reject(err));
+      (writeStream as NodeJS.WritableStream).on('finish', () => resolve(typeof outputPathOrStream === 'string' ? outputPathOrStream : undefined));
+      (writeStream as NodeJS.WritableStream).on('error', (err: any) => reject(err));
     } catch (err) {
       reject(err);
     }
@@ -222,20 +226,25 @@ function drawFooter(doc: PDFKit.PDFDocument, brownColor: string) {
 export const generateInvoicePDF = async (
   invoiceData: any,
   entityData: any,
-  outputPath: string
-): Promise<string> => {
+  outputPathOrStream: string | NodeJS.WritableStream
+): Promise<string | void> => {
   return new Promise((resolve, reject) => {
     try {
       // Create a document with 0 bottom margin so the footer can touch the bottom easily,
       // but keep normal margins for top, left, right.
       const doc = new PDFDocument({ margin: 50, size: 'A4', bufferPages: true });
       
-      const dir = path.dirname(outputPath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+      let writeStream;
+      if (typeof outputPathOrStream === 'string') {
+        const dir = path.dirname(outputPathOrStream);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        writeStream = fs.createWriteStream(outputPathOrStream);
+      } else {
+        writeStream = outputPathOrStream;
       }
-
-      const writeStream = fs.createWriteStream(outputPath);
+      
       doc.pipe(writeStream);
 
       const brownColor = '#B18654';
@@ -454,8 +463,8 @@ export const generateInvoicePDF = async (
 
       doc.end();
 
-      writeStream.on('finish', () => resolve(outputPath));
-      writeStream.on('error', (err) => reject(err));
+      (writeStream as NodeJS.WritableStream).on('finish', () => resolve(typeof outputPathOrStream === 'string' ? outputPathOrStream : undefined));
+      (writeStream as NodeJS.WritableStream).on('error', (err: any) => reject(err));
     } catch (err) {
       reject(err);
     }

@@ -33,31 +33,18 @@ import path from 'path';
 import { generateInvoicePDF } from '../utils/invoiceGenerator.js';
 
 export const downloadInvoicePDF = async (req: Request, res: Response) => {
-  const invoice = await invoiceService.getById(req.params.id as string);
-  
-  const entityData = invoice.type === 'CLIENT' ? invoice.client : invoice.vendor;
-  
-  const tempPath = path.resolve(process.cwd(), `temp/invoice-${invoice.id}.pdf`);
-  
-  await generateInvoicePDF(invoice, entityData, tempPath);
-  
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`);
-  
-  const fileStream = fs.createReadStream(tempPath);
-  fileStream.pipe(res);
-  
-  fileStream.on('end', () => {
-    // Clean up temp file
-    if (fs.existsSync(tempPath)) {
-      fs.unlinkSync(tempPath);
-    }
-  });
-  
-  fileStream.on('error', (err) => {
+  try {
+    const invoice = await invoiceService.getById(req.params.id as string);
+    const entityData = invoice.type === 'CLIENT' ? invoice.client : invoice.vendor;
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`);
+    
+    await generateInvoicePDF(invoice, entityData, res);
+  } catch (err) {
     console.error('Error streaming PDF:', err);
     if (!res.headersSent) {
       res.status(500).json(new ApiResponse(500, null, 'Error generating PDF'));
     }
-  });
+  }
 };

@@ -79,7 +79,7 @@ export const generateLeadInvoicePDF = async (
 
       let iconsDir = path.join(__dirname, '../assets/icons');
       if (!fs.existsSync(iconsDir)) {
-        iconsDir = path.join(process.cwd(), 'src/assets/icons');
+        iconsDir = path.join(__dirname, '../../src/assets/icons');
       }
       const iconSize = 10;
       const iconX = rightX + 5;
@@ -302,7 +302,7 @@ export const generateInvoicePDF = async (
 
       let iconsDir = path.join(__dirname, '../assets/icons');
       if (!fs.existsSync(iconsDir)) {
-        iconsDir = path.join(process.cwd(), 'src/assets/icons');
+        iconsDir = path.join(__dirname, '../../src/assets/icons');
       }
       const iconSize = 10;
 

@@ -457,7 +457,7 @@ model Vendor {
   state          String?
   gst            String?
   pan            String?
-  category       String? // Material type they supply
+  categories     String[] @default([])
   rating         Int?     @default(0) // 0-5
   isActive       Boolean  @default(true) @map("is_active")
   openingBalance Decimal? @default(0) @map("opening_balance") @db.Decimal(12, 2)
@@ -684,6 +684,7 @@ model UnifiedAttendance {
   status        AttendanceStatus
   overtimeHours Float?           @default(0) @map("overtime_hours")
   absentReason  String?          @map("absent_reason")
+  projectId     String?          @map("project_id")
 
   checkIn             DateTime? @map("check_in")
   checkOut            DateTime? @map("check_out")

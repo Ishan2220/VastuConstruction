@@ -17,6 +17,7 @@ interface Person {
   status: AttendanceStatus;
   overtimeHours: number | string;
   absentReason?: string | null;
+  projectId?: string | null;
 }
 
 interface AttendanceData {
@@ -60,27 +61,39 @@ export default function AttendancePage() {
   const selectedDateStr = formatDateStr(selectedDate);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date(today.getFullYear(), today.getMonth(), 1));
   const [personType, setPersonType] = useState<PersonType>('EMPLOYEE');
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   
   const isToday = selectedDateStr === todayStr;  
   // Local state for optimistic updates
   const [localPeople, setLocalPeople] = useState<Person[]>([]);
   const [successIds, setSuccessIds] = useState<Set<string>>(new Set());
 
+  // Fetch projects list for site selector
+  const { data: projects = [] } = useQuery({
+    queryKey: ['projects-select'],
+    queryFn: async () => {
+      const { data } = await api.get('/projects?limit=500');
+      return data.data?.data || [];
+    }
+  });
+
   // Queries
   const { data: attendanceData, isLoading } = useQuery({
-    queryKey: ['attendance', selectedDateStr, personType],
+    queryKey: ['attendance', selectedDateStr, personType, selectedProjectId],
     queryFn: async () => {
       if (personType === 'VENDOR_TEAMS') return null;
-      const res = await api.get<{ data: AttendanceData }>(`/attendance?date=${selectedDateStr}&type=${personType}`);
+      const projectParam = selectedProjectId ? `&projectId=${selectedProjectId}` : '';
+      const res = await api.get<{ data: AttendanceData }>(`/attendance?date=${selectedDateStr}&type=${personType}${projectParam}`);
       return res.data.data;
     },
   });
 
   const { data: calendarSummary } = useQuery({
-    queryKey: ['attendance-calendar', formatMonthStr(currentMonth), personType],
+    queryKey: ['attendance-calendar', formatMonthStr(currentMonth), personType, selectedProjectId],
     queryFn: async () => {
       if (personType === 'VENDOR_TEAMS') return null;
-      const res = await api.get<{ data: CalendarSummary }>(`/attendance/calendar-summary?month=${formatMonthStr(currentMonth)}&type=${personType}`);
+      const projectParam = selectedProjectId ? `&projectId=${selectedProjectId}` : '';
+      const res = await api.get<{ data: CalendarSummary }>(`/attendance/calendar-summary?month=${formatMonthStr(currentMonth)}&type=${personType}${projectParam}`);
       return res.data.data;
     },
   });
@@ -93,7 +106,7 @@ export default function AttendancePage() {
 
   // Mutations
   const updateMutation = useMutation({
-    mutationFn: async (payload: { personId: string; personType: PersonType; date: string; status: AttendanceStatus; overtimeHours: number; absentReason?: string | null }) => {
+    mutationFn: async (payload: { personId: string; personType: PersonType; date: string; status: AttendanceStatus; overtimeHours: number; absentReason?: string | null; projectId?: string }) => {
       const res = await api.put('/attendance', payload);
       return res.data;
     },
@@ -107,7 +120,7 @@ export default function AttendancePage() {
         });
       }, 1500);
       queryClient.invalidateQueries({ queryKey: ['attendance-calendar'] });
-      queryClient.invalidateQueries({ queryKey: ['attendance', variables.date, variables.personType] });
+      queryClient.invalidateQueries({ queryKey: ['attendance'] });
     },
     onError: (err: any, _vars, context: any) => {
       toast.error(err.response?.data?.message || err.message || 'Failed to update attendance');
@@ -118,13 +131,13 @@ export default function AttendancePage() {
   });
 
   const bulkMutation = useMutation({
-    mutationFn: async (payload: { date: string; personType: PersonType; updates: any[] }) => {
+    mutationFn: async (payload: { date: string; personType: PersonType; updates: any[]; projectId?: string }) => {
       const res = await api.put('/attendance/bulk', payload);
       return res.data;
     },
     onSuccess: () => {
       toast.success('All unmarked people marked present');
-      queryClient.invalidateQueries({ queryKey: ['attendance', selectedDateStr, personType] });
+      queryClient.invalidateQueries({ queryKey: ['attendance'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-calendar'] });
     },
     onError: () => {
@@ -151,7 +164,7 @@ export default function AttendancePage() {
     const person = newPeople.find(p => p.personId === personId);
     if (person) {
       updateMutation.mutate(
-        { personId, personType, date: selectedDateStr, status, overtimeHours: Number(person.overtimeHours) || 0, absentReason: person.absentReason },
+        { personId, personType, date: selectedDateStr, status, overtimeHours: Number(person.overtimeHours) || 0, absentReason: person.absentReason, projectId: selectedProjectId || undefined },
         { 
           onError: (err: any) => {
             toast.error(err.response?.data?.message || err.message || 'Failed to update attendance');
@@ -177,7 +190,7 @@ export default function AttendancePage() {
     const person = newPeople.find(p => p.personId === personId);
     if (person && person.status === 'ABSENT') {
       updateMutation.mutate(
-        { personId, personType, date: selectedDateStr, status: 'ABSENT', overtimeHours: 0, absentReason: val },
+        { personId, personType, date: selectedDateStr, status: 'ABSENT', overtimeHours: 0, absentReason: val, projectId: selectedProjectId || undefined },
         { 
           onError: (err: any) => {
             toast.error(err.response?.data?.message || err.message || 'Failed to update attendance');
@@ -207,7 +220,7 @@ export default function AttendancePage() {
     const person = newPeople.find(p => p.personId === personId);
     if (person && person.status) {
       updateMutation.mutate(
-        { personId, personType, date: selectedDateStr, status: person.status, overtimeHours: num },
+        { personId, personType, date: selectedDateStr, status: person.status, overtimeHours: num, absentReason: person.absentReason, projectId: selectedProjectId || undefined },
         { 
           onError: (err: any) => {
             toast.error(err.response?.data?.message || err.message || 'Failed to update attendance');
@@ -227,12 +240,14 @@ export default function AttendancePage() {
     const updates = unmarked.map(p => ({
       personId: p.personId,
       status: 'PRESENT',
-      overtimeHours: 0
+      overtimeHours: 0,
+      projectId: selectedProjectId || undefined
     }));
 
     bulkMutation.mutate({
       date: selectedDateStr,
       personType,
+      projectId: selectedProjectId || undefined,
       updates
     }, {
       onError: () => {
@@ -341,8 +356,8 @@ export default function AttendancePage() {
       {/* RIGHT COL: LIST */}
       <div className="flex-1 flex flex-col min-w-0">
         
-        {/* Category Switcher Dropdown */}
-        <div className="flex justify-center lg:justify-start mb-6">
+        {/* Category & Site Switcher Dropdowns */}
+        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-6">
           <div className="relative inline-flex">
             <select
               value={personType}
@@ -351,6 +366,26 @@ export default function AttendancePage() {
             >
               <option value="EMPLOYEE">Employees</option>
               <option value="VENDOR_TEAMS">Vendor Teams</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-violet-700">
+              <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+              </svg>
+            </div>
+          </div>
+
+          <div className="relative inline-flex">
+            <select
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+              className="appearance-none bg-white border border-gray-200 text-violet-700 text-sm font-semibold rounded-xl px-4 py-2.5 pr-10 shadow-[4px_4px_8px_#e2e8f0,-4px_-4px_8px_#ffffff] focus:outline-none focus:ring-2 focus:ring-violet-400 transition-shadow cursor-pointer max-w-xs truncate"
+            >
+              <option value="">All Sites</option>
+              {projects.map((project: any) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-violet-700">
               <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">

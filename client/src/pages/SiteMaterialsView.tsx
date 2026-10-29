@@ -295,10 +295,28 @@ export default function SiteMaterialsView({ projectId: propProjectId }: { projec
               {!activeMaterial && (
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700">Select Material *</label>
-                  <select name="materialSelect" required className="w-full px-3 py-2 clay-input text-sm">
+                  <select
+                    name="materialSelect"
+                    required
+                    className="w-full px-3 py-2 clay-input text-sm"
+                    onChange={(e) => {
+                      const matId = e.target.value;
+                      const found = materialsDirectory.find((m: any) => m.id === matId);
+                      if (found) {
+                        const r = String(found.rate ?? found.unitPrice ?? '');
+                        setReceiveData((prev) => ({
+                          ...prev,
+                          rate: r,
+                          amount: prev.quantity && r ? String(Number(prev.quantity) * Number(r)) : prev.amount,
+                        }));
+                      }
+                    }}
+                  >
                     <option value="">Select from directory...</option>
                     {materialsDirectory.map((m: any) => (
-                      <option key={m.id} value={m.id}>{m.name} ({m.unit})</option>
+                      <option key={m.id} value={m.id}>
+                        {m.name} ({m.unit}) - ₹{m.rate ?? m.unitPrice ?? 0}/{m.unit}
+                      </option>
                     ))}
                   </select>
                 </div>

@@ -80,22 +80,41 @@ export const getById = async (id: string) => {
   return material;
 };
 
-export const create = async (data: Prisma.MaterialUncheckedCreateInput & { idempotencyKey?: string }, userId: string) => {
-  const { idempotencyKey, ...rest } = data;
+export const create = async (data: any, userId: string) => {
+  const { idempotencyKey, code, category, minStockAlert, unitPrice, ...rest } = data;
+  const rateVal = rest.rate !== undefined ? Number(rest.rate) : (unitPrice !== undefined ? Number(unitPrice) : 0);
   const material = await prisma.material.create({
-    data: rest,
+    data: {
+      name: rest.name,
+      unit: rest.unit,
+      rate: rateVal,
+      gstRate: rest.gstRate !== undefined ? Number(rest.gstRate) : 0,
+      vendorId: rest.vendorId || null,
+      isDefault: rest.isDefault ?? false,
+      isActive: rest.isActive ?? true,
+    },
     include: { vendor: { select: { name: true } } },
   });
   eventBus.publishMutation('Material', 'CREATE', userId, material.id, idempotencyKey || crypto.randomUUID(), material, null);
   return material;
 };
 
-export const update = async (id: string, data: Prisma.MaterialUncheckedUpdateInput & { idempotencyKey?: string }, userId: string) => {
+export const update = async (id: string, data: any, userId: string) => {
   const existing = await prisma.material.findUnique({ where: { id } });
   if (!existing) throw new ApiError(404, 'Material not found');
 
-  const { idempotencyKey, ...rest } = data;
-  const material = await prisma.material.update({ where: { id }, data: rest });
+  const { idempotencyKey, code, category, minStockAlert, unitPrice, ...rest } = data;
+  const updateData: any = {};
+  if (rest.name !== undefined) updateData.name = rest.name;
+  if (rest.unit !== undefined) updateData.unit = rest.unit;
+  if (rest.rate !== undefined) updateData.rate = Number(rest.rate);
+  else if (unitPrice !== undefined) updateData.rate = Number(unitPrice);
+  if (rest.gstRate !== undefined) updateData.gstRate = Number(rest.gstRate);
+  if (rest.vendorId !== undefined) updateData.vendorId = rest.vendorId || null;
+  if (rest.isDefault !== undefined) updateData.isDefault = rest.isDefault;
+  if (rest.isActive !== undefined) updateData.isActive = rest.isActive;
+
+  const material = await prisma.material.update({ where: { id }, data: updateData });
   eventBus.publishMutation('Material', 'UPDATE', userId, id, idempotencyKey || crypto.randomUUID(), material, existing);
   return material;
 };

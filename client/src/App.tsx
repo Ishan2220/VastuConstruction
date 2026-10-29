@@ -40,6 +40,7 @@ const InvoicesPage = lazy(() => import('@/pages/InvoicesPage'));
 const UsersPage = lazy(() => import('@/pages/settings/UsersPage'));
 const AccountPage = lazy(() => import('@/pages/settings/AccountPage'));
 const FinancialSettingsPage = lazy(() => import('@/pages/settings/FinancialSettingsPage'));
+const PageAccessPage = lazy(() => import('@/pages/settings/PageAccessPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 const PaymentHistoryPage = lazy(() => import('@/pages/PaymentHistoryPage'));
 const PayrollPage = lazy(() => import('@/pages/PayrollPage'));
@@ -184,6 +185,7 @@ export default function App() {
               <Route path="settings" element={<RoleRoute allowedRoles={['ADMIN']} pageName="Settings"><SettingsPage /></RoleRoute>} />
               <Route path="settings/users" element={<RoleRoute allowedRoles={['ADMIN']} pageName="Settings"><UsersPage /></RoleRoute>} />
               <Route path="settings/financial" element={<RoleRoute allowedRoles={['ADMIN']} pageName="Settings"><FinancialSettingsPage /></RoleRoute>} />
+              <Route path="settings/page-access" element={<RoleRoute allowedRoles={['ADMIN']} pageName="Settings"><PageAccessPage /></RoleRoute>} />
               <Route path="settings/account" element={<AccountPage />} />
               <Route path="super-admin" element={<RoleRoute allowedRoles={['SUPER_ADMIN']}><SuperAdminDashboard /></RoleRoute>} />
               <Route path="*" element={<NotFoundPage />} />

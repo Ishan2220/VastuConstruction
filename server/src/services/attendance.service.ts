@@ -5,7 +5,7 @@ import { PayrollEngine } from './payrollEngine.service.js';
 import { getSettings } from './payroll.service.js';
 import { getAttendanceLockStatus, validateAttendanceEditWindow } from '../utils/dateValidation.js';
 
-export const getAttendanceByDate = async (date: string, type: 'EMPLOYEE' | 'LABOR', userRole: string = '') => {
+export const getAttendanceByDate = async (date: string, type: 'EMPLOYEE' | 'LABOR', userRole: string = '', projectId?: string) => {
   const { isLocked, targetDate } = getAttendanceLockStatus(date, userRole);
 
   let activePeople: any[] = [];
@@ -28,7 +28,8 @@ export const getAttendanceByDate = async (date: string, type: 'EMPLOYEE' | 'LABO
   const attendanceRecords = await prisma.unifiedAttendance.findMany({
     where: {
       date: targetDate,
-      personType: type
+      personType: type,
+      ...(projectId ? { projectId } : {})
     }
   });
 
@@ -52,7 +53,8 @@ export const getAttendanceByDate = async (date: string, type: 'EMPLOYEE' | 'LABO
       role,
       status: record ? record.status : null,
       overtimeHours: record ? Number(record.overtimeHours) || 0 : 0,
-      absentReason: record ? record.absentReason : null
+      absentReason: record ? record.absentReason : null,
+      projectId: record ? record.projectId : null
     };
   });
 
@@ -71,7 +73,8 @@ export const upsertAttendance = async (
   overtimeHours: number = 0,
   absentReason: string | null = null,
   markedBy: string = '',
-  userRole: string = ''
+  userRole: string = '',
+  projectId?: string
 ) => {
   const targetDate = validateAttendanceEditWindow(date, userRole);
   
@@ -97,7 +100,8 @@ export const upsertAttendance = async (
       status,
       overtimeHours: finalOvertime,
       absentReason: finalReason,
-      markedBy
+      markedBy,
+      ...(projectId !== undefined ? { projectId: projectId || null } : {})
     },
     create: {
       personId,
@@ -106,7 +110,8 @@ export const upsertAttendance = async (
       status,
       overtimeHours: finalOvertime,
       absentReason: finalReason,
-      markedBy
+      markedBy,
+      projectId: projectId || null
     }
   });
 
@@ -153,9 +158,10 @@ export const upsertAttendance = async (
 export const bulkMarkPresent = async (
   date: string,
   personType: 'EMPLOYEE' | 'LABOR',
-  updates: Array<{ personId: string; status: 'PRESENT' | 'HALF_DAY' | 'ABSENT' | 'LEAVE' | 'HOLIDAY'; overtimeHours?: number; absentReason?: string }>,
+  updates: Array<{ personId: string; status: 'PRESENT' | 'HALF_DAY' | 'ABSENT' | 'LEAVE' | 'HOLIDAY'; overtimeHours?: number; absentReason?: string; projectId?: string }>,
   markedBy: string,
-  userRole: string = ''
+  userRole: string = '',
+  projectId?: string
 ) => {
   const targetDate = validateAttendanceEditWindow(date, userRole);
 
@@ -175,6 +181,7 @@ export const bulkMarkPresent = async (
     for (const update of updates) {
       const finalOvertime = update.status === 'ABSENT' || update.status === 'LEAVE' || update.status === 'HOLIDAY' ? 0 : (update.overtimeHours || 0);
       const finalReason = update.status === 'ABSENT' ? (update.absentReason || null) : null;
+      const recordProjectId = update.projectId !== undefined ? (update.projectId || null) : (projectId ? projectId : undefined);
       
       const att = await tx.unifiedAttendance.upsert({
         where: {
@@ -188,7 +195,8 @@ export const bulkMarkPresent = async (
           status: update.status,
           overtimeHours: finalOvertime,
           absentReason: finalReason,
-          markedBy
+          markedBy,
+          ...(recordProjectId !== undefined ? { projectId: recordProjectId } : {})
         },
         create: {
           personId: update.personId,
@@ -197,7 +205,8 @@ export const bulkMarkPresent = async (
           status: update.status,
           overtimeHours: finalOvertime,
           absentReason: finalReason,
-          markedBy
+          markedBy,
+          projectId: recordProjectId || null
         }
       });
 
@@ -245,7 +254,7 @@ export const bulkMarkPresent = async (
   return count;
 };
 
-export const calendarSummary = async (month: string, type: 'EMPLOYEE' | 'LABOR') => {
+export const calendarSummary = async (month: string, type: 'EMPLOYEE' | 'LABOR', projectId?: string) => {
   // month is YYYY-MM
   const [yearStr, monthStr] = month.split('-');
   const year = parseInt(yearStr);
@@ -271,7 +280,8 @@ export const calendarSummary = async (month: string, type: 'EMPLOYEE' | 'LABOR')
       date: {
         gte: startDate,
         lte: endDate
-      }
+      },
+      ...(projectId ? { projectId } : {})
     }
   });
 

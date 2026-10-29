@@ -45,6 +45,9 @@ export default function MaterialsPage() {
     gstPercentage: 18,
     gstAmount: '',
   });
+  const [selectedVendorAgency, setSelectedVendorAgency] = useState('');
+  const [editingRateId, setEditingRateId] = useState<string | null>(null);
+  const [inlineRateValue, setInlineRateValue] = useState('');
 
   const { data: settings } = useQuery({
     queryKey: ['financial-settings'],
@@ -72,6 +75,7 @@ export default function MaterialsPage() {
     code: '',
     category: 'CEMENT',
     unit: 'BAGS',
+    rate: '',
     unitPrice: '',
     minStockAlert: 50,
   });
@@ -90,7 +94,7 @@ export default function MaterialsPage() {
   const { data: materialsList = [] } = useQuery({
     queryKey: ['materials-list'],
     queryFn: async () => {
-      const { data } = await api.get('/materials');
+      const { data } = await api.get('/materials?limit=1000');
       return data.data?.data || [];
     },
   });
@@ -129,6 +133,7 @@ export default function MaterialsPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       toast.success('Material entry logged successfully');
       setIsOrderOpen(false);
+      setSelectedVendorAgency('');
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Failed to log material entry');
@@ -190,7 +195,7 @@ export default function MaterialsPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       toast.success('New material added to directory');
       setIsAddDirOpen(false);
-      setNewDir({ name: '', code: '', category: 'CEMENT', unit: 'BAGS', unitPrice: '', minStockAlert: 50 });
+      setNewDir({ name: '', code: '', category: 'CEMENT', unit: 'BAGS', rate: '', unitPrice: '', minStockAlert: 50 });
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Failed to add material');
@@ -228,19 +233,43 @@ export default function MaterialsPage() {
     },
   });
 
-  const handleCreateOrder = (e: React.FormEvent) => {
+  const handleCreateOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newOrder.vendorId || !newOrder.projectId || !newOrder.items[0].materialId) {
+    const vendorInput = selectedVendorAgency || newOrder.vendorId;
+    if (!vendorInput || !newOrder.projectId || !newOrder.items[0].materialId) {
       toast.error('Please fill required vendor, project, and material details');
       return;
     }
+
+    let finalVendorId = newOrder.vendorId;
+    const matchedVendor = vendorsList.find((v: any) =>
+      v.id === finalVendorId || v.name.toLowerCase() === vendorInput.trim().toLowerCase()
+    );
+
+    if (matchedVendor) {
+      finalVendorId = matchedVendor.id;
+    } else {
+      try {
+        const { data: vData } = await api.post('/vendors', {
+          name: vendorInput.trim(),
+          phone: 'N/A',
+          categories: ['MATERIAL'],
+        });
+        finalVendorId = vData?.data?.id || vData?.id;
+        queryClient.invalidateQueries({ queryKey: ['vendors-select'] });
+      } catch (err: any) {
+        toast.error('Failed to register vendor agency');
+        return;
+      }
+    }
+
     const formattedItems = newOrder.items.map((it) => ({
       materialId: it.materialId,
       quantityOrdered: Number(it.quantityOrdered) || 1,
       rate: Number(it.rate) || 0,
     }));
     createOrderMutation.mutate({
-      vendorId: newOrder.vendorId,
+      vendorId: finalVendorId,
       projectId: newOrder.projectId,
       notes: newOrder.notes,
       gstMode: newOrder.gstMode,
@@ -462,25 +491,131 @@ export default function MaterialsPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {materialsList.map((m: any) => (
-              <div key={m.id} className="clay-card p-6 space-y-3 flex flex-col justify-between">
-                <div>
+              <div key={m.id} className="clay-card p-6 space-y-4 flex flex-col justify-between">
+                <div className="space-y-2">
                   <div className="flex justify-between items-start">
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-white/60 border border-violet-100/30 text-slate-600 shadow-sm">{m.code}</span>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#7C6EF0]/10 border border-[#7C6EF0]/20 text-[#7C6EF0] shadow-sm">{m.category}</span>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-white/60 border border-violet-100/30 text-slate-600 shadow-sm">{m.code || 'MAT'}</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#7C6EF0]/10 border border-[#7C6EF0]/20 text-[#7C6EF0] shadow-sm">{m.category || 'MATERIAL'}</span>
                   </div>
-                  <h3 className="font-bold text-slate-800 text-base font-heading mt-3">{m.name}</h3>
+                  <h3 className="font-bold text-slate-800 text-base font-heading mt-2">{m.name}</h3>
                 </div>
-                <div className="flex justify-between items-center pt-3 border-t border-violet-100/30 text-xs text-slate-500">
-                  <div>
-                    Unit: <strong className="uppercase text-slate-700">{m.unit}</strong> | Rate: <strong className="font-mono text-slate-800">₹{m.unitPrice || 0}</strong>
+
+                {/* Prominently Displayed & Editable Rate */}
+                <div className="bg-violet-50/70 rounded-xl p-3 border border-violet-100/60 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500 font-semibold">Unit: <strong className="uppercase text-slate-700">{m.unit}</strong></span>
+                    {editingRateId === m.id ? (
+                      <span className="text-[11px] font-bold text-[#7C6EF0]">Editing Rate</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingRateId(m.id);
+                          setInlineRateValue(String(m.rate ?? m.unitPrice ?? ''));
+                        }}
+                        className="text-[11px] font-bold text-[#7C6EF0] hover:text-[#6857ea] flex items-center gap-1 transition-colors"
+                        title="Quick edit rate"
+                      >
+                        <Pencil className="w-3 h-3" /> Quick Edit
+                      </button>
+                    )}
                   </div>
+
+                  {editingRateId === m.id ? (
+                    <div className="flex items-center gap-2 pt-1">
+                      <div className="relative flex-1">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">₹</span>
+                        <input
+                          type="number"
+                          value={inlineRateValue}
+                          onChange={(e) => setInlineRateValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              updateDirMutation.mutate({
+                                id: m.id,
+                                payload: { rate: Number(inlineRateValue) || 0 },
+                              });
+                              setEditingRateId(null);
+                            } else if (e.key === 'Escape') {
+                              setEditingRateId(null);
+                            }
+                          }}
+                          className="w-full pl-6 pr-2 py-1.5 text-sm font-mono font-bold bg-white rounded-lg border border-violet-200 focus:outline-none focus:ring-2 focus:ring-[#7C6EF0]"
+                          placeholder="0"
+                          autoFocus
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateDirMutation.mutate({
+                            id: m.id,
+                            payload: { rate: Number(inlineRateValue) || 0 },
+                          });
+                          setEditingRateId(null);
+                        }}
+                        disabled={updateDirMutation.isPending}
+                        className="p-1.5 rounded-lg bg-[#7C6EF0] text-white hover:bg-[#6857ea] transition-all"
+                        title="Save rate"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingRateId(null)}
+                        className="p-1.5 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all text-xs font-bold"
+                        title="Cancel"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-base font-mono font-extrabold text-[#7C6EF0]">
+                        Rate: ₹{m.rate ?? m.unitPrice ?? 0}/{m.unit}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center pt-3 border-t border-violet-100/30 text-xs text-slate-500">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewOrder({
+                        vendorId: m.vendorId || '',
+                        projectId: '',
+                        notes: '',
+                        items: [{
+                          materialId: m.id,
+                          quantityOrdered: '',
+                          rate: String(m.rate ?? m.unitPrice ?? ''),
+                        }],
+                        gstMode: 'NONE',
+                        gstPercentage: 18,
+                        gstAmount: '',
+                      });
+                      setSelectedVendorAgency(m.vendor?.name || '');
+                      setIsOrderOpen(true);
+                    }}
+                    className="clay-btn-secondary px-3 py-1.5 rounded-xl text-xs font-bold text-[#7C6EF0] flex items-center gap-1.5 hover:bg-violet-50 transition-all border border-violet-200"
+                    title="Log material entry using this material"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Create Entry</span>
+                  </button>
+
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => {
-                        setEditDir({ ...m });
+                        setEditDir({
+                          ...m,
+                          rate: m.rate ?? m.unitPrice ?? '',
+                          unitPrice: m.rate ?? m.unitPrice ?? '',
+                        });
                         setIsEditDirOpen(true);
                       }}
-                      className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 text-[#F2A65A] transition-all shadow-sm border border-amber-100/50"
+                      className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 text-[#F2A65A] transition-all shadow-sm border border-amber-100/50"
                       title="Edit Material"
                     >
                       <Pencil className="w-3.5 h-3.5" />
@@ -491,7 +626,7 @@ export default function MaterialsPage() {
                           deleteDirMutation.mutate(m.id);
                         }
                       }}
-                      className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-rose-50 hover:bg-rose-100 text-[#E5636C] transition-all shadow-sm border border-rose-100/50"
+                      className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg bg-rose-50 hover:bg-rose-100 text-[#E5636C] transition-all shadow-sm border border-rose-100/50"
                       title="Delete Material"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -532,18 +667,22 @@ export default function MaterialsPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Vendor Supplier *</label>
-                <select
-                  required
-                  value={newOrder.vendorId}
-                  onChange={(e) => setNewOrder({ ...newOrder, vendorId: e.target.value })}
-                  className="clay-input w-full text-sm"
-                >
-                  <option value="">Select Vendor Agency</option>
-                  {vendorsList.map((v: any) => (
-                    <option key={v.id} value={v.id}>{v.name} ({v.category})</option>
-                  ))}
-                </select>
+                <label className="text-xs font-semibold text-slate-700">Vendor Agency *</label>
+                <CategorySelect
+                  module="vendors"
+                  value={selectedVendorAgency || (vendorsList.find((v: any) => v.id === newOrder.vendorId)?.name || '')}
+                  onChange={(val) => {
+                    setSelectedVendorAgency(val);
+                    const matched = vendorsList.find((v: any) => v.name.toLowerCase() === val.toLowerCase() || v.id === val);
+                    if (matched) {
+                      setNewOrder(prev => ({ ...prev, vendorId: matched.id }));
+                    } else {
+                      setNewOrder(prev => ({ ...prev, vendorId: val }));
+                    }
+                  }}
+                  defaultOptions={vendorsList.map((v: any) => v.name)}
+                  placeholder="Select or enter Vendor Agency..."
+                />
               </div>
 
               <div className="p-4 rounded-xl bg-white/40 border border-violet-100/40 shadow-[inset_0_0_10px_rgba(124,110,240,0.02)] space-y-3">
@@ -552,15 +691,25 @@ export default function MaterialsPage() {
                   <select
                     required
                     value={newOrder.items[0].materialId}
-                    onChange={(e) => setNewOrder({
-                      ...newOrder,
-                      items: [{ ...newOrder.items[0], materialId: e.target.value }],
-                    })}
+                    onChange={(e) => {
+                      const matId = e.target.value;
+                      const foundMat = materialsList.find((m: any) => m.id === matId);
+                      setNewOrder({
+                        ...newOrder,
+                        items: [{
+                          ...newOrder.items[0],
+                          materialId: matId,
+                          rate: String(foundMat?.rate ?? foundMat?.unitPrice ?? newOrder.items[0].rate ?? ''),
+                        }],
+                      });
+                    }}
                     className="clay-input w-full text-sm"
                   >
                     <option value="">Select Material</option>
                     {materialsList.map((m: any) => (
-                      <option key={m.id} value={m.id}>{m.name} ({m.code}) - ₹{m.unitPrice}/{m.unit}</option>
+                      <option key={m.id} value={m.id}>
+                        {m.name} ({m.code || 'MAT'}) - ₹{m.rate ?? m.unitPrice ?? 0}/{m.unit}
+                      </option>
                     ))}
                   </select>
 
@@ -720,7 +869,7 @@ export default function MaterialsPage() {
                   code: newDir.code || `MAT-${Math.floor(Math.random() * 900 + 100)}`,
                   category: newDir.category,
                   unit: newDir.unit,
-                  unitPrice: Number(newDir.unitPrice) || 0,
+                  rate: Number(newDir.rate || newDir.unitPrice) || 0,
                   minStockAlert: Number(newDir.minStockAlert) || 50,
                 });
               }}
@@ -761,12 +910,12 @@ export default function MaterialsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Unit Price (₹)</label>
+                  <label className="text-xs font-semibold text-slate-700">Rate / Unit Price (₹)</label>
                   <input
                     type="number"
                     placeholder="e.g. 420"
-                    value={newDir.unitPrice}
-                    onChange={(e) => setNewDir({ ...newDir, unitPrice: e.target.value })}
+                    value={newDir.rate || newDir.unitPrice}
+                    onChange={(e) => setNewDir({ ...newDir, rate: e.target.value, unitPrice: e.target.value })}
                     className="clay-input w-full text-sm mt-1"
                   />
                 </div>
@@ -798,7 +947,7 @@ export default function MaterialsPage() {
                     code: editDir.code,
                     category: editDir.category,
                     unit: editDir.unit,
-                    unitPrice: Number(editDir.unitPrice) || 0,
+                    rate: Number(editDir.rate ?? editDir.unitPrice) || 0,
                   },
                 });
               }}
@@ -838,11 +987,11 @@ export default function MaterialsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Unit Price (₹)</label>
+                  <label className="text-xs font-semibold text-slate-700">Rate / Unit Price (₹)</label>
                   <input
                     type="number"
-                    value={editDir.unitPrice}
-                    onChange={(e) => setEditDir({ ...editDir, unitPrice: e.target.value })}
+                    value={editDir.rate ?? editDir.unitPrice ?? ''}
+                    onChange={(e) => setEditDir({ ...editDir, rate: e.target.value, unitPrice: e.target.value })}
                     className="clay-input w-full text-sm mt-1"
                   />
                 </div>

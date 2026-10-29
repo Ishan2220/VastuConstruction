@@ -376,12 +376,16 @@ export default function ExpensesPage() {
               <CategorySelect
                 module="payment_method"
                 value={newExpense.paymentMethod}
-                onChange={(val) => setNewExpense({ ...newExpense, paymentMethod: val })}
+                onChange={(val) => setNewExpense({
+                  ...newExpense,
+                  paymentMethod: val,
+                  accountId: val === 'CASH' ? '' : newExpense.accountId,
+                })}
                 defaultOptions={['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CASH', 'CREDIT_CARD']}
                 placeholder="Select Payment Method..."
               />
 
-              {['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CREDIT_CARD', 'CASH'].includes(newExpense.paymentMethod) && (
+              {newExpense.paymentMethod && newExpense.paymentMethod !== 'CASH' && (
                 <select
                   required
                   value={newExpense.accountId}

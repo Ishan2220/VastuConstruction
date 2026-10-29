@@ -6,18 +6,19 @@ import * as attendanceService from '../services/attendance.service.js';
 export const getByDate = asyncHandler(async (req: Request, res: Response) => {
   const date = req.query.date as string;
   const type = req.query.type as 'EMPLOYEE' | 'LABOR';
+  const projectId = req.query.projectId as string | undefined;
   
   if (!date || !type) {
     res.status(400).json(new ApiResponse(400, null, 'Date and type are required'));
     return;
   }
   
-  const result = await attendanceService.getAttendanceByDate(date, type, req.user!.role);
+  const result = await attendanceService.getAttendanceByDate(date, type, req.user!.role, projectId);
   res.json(new ApiResponse(200, result, 'Attendance fetched successfully'));
 });
 
 export const upsertOne = asyncHandler(async (req: Request, res: Response) => {
-  const { personId, personType, date, status, overtimeHours, absentReason } = req.body;
+  const { personId, personType, date, status, overtimeHours, absentReason, projectId } = req.body;
   
   if (!personId || !personType || !date || !status) {
     res.status(400).json(new ApiResponse(400, null, 'personId, personType, date, status are required'));
@@ -32,14 +33,15 @@ export const upsertOne = asyncHandler(async (req: Request, res: Response) => {
     overtimeHours,
     absentReason,
     req.user!.userId,
-    req.user!.role
+    req.user!.role,
+    projectId
   );
   
   res.status(200).json(new ApiResponse(200, result, 'Attendance record updated successfully'));
 });
 
 export const bulkUpdate = asyncHandler(async (req: Request, res: Response) => {
-  const { date, personType, updates } = req.body;
+  const { date, personType, updates, projectId } = req.body;
   
   if (!date || !personType || !Array.isArray(updates)) {
     res.status(400).json(new ApiResponse(400, null, 'date, personType, and updates array are required'));
@@ -51,7 +53,8 @@ export const bulkUpdate = asyncHandler(async (req: Request, res: Response) => {
     personType,
     updates,
     req.user!.userId,
-    req.user!.role
+    req.user!.role,
+    projectId
   );
   
   res.status(200).json(new ApiResponse(200, { count }, `Successfully marked attendance for ${count} people`));
@@ -60,12 +63,13 @@ export const bulkUpdate = asyncHandler(async (req: Request, res: Response) => {
 export const calendarSummary = asyncHandler(async (req: Request, res: Response) => {
   const month = req.query.month as string;
   const type = req.query.type as 'EMPLOYEE' | 'LABOR';
+  const projectId = req.query.projectId as string | undefined;
   
   if (!month || !type) {
     res.status(400).json(new ApiResponse(400, null, 'month and type are required'));
     return;
   }
 
-  const result = await attendanceService.calendarSummary(month, type);
+  const result = await attendanceService.calendarSummary(month, type, projectId);
   res.status(200).json(new ApiResponse(200, result, 'Calendar summary fetched successfully'));
 });

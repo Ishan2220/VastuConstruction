@@ -68,7 +68,7 @@ export const createPaymentWithDetails = async (vendorId: string, data: any, user
       data: {
         vendorId,
         projectId,
-        type: vendor.category === 'LABOUR_CONTRACTOR' ? 'LABOUR' : 'VENDOR',
+        type: (vendor as any).categories?.includes('LABOUR_CONTRACTOR') || (vendor as any).category === 'LABOUR_CONTRACTOR' ? 'LABOUR' : 'VENDOR',
         amount: totalAmount,
         gstMode: cleanedGstMode,
         gstPercentage: cleanedGstPercentage,

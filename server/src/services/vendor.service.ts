@@ -22,6 +22,8 @@ export const list = async (params: ListParams) => {
   const limitNum = Number(limit) || 10;
   const skip = (pageNum - 1) * limitNum;
 
+  const categoryFilter = category && category !== 'ALL' ? category : undefined;
+
   const where: Prisma.VendorWhereInput = {
     deletedAt: null,
     ...(search && {
@@ -31,7 +33,7 @@ export const list = async (params: ListParams) => {
       ],
     }),
     ...(city && { city: { contains: city, mode: 'insensitive' } }),
-    ...(category && category !== 'ALL' && { category }),
+    ...(categoryFilter && { categories: { has: categoryFilter } }),
   };
 
   const [rawData, total] = await Promise.all([
@@ -63,6 +65,7 @@ export const list = async (params: ListParams) => {
 
     return {
       ...rest,
+      category: vendor.categories?.[0] || '',
       totalPurchased,
       totalPaid,
       outstanding
@@ -104,18 +107,37 @@ export const getById = async (id: string) => {
   });
 
   if (!vendor) throw new ApiError(404, 'Vendor not found');
-  return vendor;
+  return {
+    ...vendor,
+    category: vendor.categories?.[0] || '',
+  };
 };
 
 export const create = async (payload: any, userId: string) => {
-  const { gstin, idempotencyKey, ...rest } = payload;
+  const { gstin, idempotencyKey, category, categories, ...rest } = payload;
+
+  let normalizedCategories: string[] = [];
+  if (Array.isArray(categories)) {
+    normalizedCategories = categories.map(c => String(c).trim()).filter(Boolean);
+  } else if (typeof categories === 'string' && categories.trim()) {
+    normalizedCategories = categories.split(',').map(c => c.trim()).filter(Boolean);
+  } else if (Array.isArray(category)) {
+    normalizedCategories = category.map(c => String(c).trim()).filter(Boolean);
+  } else if (typeof category === 'string' && category.trim()) {
+    normalizedCategories = category.split(',').map(c => c.trim()).filter(Boolean);
+  }
+
   const data: Prisma.VendorCreateInput = {
     ...rest,
+    categories: normalizedCategories,
     ...(gstin !== undefined && rest.gst === undefined ? { gst: gstin } : {}),
   };
   const vendor = await prisma.vendor.create({ data });
   eventBus.publishMutation('Vendor', 'CREATE', userId, vendor.id, payload.idempotencyKey || crypto.randomUUID(), vendor, null);
-  return vendor;
+  return {
+    ...vendor,
+    category: vendor.categories?.[0] || '',
+  };
 };
 
 export const update = async (id: string, payload: any, userId: string) => {
@@ -134,17 +156,38 @@ export const update = async (id: string, payload: any, userId: string) => {
     expenses, 
     vendorAttendances, 
     materials, 
+    category,
+    categories,
     ...rest 
   } = payload;
 
+  let normalizedCategories: string[] | undefined;
+  if (categories !== undefined) {
+    if (Array.isArray(categories)) {
+      normalizedCategories = categories.map(c => String(c).trim()).filter(Boolean);
+    } else if (typeof categories === 'string') {
+      normalizedCategories = categories.split(',').map(c => c.trim()).filter(Boolean);
+    }
+  } else if (category !== undefined) {
+    if (Array.isArray(category)) {
+      normalizedCategories = category.map(c => String(c).trim()).filter(Boolean);
+    } else if (typeof category === 'string') {
+      normalizedCategories = category.split(',').map(c => c.trim()).filter(Boolean);
+    }
+  }
+
   const data: Prisma.VendorUncheckedUpdateInput = {
     ...rest,
+    ...(normalizedCategories !== undefined ? { categories: normalizedCategories } : {}),
     ...(gstin !== undefined && rest.gst === undefined ? { gst: gstin } : {}),
   };
 
   const vendor = await prisma.vendor.update({ where: { id }, data });
   eventBus.publishMutation('Vendor', 'UPDATE', userId, id, payload.idempotencyKey || crypto.randomUUID(), vendor, existing);
-  return vendor;
+  return {
+    ...vendor,
+    category: vendor.categories?.[0] || '',
+  };
 };
 
 export const remove = async (id: string, userId: string) => {
@@ -180,7 +223,7 @@ export const addPayment = async (vendorId: string, data: any, userId: string) =>
       data: {
         vendorId,
         projectId: data.projectId || null,
-        type: vendor.category === 'LABOUR_CONTRACTOR' ? 'LABOUR' : 'VENDOR',
+        type: vendor.categories?.includes('LABOUR_CONTRACTOR') || (vendor as any).category === 'LABOUR_CONTRACTOR' ? 'LABOUR' : 'VENDOR',
         amount: paymentAmount,
         paymentDate: payment.paymentDate,
         paymentMethod: payment.paymentMethod,
@@ -240,6 +283,7 @@ export const getVendorsByProject = async (projectId: string) => {
     
     return {
       ...rest,
+      category: vendor.categories?.[0] || '',
       totalPurchased,
       totalPaid,
       outstanding

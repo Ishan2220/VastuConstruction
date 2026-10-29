@@ -1,4 +1,4 @@
-import { Settings, Shield, UserCog, ChevronRight, Bell, Lock } from 'lucide-react';
+import { Settings, Shield, UserCog, ChevronRight, Bell, Lock, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router';
 
 export default function SettingsPage() {
@@ -60,6 +60,20 @@ export default function SettingsPage() {
             <div className="flex-1">
               <h3 className="text-xl font-bold text-slate-800 font-heading group-hover:text-slate-900 transition-colors">Financial & GST Settings</h3>
               <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">Manage GST configurations, flexible tax rules, and general financial preferences.</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-800 group-hover:translate-x-1 transition-all" />
+          </div>
+        </Link>
+
+        <Link to="/settings/page-access" className="block group relative bg-white/70 backdrop-blur-md border border-slate-200/60 p-6 rounded-3xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          <div className="relative flex items-start gap-5 pointer-events-none">
+            <div className="p-4 rounded-2xl bg-white border border-slate-100 text-slate-800 shadow-sm group-hover:scale-110 group-hover:bg-slate-800 group-hover:text-white transition-all duration-300">
+              <ShieldCheck className="w-7 h-7" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-slate-800 font-heading group-hover:text-slate-900 transition-colors">Manage Page Access</h3>
+              <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">Control which pages each team member can access across the ERP modules.</p>
             </div>
             <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-800 group-hover:translate-x-1 transition-all" />
           </div>

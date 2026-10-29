@@ -119,7 +119,7 @@ export default function Sidebar() {
   const hasTempAdmin = (label: string) => {
     if (!user?.tempAdminUntil || !Array.isArray(user?.tempAdminPages)) return false;
     if (new Date(user.tempAdminUntil) < new Date()) return false;
-    return user.tempAdminPages.includes(label);
+    return user.tempAdminPages.includes(label) || (label === 'Material Entries' && user.tempAdminPages.includes('Purchase Orders'));
   };
 
   const filteredNav = navItems.filter(

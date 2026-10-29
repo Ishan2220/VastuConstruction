@@ -16,6 +16,8 @@ export const listUsers = async () => {
       isActive: true,
       lastLoginAt: true,
       createdAt: true,
+      tempAdminUntil: true,
+      tempAdminPages: true,
     },
     orderBy: { createdAt: 'desc' },
   });
@@ -111,4 +113,79 @@ export const grantTempAdmin = async (userId: string, pages: string[], durationHo
   });
   
   eventBus.publishMutation('User', 'UPDATE', userId, updatedUser.id, crypto.randomUUID(), updatedUser, user);
+};
+
+export const updatePageAccess = async (userId: string, pages: string[], accessUntil?: string | Date | null) => {
+  const user = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } });
+  if (!user) throw new ApiError(404, 'User not found');
+
+  const until = pages.length > 0 ? (accessUntil ? new Date(accessUntil) : new Date('2099-12-31T23:59:59.999Z')) : null;
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      tempAdminUntil: until,
+      tempAdminPages: pages,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      role: true,
+      isActive: true,
+      lastLoginAt: true,
+      createdAt: true,
+      tempAdminUntil: true,
+      tempAdminPages: true,
+    },
+  });
+
+  eventBus.publishMutation('User', 'UPDATE', userId, updatedUser.id, crypto.randomUUID(), updatedUser, user);
+  return updatedUser;
+};
+
+export const updateUser = async (
+  userId: string,
+  data: {
+    tempAdminPages?: string[];
+    tempAdminUntil?: string | Date | null;
+    role?: Role;
+    isActive?: boolean;
+    name?: string;
+    phone?: string;
+  }
+) => {
+  const user = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } });
+  if (!user) throw new ApiError(404, 'User not found');
+
+  const updateData: any = {};
+  if (data.tempAdminPages !== undefined) updateData.tempAdminPages = data.tempAdminPages;
+  if (data.tempAdminUntil !== undefined) {
+    updateData.tempAdminUntil = data.tempAdminUntil ? new Date(data.tempAdminUntil) : null;
+  }
+  if (data.role !== undefined) updateData.role = data.role;
+  if (data.isActive !== undefined) updateData.isActive = data.isActive;
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.phone !== undefined) updateData.phone = data.phone;
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: updateData,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      role: true,
+      isActive: true,
+      lastLoginAt: true,
+      createdAt: true,
+      tempAdminUntil: true,
+      tempAdminPages: true,
+    },
+  });
+
+  eventBus.publishMutation('User', 'UPDATE', userId, updatedUser.id, crypto.randomUUID(), updatedUser, user);
+  return updatedUser;
 };

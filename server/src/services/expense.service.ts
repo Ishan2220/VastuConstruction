@@ -51,7 +51,7 @@ export const list = async (params: ListParams) => {
       orderBy: { [sortBy]: sortOrder },
       include: {
         project: { select: { id: true, name: true } },
-        vendor: { select: { id: true, name: true, category: true } },
+        vendor: { select: { id: true, name: true, categories: true } },
         account: { select: { id: true, bankName: true, accountNo: true } },
         createdBy: { select: { id: true, name: true } },
       },
@@ -121,8 +121,8 @@ export const create = async (
     remarks: cleanRelationId(data.remarks) || null,
   };
 
-  if (!cleanedData.accountId) {
-    throw new ApiError(400, 'Account ID is required for logging expenses');
+  if (!cleanedData.accountId && cleanedData.paymentMethod !== 'CASH') {
+    throw new ApiError(400, 'Account ID is required for non-cash expenses');
   }
 
   await checkFinancialLock(cleanedData.paymentDate);
@@ -137,8 +137,13 @@ export const create = async (
 
     // Double-Entry Ledger with Flexible GST split
     const lines = [];
-    // 1. Bank Account pays the Total Amount (Base + GST)
-    lines.push({ accountId: cleanedData.accountId, debitAmount: 0, creditAmount: cleanedData.totalAmount, description: 'Expense payment (Total)' });
+    // 1. Bank Account or Cash Drawer pays the Total Amount (Base + GST)
+    lines.push({ 
+      accountId: cleanedData.accountId || null, 
+      debitAmount: 0, 
+      creditAmount: cleanedData.totalAmount, 
+      description: cleanedData.accountId ? 'Expense payment (Total)' : 'Expense cash payment (Total)' 
+    });
     // 2. Expense Account (Null for now) receives the Base Amount (Debit increases expenses)
     lines.push({ accountId: null, debitAmount: cleanedData.amount, creditAmount: 0, description: 'Expense recognition (Base)' });
     // 3. Tax Account (Null for now) receives the GST Amount if any (Debit)

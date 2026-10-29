@@ -12,13 +12,254 @@ import {
   CheckCircle2,
   Edit3,
   Trash2,
+  Check,
+  ChevronDown,
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { CategorySelect } from '@/components/common/CategorySelect';
+import { useCustomCategories } from '@/hooks/useCustomCategories';
 import { useQuickAddListener } from '@/hooks/useQuickAddListener';
 import { useConfirm } from "@/components/ui/ConfirmProvider";
 import { MAHARASHTRA_CITIES } from '@/lib/cities';
+
+interface MultiCategorySelectProps {
+  value: string[];
+  onChange: (value: string[]) => void;
+  defaultOptions?: string[];
+  placeholder?: string;
+  className?: string;
+}
+
+function MultiCategorySelect({
+  value = [],
+  onChange,
+  defaultOptions = ['CEMENT', 'STEEL', 'AGGREGATE', 'BRICKS', 'ELECTRICAL', 'PLUMBING'],
+  placeholder = 'Select Categories...',
+  className = '',
+}: MultiCategorySelectProps) {
+  const { allCategories, addCategory } = useCustomCategories('vendors', defaultOptions);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const selectedList = Array.isArray(value) ? value : [];
+
+  const toggleCategory = (cat: string) => {
+    if (selectedList.includes(cat)) {
+      onChange(selectedList.filter((c) => c !== cat));
+    } else {
+      onChange([...selectedList, cat]);
+    }
+  };
+
+  const handleAddSubmit = (e?: React.FormEvent | React.KeyboardEvent | React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const trimmed = newCatName.trim().toUpperCase();
+    if (!trimmed) return;
+    addCategory(trimmed);
+    if (!selectedList.includes(trimmed)) {
+      onChange([...selectedList, trimmed]);
+    }
+    setNewCatName('');
+    setIsAdding(false);
+    setSearchQuery('');
+    toast.success(`Category "${trimmed}" added!`);
+  };
+
+  const filteredCategories = allCategories.filter((cat) =>
+    cat.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const exactMatchExists = allCategories.some(
+    (cat) => cat.toLowerCase() === searchQuery.trim().toLowerCase()
+  );
+
+  return (
+    <div className="relative w-full text-left">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-800 shadow-2xs transition-all hover:border-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 ${className}`}
+      >
+        <span className="truncate">
+          {selectedList.length === 0 ? (
+            <span className="text-slate-400">{placeholder}</span>
+          ) : selectedList.length <= 2 ? (
+            selectedList.join(', ')
+          ) : (
+            `${selectedList.slice(0, 2).join(', ')} (+${selectedList.length - 2} more)`
+          )}
+        </span>
+        <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-slate-400" />
+      </button>
+
+      {isOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => {
+              setIsOpen(false);
+              setIsAdding(false);
+              setSearchQuery('');
+            }}
+          />
+          <div className="absolute left-0 top-full z-50 mt-1 max-h-80 w-full min-w-[220px] overflow-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+            {/* Search Input */}
+            <div className="p-1.5 border-b border-slate-100 mb-1 bg-slate-50/50 rounded-t-xl">
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+
+            {/* Selected Pills */}
+            {selectedList.length > 0 && (
+              <div className="p-1.5 flex flex-wrap gap-1 border-b border-slate-100 mb-1">
+                {selectedList.map((cat) => (
+                  <span
+                    key={cat}
+                    className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-bold text-indigo-700"
+                  >
+                    {cat}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCategory(cat);
+                      }}
+                      className="hover:text-rose-500 ml-0.5 font-bold"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Category Checkbox List */}
+            <div className="max-h-44 overflow-y-auto space-y-1">
+              {filteredCategories.length === 0 ? (
+                <div className="p-2 text-xs text-slate-400 text-center font-medium">No results found</div>
+              ) : (
+                filteredCategories.map((cat) => {
+                  const isSelected = selectedList.includes(cat);
+                  return (
+                    <div
+                      key={cat}
+                      onClick={() => toggleCategory(cat)}
+                      className={`flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-all ${
+                        isSelected
+                          ? 'bg-indigo-50 text-indigo-600'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}}
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer pointer-events-none"
+                        />
+                        <span className="truncate">{cat}</span>
+                      </div>
+                      {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-indigo-600" />}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="my-1.5 border-t border-slate-100" />
+
+            {/* Quick Add from Search */}
+            {!exactMatchExists && searchQuery.trim() && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const trimmed = searchQuery.trim().toUpperCase();
+                  addCategory(trimmed);
+                  if (!selectedList.includes(trimmed)) {
+                    onChange([...selectedList, trimmed]);
+                  }
+                  setSearchQuery('');
+                  toast.success(`Category "${trimmed}" added!`);
+                }}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-indigo-600 transition-all hover:bg-indigo-50"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add "{searchQuery.trim().toUpperCase()}"...</span>
+              </button>
+            )}
+
+            {/* Add Custom Category Form */}
+            {isAdding ? (
+              <div className="p-1 space-y-2">
+                <input
+                  type="text"
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddSubmit(e);
+                    }
+                  }}
+                  placeholder="Type category name..."
+                  autoFocus
+                  className="w-full rounded-lg border border-indigo-200 bg-indigo-50/30 px-2.5 py-1.5 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <div className="flex items-center gap-1.5 justify-end">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsAdding(false);
+                    }}
+                    className="rounded-lg px-2 py-1 text-[11px] font-semibold text-slate-500 hover:bg-slate-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      handleAddSubmit(e);
+                    }}
+                    className="rounded-lg bg-indigo-600 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-indigo-500"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            ) : (
+              !searchQuery.trim() && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsAdding(true);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-indigo-600 transition-all hover:bg-indigo-50"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Add Custom Category...</span>
+                </button>
+              )
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function VendorsPage() {
     const confirmDialog = useConfirm();
@@ -35,7 +276,7 @@ export default function VendorsPage() {
     contactPerson: '',
     phone: '',
     email: '',
-    category: 'CEMENT',
+    categories: ['CEMENT'] as string[],
     gstin: '',
     address: '',
     city: 'Mumbai',
@@ -61,6 +302,18 @@ export default function VendorsPage() {
       queryClient.invalidateQueries({ queryKey: ['vendors-select'] });
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       toast.success('Vendor agency added successfully');
+      setNewVendor({
+        name: '',
+        contactPerson: '',
+        phone: '',
+        email: '',
+        categories: ['CEMENT'],
+        gstin: '',
+        address: '',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        openingBalance: '',
+      });
       setIsAddOpen(false);
     },
     onError: (err: any) => {
@@ -107,6 +360,10 @@ export default function VendorsPage() {
       toast.error('Vendor Name and Contact Person are required');
       return;
     }
+    if (!newVendor.categories || newVendor.categories.length === 0) {
+      toast.error('Please select at least one material category');
+      return;
+    }
     const { gstin, openingBalance, ...rest } = newVendor;
     createMutation.mutate({
       ...rest,
@@ -117,6 +374,10 @@ export default function VendorsPage() {
 
   const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editingVendor.categories || editingVendor.categories.length === 0) {
+      toast.error('Please select at least one material category');
+      return;
+    }
     const { gstin, gst, openingBalance, ...rest } = editingVendor;
     updateMutation.mutate({
       ...rest,
@@ -125,11 +386,31 @@ export default function VendorsPage() {
     });
   };
 
+  const openEdit = (vendor: any) => {
+    const cats = Array.isArray(vendor.categories) && vendor.categories.length > 0
+      ? vendor.categories
+      : vendor.category
+        ? [vendor.category]
+        : ['CEMENT'];
+    setEditingVendor({
+      ...vendor,
+      categories: cats,
+    });
+  };
+
   const filteredVendors = vendors.filter((v: any) => {
-    const matchesSearch = v.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          v.category?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const vendorCats: string[] = Array.isArray(v.categories) && v.categories.length > 0
+      ? v.categories
+      : (v.category ? [v.category] : []);
+    const catsString = vendorCats.join(' ').toLowerCase();
+    const matchesSearch = v.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          catsString.includes(searchTerm.toLowerCase()) || 
                           v.phone?.includes(searchTerm);
-    const matchesCategory = filterCategory === 'ALL' || v.category === filterCategory;
+    const matchesCategory = filterCategory === 'ALL' || vendorCats.some((c: string) => 
+      c.toUpperCase() === filterCategory.toUpperCase() ||
+      (filterCategory === 'AGGREGATES' && c.toUpperCase() === 'AGGREGATE') ||
+      (filterCategory === 'AGGREGATE' && c.toUpperCase() === 'AGGREGATES')
+    );
     const matchesCity = filterCity === 'ALL' || v.city === filterCity;
     return matchesSearch && matchesCategory && matchesCity;
   });
@@ -214,15 +495,17 @@ export default function VendorsPage() {
               <div key={vendor.id} onClick={() => navigate(`/vendors/${vendor.id}`)} className="clay-card p-6 space-y-4 flex flex-col justify-between hover:border-[#7C6EF0]/30 transition-all cursor-pointer group">
                 <div className="space-y-3">
                   <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-[#7C6EF0]/10 text-[#7C6EF0] border border-[#7C6EF0]/20">
-                        {vendor.category}
-                      </span>
+                    <div className="flex flex-wrap items-center gap-1.5 max-w-[70%]">
+                      {((vendor.categories && vendor.categories.length > 0) ? vendor.categories : (vendor.category ? [vendor.category] : ['OTHER'])).map((cat: string) => (
+                        <span key={cat} className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#7C6EF0]/10 text-[#7C6EF0] border border-[#7C6EF0]/20">
+                          {cat}
+                        </span>
+                      ))}
                       <span className="text-[11px] font-mono text-slate-400">{vendor.gst || vendor.gstin || 'GST Unregistered'}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={(e) => { e.stopPropagation(); setEditingVendor(vendor); }}
+                        onClick={(e) => { e.stopPropagation(); openEdit(vendor); }}
                         className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors cursor-pointer"
                         title="Edit Vendor Details"
                       >
@@ -291,11 +574,13 @@ export default function VendorsPage() {
                   <tr key={vendor.id} onClick={() => navigate(`/vendors/${vendor.id}`)} className="hover:bg-slate-50/50 transition-colors cursor-pointer group">
                     <td className="p-4">
                       <div className="font-bold text-slate-800">{vendor.contactPerson || vendor.name}</div>
-                      <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
-                        <span className="font-bold text-[#7C6EF0] bg-[#7C6EF0]/10 px-2 py-0.5 rounded border border-[#7C6EF0]/20 font-mono">
-                          {vendor.category}
-                        </span>
-                        <span className="font-mono">{vendor.gst || vendor.gstin || 'GST Unregistered'}</span>
+                      <div className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-1.5">
+                        {((vendor.categories && vendor.categories.length > 0) ? vendor.categories : (vendor.category ? [vendor.category] : ['OTHER'])).map((cat: string) => (
+                          <span key={cat} className="font-bold text-[#7C6EF0] bg-[#7C6EF0]/10 px-2 py-0.5 rounded border border-[#7C6EF0]/20 font-mono text-[11px]">
+                            {cat}
+                          </span>
+                        ))}
+                        <span className="font-mono ml-1">{vendor.gst || vendor.gstin || 'GST Unregistered'}</span>
                       </div>
                     </td>
                     <td className="p-4">
@@ -314,7 +599,7 @@ export default function VendorsPage() {
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={(e) => { e.stopPropagation(); setEditingVendor(vendor); }}
+                          onClick={(e) => { e.stopPropagation(); openEdit(vendor); }}
                           className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-[#7C6EF0] hover:bg-[#7C6EF0]/10 rounded-lg transition-colors"
                           title="Edit Vendor Details"
                         >
@@ -367,25 +652,20 @@ export default function VendorsPage() {
                 className="w-full clay-input text-sm"
               />
               <div className="grid grid-cols-2 gap-4">
-                <CategorySelect
-                  module="vendors"
-                  value={newVendor.category}
-                  onChange={(val) => setNewVendor({ ...newVendor, category: val })}
+                <MultiCategorySelect
+                  value={newVendor.categories}
+                  onChange={(val) => setNewVendor({ ...newVendor, categories: val })}
                   defaultOptions={['CEMENT', 'STEEL', 'AGGREGATE', 'BRICKS', 'ELECTRICAL', 'PLUMBING']}
-                  placeholder="Select Category..."
+                  placeholder="Select Categories..."
                 />
-                  <select
-                    required
-                    value={newVendor.city}
-                    onChange={(e) => setNewVendor({ ...newVendor, city: e.target.value })}
-                    className="w-full clay-input text-sm"
-                  >
-                    <option value="">Select City *</option>
-                    {MAHARASHTRA_CITIES.map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
+                <CategorySelect
+                  module="cities"
+                  value={newVendor.city}
+                  onChange={(val) => setNewVendor({ ...newVendor, city: val })}
+                  defaultOptions={MAHARASHTRA_CITIES}
+                  placeholder="Select or Add City..."
+                />
+              </div>
                 <input
                   type="text"
                   placeholder="State"
@@ -474,25 +754,20 @@ export default function VendorsPage() {
                 className="w-full clay-input text-sm"
               />
               <div className="grid grid-cols-2 gap-4">
-                <CategorySelect
-                  module="vendors"
-                  value={editingVendor.category || 'CEMENT'}
-                  onChange={(val) => setEditingVendor({ ...editingVendor, category: val })}
-                  defaultOptions={['CEMENT', 'STEEL', 'BRICKS', 'PLUMBING', 'ELECTRICAL', 'AGGREGATES']}
-                  placeholder="Select Category..."
+                <MultiCategorySelect
+                  value={Array.isArray(editingVendor.categories) ? editingVendor.categories : (editingVendor.category ? [editingVendor.category] : ['CEMENT'])}
+                  onChange={(val) => setEditingVendor({ ...editingVendor, categories: val })}
+                  defaultOptions={['CEMENT', 'STEEL', 'AGGREGATE', 'BRICKS', 'ELECTRICAL', 'PLUMBING']}
+                  placeholder="Select Categories..."
                 />
-                  <select
-                    required
-                    value={editingVendor.city || ''}
-                    onChange={(e) => setEditingVendor({ ...editingVendor, city: e.target.value })}
-                    className="w-full clay-input text-sm"
-                  >
-                    <option value="">Select City *</option>
-                    {MAHARASHTRA_CITIES.map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
+                <CategorySelect
+                  module="cities"
+                  value={editingVendor.city || ''}
+                  onChange={(val) => setEditingVendor({ ...editingVendor, city: val })}
+                  defaultOptions={MAHARASHTRA_CITIES}
+                  placeholder="Select or Add City..."
+                />
+              </div>
                 <input
                   type="text"
                   placeholder="State"

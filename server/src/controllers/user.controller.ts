@@ -46,3 +46,17 @@ export const grantTempAdmin = asyncHandler(async (req: Request, res: Response) =
   await userService.grantTempAdmin(id, pages, durationHours);
   res.json(new ApiResponse(200, null, 'Temporary admin rights granted successfully'));
 });
+
+export const updatePageAccess = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const { pages, accessUntil } = req.body;
+  if (!Array.isArray(pages)) throw new ApiError(400, 'Pages must be an array of strings');
+  const result = await userService.updatePageAccess(id, pages, accessUntil);
+  res.json(new ApiResponse(200, result, 'Page access updated successfully'));
+});
+
+export const updateUser = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const result = await userService.updateUser(id, req.body);
+  res.json(new ApiResponse(200, result, 'User updated successfully'));
+});

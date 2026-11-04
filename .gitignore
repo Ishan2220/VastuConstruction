@@ -4,3 +4,4 @@ dist/
 .DS_Store
 .prisma/
 server/uploads/
+vps_ssh_key.txt

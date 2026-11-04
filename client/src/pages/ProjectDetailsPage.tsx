@@ -362,7 +362,7 @@ export default function ProjectDetailsPage() {
               <div className="flex justify-between items-baseline border-t border-slate-100 pt-1">
                 <span className="text-xs text-slate-500">Labour Outflows:</span>
                 <span className="text-xs font-bold text-slate-700 font-mono">
-                  {siteFin?.labourPayments?.recent?.length || 0} recorded
+                  {siteFin?.labourPayments?.disbursementsCount || siteFin?.labourPayments?.recent?.length || 0} recorded
                 </span>
               </div>
             </div>

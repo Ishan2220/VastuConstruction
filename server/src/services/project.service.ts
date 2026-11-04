@@ -90,17 +90,18 @@ export const getById = async (id: string, userId?: string, userRole?: Role) => {
   if (!project) throw new ApiError(404, 'Project not found');
 
   // Compute Site Financials, Payments, and Materials breakdown
-  const [incomes, expenses, materialOrders, stocks, consumptions] = await Promise.all([
+  const [incomes, expenses, materialOrders, purchaseOrders, stocks, consumptions, attendances] = await Promise.all([
     prisma.income.findMany({
       where: { projectId: id, deletedAt: null },
       orderBy: { paymentDate: 'desc' },
-      take: 20,
     }),
     prisma.expense.findMany({
       where: { projectId: id, deletedAt: null },
-      include: { vendor: { select: { id: true, name: true } }, account: { select: { bankName: true, accountNo: true } } },
+      include: {
+        vendor: { select: { id: true, name: true } },
+        account: { select: { bankName: true, accountNo: true } }
+      },
       orderBy: { paymentDate: 'desc' },
-      take: 30,
     }),
     prisma.materialOrder.findMany({
       where: { projectId: id },
@@ -110,6 +111,14 @@ export const getById = async (id: string, userId?: string, userRole?: Role) => {
       },
       orderBy: { orderDate: 'desc' },
     }),
+    prisma.purchaseOrder.findMany({
+      where: { projectId: id },
+      include: {
+        vendor: { select: { id: true, name: true } },
+        items: { include: { material: { select: { id: true, name: true, unit: true, rate: true } } } },
+      },
+      orderBy: { issueDate: 'desc' },
+    }),
     prisma.stock.findMany({
       where: { projectId: id },
       include: { material: { select: { id: true, name: true, unit: true, rate: true } } },
@@ -117,26 +126,60 @@ export const getById = async (id: string, userId?: string, userRole?: Role) => {
     prisma.materialConsumption.findMany({
       where: { projectId: id },
     }),
+    prisma.unifiedAttendance.findMany({
+      where: { projectId: id },
+      select: { dailySalaryEarned: true, dailyOvertimeAmount: true, date: true, status: true },
+    }),
   ]);
 
   const contractValue = Number(project.contractValue || 0);
   const clientDone = incomes.reduce((sum, inc) => sum + Number(inc.amount), 0);
   const clientPending = Math.max(0, contractValue - clientDone);
 
-  // Vendor payments
+  // Classify Expenses with comprehensive criteria (type, relations, description keywords)
+  const isLabourExpense = (e: any) => {
+    const t = String(e.type || '').trim().toUpperCase();
+    if (['LABOUR', 'LABOR', 'WAGE', 'WAGES', 'SALARY', 'SALARIES', 'WORKER', 'WORKERS', 'MUSTER', 'HELPER', 'MASON', 'CARPENTER', 'HAJIRI', 'DAILY_WAGE'].includes(t)) {
+      return true;
+    }
+    const d = String((e.description || '') + ' ' + (e.remarks || '')).toUpperCase();
+    return d.includes('LABOUR') || d.includes('LABOR') || d.includes('WAGE') || d.includes('SALARY') || d.includes('MUSTER') || d.includes('HAJIRI') || d.includes('WORKER') || d.includes('MAZDOOR');
+  };
+
+  const isVendorExpense = (e: any) => {
+    if (isLabourExpense(e)) return false;
+    if (e.vendorId || e.vendor) return true;
+    const t = String(e.type || '').trim().toUpperCase();
+    if (['VENDOR', 'MATERIAL', 'MATERIALS', 'SUPPLIER', 'SUPPLIERS', 'SUBCONTRACTOR', 'SUBCONTRACT', 'EQUIPMENT', 'TRANSPORT', 'MACHINERY', 'HARDWARE', 'RAW_MATERIAL', 'CEMENT', 'STEEL', 'SAND', 'BRICK', 'AGGREGATE', 'TILES', 'PAINT', 'PLUMBING', 'ELECTRICAL'].includes(t)) {
+      return true;
+    }
+    const d = String((e.description || '') + ' ' + (e.remarks || '')).toUpperCase();
+    return d.includes('VENDOR') || d.includes('SUPPLIER') || d.includes('PO-') || d.includes('MO-') || d.includes('CEMENT') || d.includes('STEEL') || d.includes('SAND') || d.includes('BRICK') || d.includes('TRANSPORT') || d.includes('EQUIPMENT') || d.includes('MATERIAL');
+  };
+
   const nonAccruedExpenses = expenses.filter(e => e.paymentMethod !== 'ACCRUED');
-  const vendorExpenses = nonAccruedExpenses.filter(e => e.type === 'VENDOR' || e.type === 'MATERIAL');
+  
+  // Vendor payments: all non-accrued vendor expenses
+  const vendorExpenses = nonAccruedExpenses.filter(isVendorExpense);
   const vendorDone = vendorExpenses.reduce((sum, e) => sum + Number(e.totalAmount || e.amount), 0);
 
-  const totalMaterialOrdersVal = materialOrders.reduce((sum, mo) => sum + Number(mo.totalAmount), 0);
-  const vendorPending = Math.max(0, totalMaterialOrdersVal - vendorDone);
+  const totalMaterialOrdersVal = materialOrders.reduce((sum, mo) => sum + Number(mo.totalAmount || 0), 0);
+  const totalPurchaseOrdersVal = purchaseOrders.reduce((sum, po) => sum + Number(po.totalAmount || po.amount || 0), 0);
+  const totalOrdersVal = totalMaterialOrdersVal + totalPurchaseOrdersVal;
 
-  // Labour payments
-  const labourExpenses = nonAccruedExpenses.filter(e => e.type === 'LABOUR');
-  const labourDone = labourExpenses.reduce((sum, e) => sum + Number(e.totalAmount || e.amount), 0);
+  const accruedVendorExpenses = expenses.filter(e => isVendorExpense(e) && e.paymentMethod === 'ACCRUED');
+  const accruedVendorPending = accruedVendorExpenses.reduce((sum, e) => sum + Number(e.totalAmount || e.amount || 0), 0);
+  const vendorPending = Math.max(accruedVendorPending, totalOrdersVal > vendorDone ? totalOrdersVal - vendorDone : 0);
+  const totalVendorObligation = Math.max(totalOrdersVal, vendorDone + vendorPending);
 
-  // Total spent across all actual site expenses
-  const totalSpent = nonAccruedExpenses.reduce((sum, e) => sum + Number(e.totalAmount || e.amount), 0);
+  // Labour payments: expenses + unified attendance wage earnings
+  const labourExpenses = nonAccruedExpenses.filter(isLabourExpense);
+  const labourAttendanceEarned = attendances.reduce((sum, a) => sum + Number(a.dailySalaryEarned || 0) + Number(a.dailyOvertimeAmount || 0), 0);
+  const labourDone = labourExpenses.reduce((sum, e) => sum + Number(e.totalAmount || e.amount), 0) + labourAttendanceEarned;
+  const labourDisbursementsCount = labourExpenses.length + attendances.filter(a => Number(a.dailySalaryEarned || 0) > 0).length;
+
+  // Total spent across all actual site expenses + attendance
+  const totalSpent = nonAccruedExpenses.reduce((sum, e) => sum + Number(e.totalAmount || e.amount), 0) + labourAttendanceEarned;
 
   // Material supplied breakdown
   const materialMap = new Map<string, {
@@ -171,7 +214,28 @@ export const getById = async (id: string, userId?: string, userRole?: Role) => {
     }
   }
 
-  // 2. From Stock & Consumptions
+  // 2. From Purchase Orders
+  for (const po of purchaseOrders) {
+    for (const item of po.items) {
+      const mat = item.material;
+      if (!mat) continue;
+      const existing = materialMap.get(mat.id) || {
+        materialId: mat.id,
+        name: mat.name,
+        unit: mat.unit,
+        quantitySupplied: 0,
+        currentStock: 0,
+        consumed: 0,
+        rate: Number(item.rate || mat.rate || 0),
+        totalCost: 0,
+      };
+      existing.quantitySupplied += Number(item.quantityOrdered);
+      existing.totalCost += Number(item.amount || (Number(item.quantityOrdered) * Number(item.rate)));
+      materialMap.set(mat.id, existing);
+    }
+  }
+
+  // 3. From Stock & Consumptions
   for (const st of stocks as any[]) {
     const mat = st.material;
     if (!mat) continue;
@@ -198,47 +262,92 @@ export const getById = async (id: string, userId?: string, userRole?: Role) => {
     }
   }
 
+  // 4. From Direct Material Expenses (when logged directly without an explicit PO)
+  for (const exp of vendorExpenses) {
+    const isMaterialType = ['MATERIAL', 'MATERIALS', 'CEMENT', 'STEEL', 'SAND', 'BRICK', 'AGGREGATE', 'TILES', 'PAINT', 'HARDWARE', 'RAW_MATERIAL'].includes(String(exp.type || '').trim().toUpperCase());
+    const isOrderPayment = (materialOrders.some(mo => (exp.description && exp.description.toUpperCase().includes(mo.orderNumber.toUpperCase())) || (exp.remarks && exp.remarks.toUpperCase().includes(mo.orderNumber.toUpperCase())))) ||
+      (purchaseOrders.some(po => (exp.description && exp.description.toUpperCase().includes(po.poNumber.toUpperCase())) || (exp.remarks && exp.remarks.toUpperCase().includes(po.poNumber.toUpperCase()))));
+    
+    if (isMaterialType && !isOrderPayment) {
+      const expKey = `EXP-${exp.id}`;
+      if (!materialMap.has(expKey)) {
+        const matCost = Number(exp.totalAmount || exp.amount || 0);
+        materialMap.set(expKey, {
+          materialId: expKey,
+          name: exp.description || (exp.vendor ? `${exp.vendor.name} Supply` : `${exp.type} Supply`),
+          unit: 'LOT',
+          quantitySupplied: 1,
+          currentStock: 1,
+          consumed: 0,
+          rate: matCost,
+          totalCost: matCost,
+        });
+      }
+    }
+  }
+
   const materialsSupplied = Array.from(materialMap.values());
-  const totalMaterialSuppliedCost = materialsSupplied.reduce((sum, m) => sum + m.totalCost, 0) || totalMaterialOrdersVal;
+  const totalMaterialSuppliedCost = materialsSupplied.reduce((sum, m) => sum + m.totalCost, 0) || totalOrdersVal;
 
   const siteFinancials = {
     clientPayments: {
       contractValue,
       done: clientDone,
       pending: clientPending,
-      recent: incomes,
+      recent: incomes.slice(0, 20),
     },
     vendorPayments: {
-      totalObligation: totalMaterialOrdersVal,
+      totalObligation: totalVendorObligation,
       done: vendorDone,
       pending: vendorPending,
-      recent: vendorExpenses,
+      recent: vendorExpenses.slice(0, 20),
     },
     labourPayments: {
       done: labourDone,
-      recent: labourExpenses,
+      disbursementsCount: labourDisbursementsCount,
+      recent: labourExpenses.slice(0, 20),
     },
     materialSupplied: {
       totalCost: totalMaterialSuppliedCost,
       totalCount: materialsSupplied.length,
       materials: materialsSupplied,
-      orders: materialOrders.map(mo => {
-        const orderPayments = vendorExpenses.filter(e => 
-          (e.description && e.description.toUpperCase().includes(mo.orderNumber.toUpperCase())) ||
-          (e.remarks && e.remarks.toUpperCase().includes(mo.orderNumber.toUpperCase()))
-        );
-        const paid = orderPayments.reduce((s, e) => s + Number(e.totalAmount || e.amount), 0);
-        return {
-          id: mo.id,
-          orderNumber: mo.orderNumber,
-          vendorName: mo.vendor?.name || 'Authorized Distributor',
-          orderDate: mo.orderDate,
-          totalAmount: Number(mo.totalAmount),
-          paidAmount: paid,
-          pendingAmount: Math.max(0, Number(mo.totalAmount) - paid),
-          status: mo.status,
-        };
-      }),
+      orders: [
+        ...materialOrders.map(mo => {
+          const orderPayments = vendorExpenses.filter(e => 
+            (e.description && e.description.toUpperCase().includes(mo.orderNumber.toUpperCase())) ||
+            (e.remarks && e.remarks.toUpperCase().includes(mo.orderNumber.toUpperCase()))
+          );
+          const paid = orderPayments.reduce((s, e) => s + Number(e.totalAmount || e.amount), 0);
+          return {
+            id: mo.id,
+            orderNumber: mo.orderNumber,
+            vendorName: mo.vendor?.name || 'Authorized Distributor',
+            orderDate: mo.orderDate,
+            totalAmount: Number(mo.totalAmount),
+            paidAmount: paid,
+            pendingAmount: Math.max(0, Number(mo.totalAmount) - paid),
+            status: mo.status,
+          };
+        }),
+        ...purchaseOrders.map(po => {
+          const orderPayments = vendorExpenses.filter(e => 
+            (e.description && e.description.toUpperCase().includes(po.poNumber.toUpperCase())) ||
+            (e.remarks && e.remarks.toUpperCase().includes(po.poNumber.toUpperCase()))
+          );
+          const paid = orderPayments.reduce((s, e) => s + Number(e.totalAmount || e.amount), 0);
+          const poTotal = Number(po.totalAmount || po.amount || 0);
+          return {
+            id: po.id,
+            orderNumber: po.poNumber,
+            vendorName: po.vendor?.name || 'Authorized Distributor',
+            orderDate: po.issueDate,
+            totalAmount: poTotal,
+            paidAmount: paid,
+            pendingAmount: Math.max(0, poTotal - paid),
+            status: po.status,
+          };
+        })
+      ],
     },
     summary: {
       totalReceived: clientDone,

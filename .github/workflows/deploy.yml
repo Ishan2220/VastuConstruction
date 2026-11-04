@@ -1,0 +1,56 @@
+name: Auto Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script_stop: true
+          script: |
+            # 1. Load user environment (Node, NPM, PM2 path)
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            source ~/.bashrc 2>/dev/null || true
+            source ~/.profile 2>/dev/null || true
+
+            echo "=== Node version ==="
+            node -v
+            npm -v
+
+            # 2. Pull latest code
+            cd ~/VastuConstruction
+            echo "=== Pulling latest changes from GitHub ==="
+            git pull origin main
+
+            # 3. Server build & database sync
+            echo "=== Building Server ==="
+            cd server
+            npm install
+            npx prisma generate
+            npm run build
+
+            # 4. Restart Server with PM2
+            echo "=== Restarting PM2 Server ==="
+            pm2 restart vastu-server || pm2 restart ecosystem.config.js || pm2 restart all
+
+            # 5. Client build
+            echo "=== Building Client Frontend ==="
+            cd ../client
+            npm install
+            npm run build
+
+            echo "=== Deployment Completed Successfully! ==="

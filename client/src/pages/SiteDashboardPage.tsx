@@ -334,8 +334,20 @@ export default function SiteDashboardPage() {
       })()}
 
       {(() => {
-        const totalBudget = project.budget || stats.contractValue || 0;
-        const reactiveFinancialProgress = totalBudget > 0 ? Math.min(Math.round((stats.totalSpent / totalBudget) * 100), 100) : 0;
+        const siteFin = project.siteFinancials || {};
+        const clientDone = siteFin.clientPayments?.done ?? stats.totalReceived ?? 0;
+        const clientPending = siteFin.clientPayments?.pending ?? Math.max(0, (project.contractValue || 0) - clientDone);
+        const totalContractMoney = (siteFin.clientPayments?.contractValue && siteFin.clientPayments.contractValue > 0)
+          ? siteFin.clientPayments.contractValue
+          : (project.contractValue && project.contractValue > 0)
+            ? project.contractValue
+            : (clientDone + clientPending > 0)
+              ? (clientDone + clientPending)
+              : (project.budget || stats.contractValue || 0);
+
+        const reactiveFinancialProgress = totalContractMoney > 0
+          ? Math.min(Math.round((clientDone / totalContractMoney) * 100), 100)
+          : 0;
         
         return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -350,12 +362,12 @@ export default function SiteDashboardPage() {
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 font-heading text-lg">Financial Overview</h3>
-                    <p className="text-xs text-slate-500">Revenue collection & expenditure</p>
+                    <p className="text-xs text-slate-500">Client payments collected vs contract value</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-extrabold text-emerald-600 font-heading">{reactiveFinancialProgress}%</div>
-                  <div className="text-xs text-slate-500 font-semibold">Spent</div>
+                  <div className="text-xs text-slate-500 font-semibold">Collected</div>
                 </div>
               </div>
 

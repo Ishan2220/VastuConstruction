@@ -76,4 +76,40 @@ jobs:
             npm install
             npm run build
 
+            # 7. Sync Frontend to Active Web Server Roots
+            echo "=== Locating Web Server Root & Updating Frontend ==="
+            cat /etc/caddy/Caddyfile 2>/dev/null || true
+            cat /etc/nginx/sites-enabled/* 2>/dev/null || true
+            docker ps 2>/dev/null || true
+
+            # Find active web root containing previous frontend files
+            TARGET_DIRS=$(find /var/www /usr/share/nginx -name "index-CruaDUUQ.js" 2>/dev/null | xargs -r -n1 dirname | sed 's/\/assets//' | sort -u)
+            echo "Found active target web directories: $TARGET_DIRS"
+
+            for dir in $TARGET_DIRS; do
+              if [ -d "$dir" ] && [ "$dir" != "$PROJECT_DIR/client/dist" ]; then
+                echo "Syncing new dist to: $dir"
+                cp -r "$PROJECT_DIR/client/dist/"* "$dir/"
+              fi
+            done
+
+            if [ -d "/var/www/html" ]; then
+              echo "Syncing to /var/www/html"
+              cp -r "$PROJECT_DIR/client/dist/"* /var/www/html/ 2>/dev/null || true
+            fi
+
+            # Check if Docker container is serving the web client
+            if command -v docker >/dev/null 2>&1; then
+              CLIENT_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'client|frontend|web|nginx' | head -n 1)
+              if [ -n "$CLIENT_CONTAINER" ]; then
+                echo "Updating client docker container: $CLIENT_CONTAINER"
+                docker cp "$PROJECT_DIR/client/dist/." "$CLIENT_CONTAINER:/usr/share/nginx/html/" 2>/dev/null || true
+                docker restart "$CLIENT_CONTAINER" 2>/dev/null || true
+              fi
+            fi
+
+            # Reload webservers
+            sudo systemctl reload nginx 2>/dev/null || nginx -s reload 2>/dev/null || true
+            sudo systemctl reload caddy 2>/dev/null || caddy reload 2>/dev/null || true
+
             echo "=== Deployment Completed Successfully! ==="

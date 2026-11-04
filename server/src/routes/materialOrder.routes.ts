@@ -10,6 +10,7 @@ router.use(authenticate, authorize('ADMIN', 'ENGINEER', { page: 'Materials' }));
 router.get('/', ctrl.list);
 router.get('/:id', ctrl.getById);
 router.post('/', ctrl.create);
+router.post('/:id/pay', ctrl.payOrder);
 router.patch('/:id/status', ctrl.updateStatus);
 router.post('/:id/receive', ctrl.receive);
 router.delete('/:id', ctrl.remove);

@@ -42,3 +42,8 @@ export const receive = asyncHandler(async (req: Request, res: Response) => {
   res.json(new ApiResponse(200, order, 'Material order stock received successfully'));
 });
 
+export const payOrder = asyncHandler(async (req: Request, res: Response) => {
+  const expense = await orderService.payOrder(req.params.id as string, req.body, req.user!.userId);
+  res.status(201).json(new ApiResponse(201, expense, 'Material order payment recorded successfully'));
+});
+

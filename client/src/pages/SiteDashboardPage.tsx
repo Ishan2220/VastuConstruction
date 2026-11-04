@@ -14,7 +14,10 @@ import {
   HardHat,
   PieChart,
   Calendar,
-  Layers
+  Layers,
+  Package,
+  Truck,
+  Receipt
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
@@ -191,6 +194,144 @@ export default function SiteDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Comprehensive Site Financials & Materials Status Cards */}
+      {(() => {
+        const siteFin = project.siteFinancials || stats;
+        return (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Client Payments: Done & Pending */}
+              <div className="clay-card p-5 space-y-2 border-l-4 border-l-[#5CB77E] bg-white">
+                <div className="flex justify-between items-center text-xs font-bold uppercase text-slate-500">
+                  <span>Client Payments</span>
+                  <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">Inflow</span>
+                </div>
+                <div className="flex justify-between items-baseline pt-1">
+                  <span className="text-xs text-slate-500">Paid (Done):</span>
+                  <span className="text-lg font-bold font-mono text-emerald-600">
+                    {formatCurrency(Number(siteFin?.clientPayments?.done || stats.totalReceived || 0))}
+                  </span>
+                </div>
+                <div className="flex justify-between items-baseline border-t border-slate-100 pt-1">
+                  <span className="text-xs text-slate-500">Pending:</span>
+                  <span className="text-base font-bold font-mono text-amber-600">
+                    {formatCurrency(Number(siteFin?.clientPayments?.pending || Math.max(0, Number(project.contractValue || 0) - Number(stats.totalReceived || 0))))}
+                  </span>
+                </div>
+              </div>
+
+              {/* Vendor Payments: Done & Pending */}
+              <div className="clay-card p-5 space-y-2 border-l-4 border-l-[#F2A65A] bg-white">
+                <div className="flex justify-between items-center text-xs font-bold uppercase text-slate-500">
+                  <span>Vendor Payments</span>
+                  <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">Suppliers</span>
+                </div>
+                <div className="flex justify-between items-baseline pt-1">
+                  <span className="text-xs text-slate-500">Paid (Done):</span>
+                  <span className="text-lg font-bold font-mono text-emerald-600">
+                    {formatCurrency(Number(siteFin?.vendorPayments?.done || 0))}
+                  </span>
+                </div>
+                <div className="flex justify-between items-baseline border-t border-slate-100 pt-1">
+                  <span className="text-xs text-slate-500">Pending:</span>
+                  <span className="text-base font-bold font-mono text-amber-600">
+                    {formatCurrency(Number(siteFin?.vendorPayments?.pending || 0))}
+                  </span>
+                </div>
+              </div>
+
+              {/* Labour Payments */}
+              <div className="clay-card p-5 space-y-2 border-l-4 border-l-[#4EA8DE] bg-white">
+                <div className="flex justify-between items-center text-xs font-bold uppercase text-slate-500">
+                  <span>Labour Payments</span>
+                  <span className="text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Muster</span>
+                </div>
+                <div className="flex justify-between items-baseline pt-1">
+                  <span className="text-xs text-slate-500">Paid (Done):</span>
+                  <span className="text-lg font-bold font-mono text-[#4EA8DE]">
+                    {formatCurrency(Number(siteFin?.labourPayments?.done || 0))}
+                  </span>
+                </div>
+                <div className="flex justify-between items-baseline border-t border-slate-100 pt-1">
+                  <span className="text-xs text-slate-500">Disbursements:</span>
+                  <span className="text-xs font-bold text-slate-700 font-mono">
+                    {siteFin?.labourPayments?.recent?.length || 0} recorded
+                  </span>
+                </div>
+              </div>
+
+              {/* Total Material Supplied */}
+              <div className="clay-card p-5 space-y-2 border-l-4 border-l-[#7C6EF0] bg-white">
+                <div className="flex justify-between items-center text-xs font-bold uppercase text-slate-500">
+                  <span>Total Material Supplied</span>
+                  <span className="text-[#7C6EF0] bg-violet-50 px-2 py-0.5 rounded border border-violet-100">Stock</span>
+                </div>
+                <div className="flex justify-between items-baseline pt-1">
+                  <span className="text-xs text-slate-500">Valuation:</span>
+                  <span className="text-lg font-bold font-mono text-[#7C6EF0]">
+                    {formatCurrency(Number(siteFin?.materialSupplied?.totalCost || 0))}
+                  </span>
+                </div>
+                <div className="flex justify-between items-baseline border-t border-slate-100 pt-1">
+                  <span className="text-xs text-slate-500">Distinct Materials:</span>
+                  <span className="text-xs font-bold text-slate-800">
+                    {siteFin?.materialSupplied?.totalCount || 0} materials
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Total Material Supplied to Site Table */}
+            {siteFin?.materialSupplied?.materials && siteFin.materialSupplied.materials.length > 0 && (
+              <div className="clay-card p-6 space-y-4">
+                <div className="flex justify-between items-center border-b border-violet-100/40 pb-3">
+                  <div>
+                    <h3 className="font-bold text-base font-heading text-slate-800 flex items-center gap-2">
+                      <Package className="w-5 h-5 text-[#7C6EF0]" />
+                      Materials Supplied to this Site
+                    </h3>
+                    <p className="text-xs text-slate-500">Breakdown of quantities supplied, rates, and current site inventory.</p>
+                  </div>
+                  <Link
+                    to={`/materials/${project.id}`}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#7C6EF0] text-white hover:bg-[#6857ea] transition-all"
+                  >
+                    View / Consume Stock
+                  </Link>
+                </div>
+
+                <div className="overflow-x-auto rounded-xl border border-violet-100/30">
+                  <table className="w-full text-left text-xs min-w-max">
+                    <thead className="bg-violet-50/50 text-slate-500 font-bold uppercase">
+                      <tr>
+                        <th className="p-3">Material</th>
+                        <th className="p-3 text-center">Unit</th>
+                        <th className="p-3 text-right">Supplied Qty</th>
+                        <th className="p-3 text-right">Current Stock</th>
+                        <th className="p-3 text-right">Rate</th>
+                        <th className="p-3 text-right">Supplied Cost</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-violet-100/30">
+                      {siteFin.materialSupplied.materials.map((m: any) => (
+                        <tr key={m.materialId} className="hover:bg-violet-50/30">
+                          <td className="p-3 font-bold text-slate-800">{m.name}</td>
+                          <td className="p-3 text-center font-mono font-bold text-slate-500">{m.unit}</td>
+                          <td className="p-3 text-right font-mono font-bold text-slate-800">{m.quantitySupplied}</td>
+                          <td className="p-3 text-right font-mono font-bold text-emerald-600">{m.currentStock}</td>
+                          <td className="p-3 text-right font-mono text-slate-500">{formatCurrency(Number(m.rate))}</td>
+                          <td className="p-3 text-right font-mono font-extrabold text-[#7C6EF0]">{formatCurrency(Number(m.totalCost))}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {(() => {
         const totalBudget = project.budget || stats.contractValue || 0;

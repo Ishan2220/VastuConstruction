@@ -88,7 +88,169 @@ export const getById = async (id: string, userId?: string, userRole?: Role) => {
   });
 
   if (!project) throw new ApiError(404, 'Project not found');
-  return project;
+
+  // Compute Site Financials, Payments, and Materials breakdown
+  const [incomes, expenses, materialOrders, stocks, consumptions] = await Promise.all([
+    prisma.income.findMany({
+      where: { projectId: id, deletedAt: null },
+      orderBy: { paymentDate: 'desc' },
+      take: 20,
+    }),
+    prisma.expense.findMany({
+      where: { projectId: id, deletedAt: null },
+      include: { vendor: { select: { id: true, name: true } }, account: { select: { bankName: true, accountNo: true } } },
+      orderBy: { paymentDate: 'desc' },
+      take: 30,
+    }),
+    prisma.materialOrder.findMany({
+      where: { projectId: id },
+      include: {
+        vendor: { select: { id: true, name: true } },
+        items: { include: { material: { select: { id: true, name: true, unit: true, rate: true } } } },
+      },
+      orderBy: { orderDate: 'desc' },
+    }),
+    prisma.stock.findMany({
+      where: { projectId: id },
+      include: { material: { select: { id: true, name: true, unit: true, rate: true } } },
+    }),
+    prisma.materialConsumption.findMany({
+      where: { projectId: id },
+    }),
+  ]);
+
+  const contractValue = Number(project.contractValue || 0);
+  const clientDone = incomes.reduce((sum, inc) => sum + Number(inc.amount), 0);
+  const clientPending = Math.max(0, contractValue - clientDone);
+
+  // Vendor payments
+  const nonAccruedExpenses = expenses.filter(e => e.paymentMethod !== 'ACCRUED');
+  const vendorExpenses = nonAccruedExpenses.filter(e => e.type === 'VENDOR' || e.type === 'MATERIAL');
+  const vendorDone = vendorExpenses.reduce((sum, e) => sum + Number(e.totalAmount || e.amount), 0);
+
+  const totalMaterialOrdersVal = materialOrders.reduce((sum, mo) => sum + Number(mo.totalAmount), 0);
+  const vendorPending = Math.max(0, totalMaterialOrdersVal - vendorDone);
+
+  // Labour payments
+  const labourExpenses = nonAccruedExpenses.filter(e => e.type === 'LABOUR');
+  const labourDone = labourExpenses.reduce((sum, e) => sum + Number(e.totalAmount || e.amount), 0);
+
+  // Total spent across all actual site expenses
+  const totalSpent = nonAccruedExpenses.reduce((sum, e) => sum + Number(e.totalAmount || e.amount), 0);
+
+  // Material supplied breakdown
+  const materialMap = new Map<string, {
+    materialId: string;
+    name: string;
+    unit: string;
+    quantitySupplied: number;
+    currentStock: number;
+    consumed: number;
+    rate: number;
+    totalCost: number;
+  }>();
+
+  // 1. From Material Orders
+  for (const mo of materialOrders) {
+    for (const item of mo.items) {
+      const mat = item.material;
+      if (!mat) continue;
+      const existing = materialMap.get(mat.id) || {
+        materialId: mat.id,
+        name: mat.name,
+        unit: mat.unit,
+        quantitySupplied: 0,
+        currentStock: 0,
+        consumed: 0,
+        rate: Number(item.rate || mat.rate || 0),
+        totalCost: 0,
+      };
+      existing.quantitySupplied += Number(item.quantityOrdered);
+      existing.totalCost += Number(item.amount || (Number(item.quantityOrdered) * Number(item.rate)));
+      materialMap.set(mat.id, existing);
+    }
+  }
+
+  // 2. From Stock & Consumptions
+  for (const st of stocks as any[]) {
+    const mat = st.material;
+    if (!mat) continue;
+    const existing = materialMap.get(mat.id) || {
+      materialId: mat.id,
+      name: mat.name,
+      unit: mat.unit,
+      quantitySupplied: Number(st.quantity),
+      currentStock: Number(st.quantity),
+      consumed: 0,
+      rate: Number(mat.rate || 0),
+      totalCost: Number(st.quantity) * Number(mat.rate || 0),
+    };
+    existing.currentStock = Number(st.quantity);
+    if (!materialMap.has(mat.id)) {
+      materialMap.set(mat.id, existing);
+    }
+  }
+
+  for (const cs of consumptions) {
+    if (cs.action === 'CONSUMED' && materialMap.has(cs.materialId)) {
+      const m = materialMap.get(cs.materialId)!;
+      m.consumed += Number(cs.quantity);
+    }
+  }
+
+  const materialsSupplied = Array.from(materialMap.values());
+  const totalMaterialSuppliedCost = materialsSupplied.reduce((sum, m) => sum + m.totalCost, 0) || totalMaterialOrdersVal;
+
+  const siteFinancials = {
+    clientPayments: {
+      contractValue,
+      done: clientDone,
+      pending: clientPending,
+      recent: incomes,
+    },
+    vendorPayments: {
+      totalObligation: totalMaterialOrdersVal,
+      done: vendorDone,
+      pending: vendorPending,
+      recent: vendorExpenses,
+    },
+    labourPayments: {
+      done: labourDone,
+      recent: labourExpenses,
+    },
+    materialSupplied: {
+      totalCost: totalMaterialSuppliedCost,
+      totalCount: materialsSupplied.length,
+      materials: materialsSupplied,
+      orders: materialOrders.map(mo => {
+        const orderPayments = vendorExpenses.filter(e => 
+          (e.description && e.description.toUpperCase().includes(mo.orderNumber.toUpperCase())) ||
+          (e.remarks && e.remarks.toUpperCase().includes(mo.orderNumber.toUpperCase()))
+        );
+        const paid = orderPayments.reduce((s, e) => s + Number(e.totalAmount || e.amount), 0);
+        return {
+          id: mo.id,
+          orderNumber: mo.orderNumber,
+          vendorName: mo.vendor?.name || 'Authorized Distributor',
+          orderDate: mo.orderDate,
+          totalAmount: Number(mo.totalAmount),
+          paidAmount: paid,
+          pendingAmount: Math.max(0, Number(mo.totalAmount) - paid),
+          status: mo.status,
+        };
+      }),
+    },
+    summary: {
+      totalReceived: clientDone,
+      totalSpent,
+      netMargin: clientDone - totalSpent,
+    }
+  };
+
+  return {
+    ...project,
+    siteFinancials,
+  };
 };
 
 const generateProjectCode = async () => {
@@ -268,9 +430,13 @@ export const getSiteDashboard = async (id: string, userId?: string, userRole?: R
   return {
     ...project,
     dashboardStats: {
-      totalReceived,
-      totalSpent,
+      totalReceived: project.siteFinancials?.clientPayments?.done ?? totalReceived,
+      totalSpent: project.siteFinancials?.summary?.totalSpent ?? totalSpent,
       contractValue,
+      clientPayments: project.siteFinancials?.clientPayments,
+      vendorPayments: project.siteFinancials?.vendorPayments,
+      labourPayments: project.siteFinancials?.labourPayments,
+      materialSupplied: project.siteFinancials?.materialSupplied,
       financialProgress: Math.min(Math.round(financialProgress), 100),
       totalTasks,
       completedTasks,

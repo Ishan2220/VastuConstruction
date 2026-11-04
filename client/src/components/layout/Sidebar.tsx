@@ -51,8 +51,7 @@ const navItems: NavItem[] = [
   { label: 'Accounts', icon: Landmark, href: '/accounts', roles: ['ADMIN', 'ACCOUNTANT'] },
   { label: 'Invoices', icon: FileText, href: '/invoices', roles: ['ADMIN', 'SUPER_ADMIN', 'ACCOUNTANT', 'ENGINEER'] },
   { label: 'Vendors', icon: Truck, href: '/vendors', roles: ['ADMIN', 'ACCOUNTANT', 'ENGINEER'] },
-  { label: 'Materials', icon: Package, href: '/materials', roles: ['ADMIN', 'ENGINEER', 'ACCOUNTANT'] },
-  { label: 'Material Entries', icon: Receipt, href: '/purchase-orders', roles: ['ADMIN', 'ACCOUNTANT', 'ENGINEER'] },
+  { label: 'Material Entries', icon: Package, href: '/material-entries', roles: ['ADMIN', 'ACCOUNTANT', 'ENGINEER'] },
 
   { label: 'Attendance', icon: CheckSquare, href: '/attendance', roles: ['ADMIN', 'ENGINEER', 'ACCOUNTANT'] },
   { label: 'Clients', icon: Building2, href: '/clients', roles: ['ADMIN'] },

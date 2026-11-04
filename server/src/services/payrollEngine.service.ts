@@ -122,8 +122,8 @@ export class PayrollEngine {
       throw new ApiError(404, 'Employee or salary details not found');
     }
 
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
+    const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
 
     const attendances = await prisma.unifiedAttendance.findMany({
       where: {
@@ -150,20 +150,22 @@ export class PayrollEngine {
 
     const settings = await getSettings();
     
-    // Dynamic Working Days (Total days in month - 4 holidays)
+    // Dynamic Working Days (Total days in month - 4 holidays/Sundays)
     const totalDaysInMonth = new Date(year, month, 0).getDate();
     const workingDays = employee.workingDaysOverride || (totalDaysInMonth - 4);
     
     // Standard Hours defaulted to 8
-    const standardHours = employee.workingHoursOverride || 8;
+    const standardHours = employee.workingHoursOverride || settings.standardWorkingHours || 8;
 
     // Calculate the base daily salary (used for proportional calculations)
     let dailySalaryBase = 0;
     if (employee.dailyRate) {
       dailySalaryBase = Number(employee.dailyRate);
     } else {
-      dailySalaryBase = Number(employee.salary) / workingDays;
+      dailySalaryBase = Number(employee.salary || 0) / workingDays;
     }
+
+    const hourlyRate = standardHours > 0 ? (dailySalaryBase / standardHours) : 0;
 
     for (const att of attendances) {
       if (att.status === 'PRESENT') presentDays++;
@@ -171,40 +173,55 @@ export class PayrollEngine {
       else if (att.status === 'ABSENT') absentDays++;
     }
 
-    // Fixed / Attendance Based Switch
-    if (employee.payrollType === 'FIXED') {
-      baseSalary = employee.salary ? Number(employee.salary) : dailySalaryBase * workingDays;
-    } else {
-      // Attendance based — monthly payroll = sum of each day's calculated salary
-      if (workLogs.length === 0 && attendances.length === 0) {
-        // If no attendance is logged at all, do NOT assume full attendance.
-        throw new ApiError(400, 'No attendance records found for this period. Mark attendance before generating payroll.');
-      } else {
-        const formatUtcDate = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-        // Map workLogs by date to avoid double counting
-        const workLogDates = new Set(workLogs.map(l => formatUtcDate(l.date)));
-        
-        // Add up logged daily work logs
-        for (const log of workLogs) {
-          totalWorkingHours += log.workingHours;
-          totalOvertimeHours += log.overtimeHours;
-          overtimeEarnings += Number(log.overtimeAmount);
-          baseSalary += (Number(log.finalDaySalary) - Number(log.overtimeAmount));
-        }
+    const formatUtcDate = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+    const workLogMap = new Map(workLogs.map(l => [formatUtcDate(l.date), l]));
 
-        // Add up attendances that DO NOT have a corresponding work log
-        for (const att of attendances) {
-          const attDateStr = formatUtcDate(att.date);
-          if (!workLogDates.has(attDateStr)) {
-            if (att.status === 'PRESENT') {
-              baseSalary += dailySalaryBase;
-              totalWorkingHours += standardHours;
-            } else if (att.status === 'HALF_DAY') {
-              baseSalary += (dailySalaryBase / 2);
-              totalWorkingHours += (standardHours / 2);
-            }
+    // If attendance exists, ALWAYS compute based on real attendance records including undertime & overtime
+    if (workLogs.length > 0 || attendances.length > 0) {
+      // 1. Process days with work logs
+      for (const log of workLogs) {
+        totalWorkingHours += log.workingHours;
+        totalOvertimeHours += log.overtimeHours;
+        overtimeEarnings += Number(log.overtimeAmount);
+        baseSalary += (Number(log.finalDaySalary) - Number(log.overtimeAmount));
+      }
+
+      // 2. Process attendances that don't have a separate daily work log
+      for (const att of attendances) {
+        const attDateStr = formatUtcDate(att.date);
+        if (!workLogMap.has(attDateStr)) {
+          const otHours = Number(att.overtimeHours || 0);
+          const otPay = otHours * hourlyRate;
+
+          if (att.status === 'PRESENT') {
+            // Check for undertime if workingHours is explicitly logged less than standard
+            const loggedHours = att.workingHours !== null && att.workingHours !== undefined && Number(att.workingHours) > 0 ? Number(att.workingHours) : standardHours;
+            const effectiveStandard = Math.min(loggedHours, standardHours);
+            const dayBase = dailySalaryBase * (effectiveStandard / standardHours);
+
+            baseSalary += dayBase;
+            totalWorkingHours += effectiveStandard + otHours;
+            totalOvertimeHours += otHours;
+            overtimeEarnings += otPay;
+          } else if (att.status === 'HALF_DAY') {
+            // Half day undertime: 50% of daily salary base
+            const halfHours = standardHours / 2;
+            baseSalary += (dailySalaryBase / 2);
+            totalWorkingHours += halfHours + otHours;
+            totalOvertimeHours += otHours;
+            overtimeEarnings += otPay;
+          } else if (att.status === 'ABSENT') {
+            // Absent: 0 pay, 0 hours
           }
         }
+      }
+    } else {
+      // No attendance marked for this period
+      if (employee.payrollType === 'FIXED') {
+        baseSalary = employee.salary ? Number(employee.salary) : dailySalaryBase * workingDays;
+        totalWorkingHours = workingDays * standardHours;
+      } else {
+        throw new ApiError(400, 'No attendance records found for this period. Mark attendance before generating payroll.');
       }
     }
 
@@ -304,7 +321,9 @@ export class PayrollEngine {
   static async freezePayroll(payrollId: string, userId: string) {
     const payroll = await prisma.payroll.findUnique({ where: { id: payrollId } });
     if (!payroll) throw new ApiError(404, 'Payroll not found');
-    if (payroll.status !== 'APPROVED') throw new ApiError(400, 'Only APPROVED payrolls can be frozen');
+    if (payroll.status !== 'APPROVED' && payroll.status !== 'CALCULATED') {
+      throw new ApiError(400, 'Only CALCULATED or APPROVED payrolls can be frozen');
+    }
 
     const updated = await prisma.payroll.update({
       where: { id: payrollId },

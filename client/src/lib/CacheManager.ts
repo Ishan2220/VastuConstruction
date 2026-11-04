@@ -7,6 +7,10 @@ export class CacheManager {
    */
   static invalidateOnExpense(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: ['expenses-list'] });
+    queryClient.invalidateQueries({ queryKey: ['material-orders'] });
+    queryClient.invalidateQueries({ queryKey: ['project-details'] });
+    queryClient.invalidateQueries({ queryKey: ['site-dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['site-materials-summary'] });
     queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard-kpis'] });
     queryClient.invalidateQueries({ queryKey: ['vendors-list'] });
@@ -19,6 +23,8 @@ export class CacheManager {
    */
   static invalidateOnIncome(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: ['incomes-list'] });
+    queryClient.invalidateQueries({ queryKey: ['project-details'] });
+    queryClient.invalidateQueries({ queryKey: ['site-dashboard'] });
     queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard-kpis'] });
     queryClient.invalidateQueries({ queryKey: ['clients-directory'] });
@@ -31,6 +37,7 @@ export class CacheManager {
   static invalidateOnProject(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: ['projects'] });
     queryClient.invalidateQueries({ queryKey: ['projects-list'] });
+    queryClient.invalidateQueries({ queryKey: ['project-details'] });
     queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard-kpis'] });
     queryClient.invalidateQueries({ queryKey: ['site-dashboard'] });
@@ -38,6 +45,8 @@ export class CacheManager {
 
   static invalidateOnSiteDashboard(queryClient: QueryClient, projectId: string) {
     queryClient.invalidateQueries({ queryKey: ['site-dashboard', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['project-details', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['site-materials-summary', projectId] });
     queryClient.invalidateQueries({ queryKey: ['projects'] });
   }
 
@@ -48,11 +57,13 @@ export class CacheManager {
     queryClient.invalidateQueries({ queryKey: ['materials-list'] });
     queryClient.invalidateQueries({ queryKey: ['material-stock'] });
     queryClient.invalidateQueries({ queryKey: ['material-orders'] });
+    queryClient.invalidateQueries({ queryKey: ['expenses-list'] });
     queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
     if (projectId) {
       queryClient.invalidateQueries({ queryKey: ['site-materials-summary', projectId] });
       queryClient.invalidateQueries({ queryKey: ['site-material-history', projectId] });
       queryClient.invalidateQueries({ queryKey: ['site-dashboard', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-details', projectId] });
     }
   }
 

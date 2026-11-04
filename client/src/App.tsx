@@ -23,8 +23,9 @@ const VendorsPage = lazy(() => import('@/pages/VendorsPage'));
 const VendorDetailsPage = lazy(() => import('@/pages/VendorDetailsPage'));
 
 const ClientsPage = lazy(() => import('@/pages/ClientsPage'));
-const MaterialsPage = lazy(() => import('@/pages/MaterialsPage'));
-const PurchaseOrdersPage = lazy(() => import('@/pages/PurchaseOrdersPage'));
+const MaterialEntriesPage = lazy(() => import('@/pages/MaterialEntriesPage'));
+const MaterialsPage = lazy(() => import('@/pages/MaterialEntriesPage'));
+const PurchaseOrdersPage = lazy(() => import('@/pages/MaterialEntriesPage'));
 const DocumentsPage = lazy(() => import('@/pages/DocumentsPage'));
 const ReportsPage = lazy(() => import('@/pages/ReportsPage'));
 const CalendarPage = lazy(() => import('@/pages/CalendarPage'));
@@ -167,11 +168,12 @@ export default function App() {
 
               <Route path="attendance" element={<RoleRoute allowedRoles={['ADMIN', 'ENGINEER', 'ACCOUNTANT']} pageName="Attendance"><AttendancePage /></RoleRoute>} />
               <Route path="clients" element={<RoleRoute allowedRoles={['ADMIN']} pageName="Clients"><ClientsPage /></RoleRoute>} />
-              <Route path="materials" element={<RoleRoute allowedRoles={['ADMIN', 'ENGINEER']} pageName="Materials"><MaterialsPage /></RoleRoute>} />
+              <Route path="material-entries" element={<RoleRoute allowedRoles={['ADMIN', 'ACCOUNTANT', 'ENGINEER']} pageName="Material Entries"><MaterialEntriesPage /></RoleRoute>} />
+              <Route path="materials" element={<RoleRoute allowedRoles={['ADMIN', 'ACCOUNTANT', 'ENGINEER']} pageName="Material Entries"><MaterialEntriesPage /></RoleRoute>} />
               <Route path="materials/:id" element={<RoleRoute allowedRoles={['ADMIN', 'ENGINEER']} pageName="Materials"><SiteMaterialsView /></RoleRoute>} />
-              <Route path="projects/:id/materials" element={<RoleRoute allowedRoles={['ADMIN', 'ENGINEER']} pageName="Materials"><MaterialsPage /></RoleRoute>} />
-              <Route path="sites/:id/materials" element={<RoleRoute allowedRoles={['ADMIN', 'ENGINEER']} pageName="Materials"><MaterialsPage /></RoleRoute>} />
-              <Route path="purchase-orders" element={<RoleRoute allowedRoles={['ADMIN', 'ACCOUNTANT', 'ENGINEER']} pageName="Purchase Orders"><PurchaseOrdersPage /></RoleRoute>} />
+              <Route path="projects/:id/materials" element={<RoleRoute allowedRoles={['ADMIN', 'ENGINEER']} pageName="Material Entries"><MaterialEntriesPage /></RoleRoute>} />
+              <Route path="sites/:id/materials" element={<RoleRoute allowedRoles={['ADMIN', 'ENGINEER']} pageName="Material Entries"><MaterialEntriesPage /></RoleRoute>} />
+              <Route path="purchase-orders" element={<RoleRoute allowedRoles={['ADMIN', 'ACCOUNTANT', 'ENGINEER']} pageName="Material Entries"><MaterialEntriesPage /></RoleRoute>} />
               <Route path="documents" element={<DocumentsPage />} />
               <Route path="reports" element={<RoleRoute allowedRoles={['ADMIN', 'ACCOUNTANT']} pageName="Reports"><ReportsPage /></RoleRoute>} />
               <Route path="calendar" element={<CalendarPage />} />

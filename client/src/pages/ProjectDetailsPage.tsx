@@ -22,8 +22,14 @@ import {
   CloudRain,
   Sun,
   Cloud,
+  Package,
+  Receipt,
+  CreditCard,
+  Truck,
+  ArrowDownRight,
+  ArrowUpRight,
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { useConfirm } from "@/components/ui/ConfirmProvider";
@@ -35,7 +41,7 @@ export default function ProjectDetailsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'PROGRESS' | 'TASKS' | 'DOCUMENTS' | 'MILESTONES'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'PAYMENTS_MATERIALS' | 'PROGRESS' | 'TASKS' | 'DOCUMENTS' | 'MILESTONES'>('OVERVIEW');
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isProgressOpen, setIsProgressOpen] = useState(false);
 
@@ -296,25 +302,115 @@ export default function ProjectDetailsPage() {
         </div>
       </div>
 
+      {/* Comprehensive Site Financials & Materials Status Cards */}
+      {(() => {
+        const siteFin = project.siteFinancials;
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Client Payments: Done & Pending */}
+            <div className="clay-card p-5 space-y-2 border-l-4 border-l-[#5CB77E] bg-white">
+              <div className="flex justify-between items-center text-xs font-bold uppercase text-slate-500">
+                <span>Client Payments</span>
+                <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">Client</span>
+              </div>
+              <div className="flex justify-between items-baseline pt-1">
+                <span className="text-xs text-slate-500">Paid (Done):</span>
+                <span className="text-lg font-bold font-mono text-emerald-600">
+                  {formatCurrency(Number(siteFin?.clientPayments?.done || 0))}
+                </span>
+              </div>
+              <div className="flex justify-between items-baseline border-t border-slate-100 pt-1">
+                <span className="text-xs text-slate-500">Pending:</span>
+                <span className="text-base font-bold font-mono text-amber-600">
+                  {formatCurrency(Number(siteFin?.clientPayments?.pending || 0))}
+                </span>
+              </div>
+            </div>
+
+            {/* Vendor Payments: Done & Pending */}
+            <div className="clay-card p-5 space-y-2 border-l-4 border-l-[#F2A65A] bg-white">
+              <div className="flex justify-between items-center text-xs font-bold uppercase text-slate-500">
+                <span>Vendor Payments</span>
+                <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">Suppliers</span>
+              </div>
+              <div className="flex justify-between items-baseline pt-1">
+                <span className="text-xs text-slate-500">Paid (Done):</span>
+                <span className="text-lg font-bold font-mono text-emerald-600">
+                  {formatCurrency(Number(siteFin?.vendorPayments?.done || 0))}
+                </span>
+              </div>
+              <div className="flex justify-between items-baseline border-t border-slate-100 pt-1">
+                <span className="text-xs text-slate-500">Pending:</span>
+                <span className="text-base font-bold font-mono text-amber-600">
+                  {formatCurrency(Number(siteFin?.vendorPayments?.pending || 0))}
+                </span>
+              </div>
+            </div>
+
+            {/* Labour Payments */}
+            <div className="clay-card p-5 space-y-2 border-l-4 border-l-[#4EA8DE] bg-white">
+              <div className="flex justify-between items-center text-xs font-bold uppercase text-slate-500">
+                <span>Labour Payments</span>
+                <span className="text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Muster</span>
+              </div>
+              <div className="flex justify-between items-baseline pt-1">
+                <span className="text-xs text-slate-500">Paid (Done):</span>
+                <span className="text-lg font-bold font-mono text-[#4EA8DE]">
+                  {formatCurrency(Number(siteFin?.labourPayments?.done || 0))}
+                </span>
+              </div>
+              <div className="flex justify-between items-baseline border-t border-slate-100 pt-1">
+                <span className="text-xs text-slate-500">Labour Outflows:</span>
+                <span className="text-xs font-bold text-slate-700 font-mono">
+                  {siteFin?.labourPayments?.recent?.length || 0} recorded
+                </span>
+              </div>
+            </div>
+
+            {/* Total Material Supplied */}
+            <div className="clay-card p-5 space-y-2 border-l-4 border-l-[#7C6EF0] bg-white">
+              <div className="flex justify-between items-center text-xs font-bold uppercase text-slate-500">
+                <span>Total Material Supplied</span>
+                <span className="text-[#7C6EF0] bg-violet-50 px-2 py-0.5 rounded border border-violet-100">Site Stock</span>
+              </div>
+              <div className="flex justify-between items-baseline pt-1">
+                <span className="text-xs text-slate-500">Valuation:</span>
+                <span className="text-lg font-bold font-mono text-[#7C6EF0]">
+                  {formatCurrency(Number(siteFin?.materialSupplied?.totalCost || 0))}
+                </span>
+              </div>
+              <div className="flex justify-between items-baseline border-t border-slate-100 pt-1">
+                <span className="text-xs text-slate-500">Materials:</span>
+                <span className="text-xs font-bold text-slate-800">
+                  {siteFin?.materialSupplied?.totalCount || 0} distinct types
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Tabs */}
       <div className="flex gap-2 border-b border-violet-100/40 pb-2 overflow-x-auto scrollbar-hide">
-        {(['OVERVIEW', 'MILESTONES', 'PROGRESS', 'TASKS', 'DOCUMENTS'] as const).map((tab) => (
+        {(['OVERVIEW', 'PAYMENTS_MATERIALS', 'MILESTONES', 'PROGRESS', 'TASKS', 'DOCUMENTS'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === tab
                 ? 'bg-white text-[#7C6EF0] shadow-sm border border-violet-100/40'
                 : 'bg-transparent text-slate-500 hover:text-slate-800 hover:bg-white/50 border border-transparent'
             }`}
           >
             {tab === 'OVERVIEW' && <Briefcase className="w-4 h-4" />}
+            {tab === 'PAYMENTS_MATERIALS' && <Receipt className="w-4 h-4" />}
             {tab === 'MILESTONES' && <CheckCircle2 className="w-4 h-4" />}
             {tab === 'PROGRESS' && <TrendingUp className="w-4 h-4" />}
             {tab === 'TASKS' && <CheckCircle2 className="w-4 h-4" />}
             {tab === 'DOCUMENTS' && <FileText className="w-4 h-4" />}
             <span>
               {tab === 'OVERVIEW' && 'Project Overview'}
+              {tab === 'PAYMENTS_MATERIALS' && 'Payments & Materials'}
               {tab === 'MILESTONES' && `Milestones (${project.milestones?.length || 0})`}
               {tab === 'PROGRESS' && `Daily Site Logs (${project.siteProgress?.length || 0})`}
               {tab === 'TASKS' && `Site Tasks (${project.tasks?.length || project._count?.tasks || 0})`}
@@ -373,6 +469,232 @@ export default function ProjectDetailsPage() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'PAYMENTS_MATERIALS' && (
+        <div className="space-y-6">
+          {/* Section 1: Total Materials Supplied to Site */}
+          <div className="clay-card p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-violet-100/40 pb-4">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 font-heading flex items-center gap-2">
+                  <Package className="w-5 h-5 text-[#7C6EF0]" />
+                  Total Materials Supplied to Site
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Full log of all cement, steel, bricks, aggregate, and building supplies delivered to this site.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link
+                  to={`/materials/${project.id}`}
+                  className="clay-btn px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5"
+                >
+                  <Package className="w-4 h-4" />
+                  <span>Manage Site Stock / Consume</span>
+                </Link>
+                <Link
+                  to="/material-entries"
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-violet-50 text-[#7C6EF0] hover:bg-violet-100 border border-violet-200/50"
+                >
+                  + New Material Entry
+                </Link>
+              </div>
+            </div>
+
+            {(!project.siteFinancials?.materialSupplied?.materials || project.siteFinancials.materialSupplied.materials.length === 0) ? (
+              <div className="p-8 text-center text-slate-400 text-xs font-medium">
+                No materials logged for this site yet. Click "Manage Site Stock" to receive materials.
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-violet-100/40">
+                <table className="w-full text-left text-xs min-w-max">
+                  <thead className="bg-violet-50/50 text-slate-500 font-bold uppercase">
+                    <tr>
+                      <th className="p-3.5">Material Name</th>
+                      <th className="p-3.5 text-center">Unit</th>
+                      <th className="p-3.5 text-right">Total Supplied</th>
+                      <th className="p-3.5 text-right">Current Stock</th>
+                      <th className="p-3.5 text-right">Rate</th>
+                      <th className="p-3.5 text-right">Supplied Valuation</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-violet-100/30 font-medium">
+                    {project.siteFinancials.materialSupplied.materials.map((m: any) => (
+                      <tr key={m.materialId} className="hover:bg-violet-50/30">
+                        <td className="p-3.5 font-bold text-slate-800">{m.name}</td>
+                        <td className="p-3.5 text-center font-mono">
+                          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold">{m.unit}</span>
+                        </td>
+                        <td className="p-3.5 text-right font-mono font-bold text-slate-800">{m.quantitySupplied}</td>
+                        <td className="p-3.5 text-right font-mono font-bold text-emerald-600">{m.currentStock}</td>
+                        <td className="p-3.5 text-right font-mono text-slate-500">{formatCurrency(Number(m.rate))}</td>
+                        <td className="p-3.5 text-right font-mono font-extrabold text-[#7C6EF0]">
+                          {formatCurrency(Number(m.totalCost))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-violet-50/70 border-t border-violet-100/50 font-bold">
+                    <tr>
+                      <td colSpan={5} className="p-3.5 text-slate-700 uppercase">Total Material Supplied Valuation:</td>
+                      <td className="p-3.5 text-right font-mono text-base font-extrabold text-[#7C6EF0]">
+                        {formatCurrency(Number(project.siteFinancials.materialSupplied.totalCost || 0))}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Section 2: Payments Breakdown Grid (Client, Vendor, Labour) */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Client Inflows */}
+            <div className="clay-card p-5 space-y-4 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between border-b border-violet-100/30 pb-2">
+                  <h4 className="font-bold text-sm text-slate-800 font-heading flex items-center gap-1.5">
+                    <IndianRupee className="w-4 h-4 text-emerald-600" />
+                    Client Payments
+                  </h4>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">Inflow</span>
+                </div>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between text-slate-500">
+                    <span>Contract Value:</span>
+                    <span className="font-mono font-bold text-slate-800">{formatCurrency(Number(project.contractValue || 0))}</span>
+                  </div>
+                  <div className="flex justify-between text-emerald-600">
+                    <span>Payment Done:</span>
+                    <span className="font-mono font-bold">{formatCurrency(Number(project.siteFinancials?.clientPayments?.done || 0))}</span>
+                  </div>
+                  <div className="flex justify-between text-amber-600 border-t border-slate-100 pt-1">
+                    <span>Pending from Client:</span>
+                    <span className="font-mono font-bold">{formatCurrency(Number(project.siteFinancials?.clientPayments?.pending || 0))}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-violet-100/30">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recent Receipts</span>
+                {(!project.siteFinancials?.clientPayments?.recent || project.siteFinancials.clientPayments.recent.length === 0) ? (
+                  <div className="text-center text-xs text-slate-400 py-3">No client receipts recorded yet.</div>
+                ) : (
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                    {project.siteFinancials.clientPayments.recent.slice(0, 5).map((inc: any) => (
+                      <div key={inc.id} className="flex justify-between items-center text-xs p-2 rounded-lg bg-emerald-50/40">
+                        <div>
+                          <span className="font-medium text-slate-700 block">{formatDate(inc.paymentDate)}</span>
+                          <span className="text-[10px] text-slate-400">{inc.paymentMethod}</span>
+                        </div>
+                        <span className="font-mono font-bold text-emerald-600">{formatCurrency(Number(inc.amount))}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Vendor Outflows */}
+            <div className="clay-card p-5 space-y-4 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between border-b border-violet-100/30 pb-2">
+                  <h4 className="font-bold text-sm text-slate-800 font-heading flex items-center gap-1.5">
+                    <Truck className="w-4 h-4 text-amber-600" />
+                    Vendor / Material Payments
+                  </h4>
+                  <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">Outflow</span>
+                </div>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between text-slate-500">
+                    <span>Total Procurement Value:</span>
+                    <span className="font-mono font-bold text-slate-800">
+                      {formatCurrency(Number(project.siteFinancials?.vendorPayments?.totalObligation || 0))}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-emerald-600">
+                    <span>Payment Done:</span>
+                    <span className="font-mono font-bold">
+                      {formatCurrency(Number(project.siteFinancials?.vendorPayments?.done || 0))}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-amber-600 border-t border-slate-100 pt-1">
+                    <span>Pending to Vendors:</span>
+                    <span className="font-mono font-bold">
+                      {formatCurrency(Number(project.siteFinancials?.vendorPayments?.pending || 0))}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-violet-100/30">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recent Vendor Outflows</span>
+                {(!project.siteFinancials?.vendorPayments?.recent || project.siteFinancials.vendorPayments.recent.length === 0) ? (
+                  <div className="text-center text-xs text-slate-400 py-3">No vendor outflows recorded yet.</div>
+                ) : (
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                    {project.siteFinancials.vendorPayments.recent.slice(0, 5).map((exp: any) => (
+                      <div key={exp.id} className="flex justify-between items-center text-xs p-2 rounded-lg bg-amber-50/40">
+                        <div>
+                          <span className="font-medium text-slate-700 block truncate max-w-[140px]">{exp.vendor?.name || exp.description}</span>
+                          <span className="text-[10px] text-slate-400">{formatDate(exp.paymentDate)}</span>
+                        </div>
+                        <span className="font-mono font-bold text-amber-600">{formatCurrency(Number(exp.totalAmount || exp.amount))}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Labour Outflows */}
+            <div className="clay-card p-5 space-y-4 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between border-b border-violet-100/30 pb-2">
+                  <h4 className="font-bold text-sm text-slate-800 font-heading flex items-center gap-1.5">
+                    <HardHat className="w-4 h-4 text-[#4EA8DE]" />
+                    Labour Payments
+                  </h4>
+                  <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">Muster</span>
+                </div>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between text-slate-500">
+                    <span>Total Labour Paid:</span>
+                    <span className="font-mono font-bold text-[#4EA8DE]">
+                      {formatCurrency(Number(project.siteFinancials?.labourPayments?.done || 0))}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-slate-500 border-t border-slate-100 pt-1">
+                    <span>Disbursements Count:</span>
+                    <span className="font-bold text-slate-800 font-mono">
+                      {project.siteFinancials?.labourPayments?.recent?.length || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-violet-100/30">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recent Labour Payouts</span>
+                {(!project.siteFinancials?.labourPayments?.recent || project.siteFinancials.labourPayments.recent.length === 0) ? (
+                  <div className="text-center text-xs text-slate-400 py-3">No labour payouts recorded yet.</div>
+                ) : (
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                    {project.siteFinancials.labourPayments.recent.slice(0, 5).map((exp: any) => (
+                      <div key={exp.id} className="flex justify-between items-center text-xs p-2 rounded-lg bg-blue-50/40">
+                        <div>
+                          <span className="font-medium text-slate-700 block truncate max-w-[140px]">{exp.description || 'Labour Muster Payout'}</span>
+                          <span className="text-[10px] text-slate-400">{formatDate(exp.paymentDate)}</span>
+                        </div>
+                        <span className="font-mono font-bold text-[#4EA8DE]">{formatCurrency(Number(exp.totalAmount || exp.amount))}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -67,6 +67,16 @@ export default function ExpensesPage() {
 
   const [filterCategory, setFilterCategory] = useState('ALL');
   const [filterVendor, setFilterVendor] = useState('ALL');
+  const [selectedMaterialOrderId, setSelectedMaterialOrderId] = useState('');
+
+  const { data: materialOrders = [] } = useQuery({
+    queryKey: ['material-orders'],
+    queryFn: async () => {
+      const { data } = await api.get('/material-orders?limit=500');
+      return data.data?.data || [];
+    },
+    enabled: isAddOpen,
+  });
 
   const filteredExpenses = expenses.filter((exp: any) => {
     const matchesSearch = searchTerm === '' || 
@@ -372,6 +382,43 @@ export default function ExpensesPage() {
                 }
                 placeholder="Select Expense Type/Category..."
               />
+
+              {newExpense.type === 'MATERIAL' && (
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700 block">
+                    Link to Material Entry / PO (Optional)
+                  </label>
+                  <select
+                    value={selectedMaterialOrderId}
+                    onChange={(e) => {
+                      const mId = e.target.value;
+                      setSelectedMaterialOrderId(mId);
+                      if (mId) {
+                        const mo = materialOrders.find((m: any) => m.id === mId);
+                        if (mo) {
+                          setNewExpense((prev) => ({
+                            ...prev,
+                            projectId: mo.projectId || prev.projectId,
+                            vendorId: mo.vendorId || prev.vendorId,
+                            amount: String(mo.pendingAmount > 0 ? mo.pendingAmount : mo.totalAmount),
+                            description: `Payment for Material Entry: ${mo.orderNumber}`,
+                          }));
+                        }
+                      }
+                    }}
+                    className="clay-input w-full text-sm bg-violet-50/50"
+                  >
+                    <option value="">-- Direct Material Expense (No Link) --</option>
+                    {materialOrders
+                      .filter((mo: any) => !newExpense.projectId || mo.projectId === newExpense.projectId)
+                      .map((mo: any) => (
+                        <option key={mo.id} value={mo.id}>
+                          {mo.orderNumber} - {mo.vendor?.name} (Total: ₹{Number(mo.totalAmount).toLocaleString('en-IN')}, Pending: ₹{Number(mo.pendingAmount || 0).toLocaleString('en-IN')})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
 
               <CategorySelect
                 module="payment_method"

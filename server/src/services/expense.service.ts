@@ -160,6 +160,41 @@ export const create = async (
       lines
     }, tx);
 
+    // If this expense is paying towards a Material Order, update the order status
+    const orderMatch = (cleanedData.description || '').match(/MO-\d+/i) || (cleanedData.remarks || '').match(/MO-\d+/i);
+    if (orderMatch && cleanedData.paymentMethod !== 'ACCRUED') {
+      const orderNum = orderMatch[0].toUpperCase();
+      const matchedOrder = await tx.materialOrder.findFirst({
+        where: { orderNumber: orderNum }
+      });
+      if (matchedOrder) {
+        const allPayments = await tx.expense.findMany({
+          where: {
+            deletedAt: null,
+            paymentMethod: { not: 'ACCRUED' },
+            type: 'MATERIAL',
+            OR: [
+              { description: { contains: orderNum, mode: 'insensitive' } },
+              { remarks: { contains: orderNum, mode: 'insensitive' } },
+            ]
+          },
+          select: { totalAmount: true, amount: true }
+        });
+        const totalPaid = allPayments.reduce((s, e) => s + Number(e.totalAmount || e.amount || 0), 0);
+        if (totalPaid >= Number(matchedOrder.totalAmount)) {
+          await tx.materialOrder.update({
+            where: { id: matchedOrder.id },
+            data: { status: 'DELIVERED' }
+          });
+        } else if (totalPaid > 0) {
+          await tx.materialOrder.update({
+            where: { id: matchedOrder.id },
+            data: { status: 'PARTIAL' }
+          });
+        }
+      }
+    }
+
     return created;
   });
 

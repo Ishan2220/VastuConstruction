@@ -85,6 +85,9 @@ export default function PayrollPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payrolls'] });
       toast.success('Payroll approved');
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to approve payroll');
     }
   });
 
@@ -93,6 +96,20 @@ export default function PayrollPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payrolls'] });
       toast.success('Payroll frozen (locked)');
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to freeze payroll');
+    }
+  });
+
+  const reopenMutation = useMutation({
+    mutationFn: async (id: string) => await api.post(`/payroll/${id}/reopen`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payrolls'] });
+      toast.success('Payroll reopened (unlocked)');
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to reopen payroll');
     }
   });
 
@@ -254,19 +271,35 @@ export default function PayrollPage() {
                       <td className="px-3 py-3 text-right space-x-1">
                         {p.status === 'CALCULATED' && (
                            <>
-                             <button onClick={() => approveMutation.mutate(p.id)} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold">Approve</button>
-                             <button onClick={() => { setSelectedPayrollId(p.id); setIsAdjustmentOpen(true); }} className="px-3 py-1 bg-amber-50 text-amber-600 rounded-lg text-xs font-bold">Adjust</button>
+                             <button onClick={() => approveMutation.mutate(p.id)} disabled={approveMutation.isPending || freezeMutation.isPending} className="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-xs font-bold transition-colors disabled:opacity-50">
+                               {approveMutation.isPending ? '...' : 'Approve'}
+                             </button>
+                             <button onClick={() => { setSelectedPayrollId(p.id); setIsAdjustmentOpen(true); }} className="px-3 py-1 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg text-xs font-bold transition-colors">
+                               Adjust
+                             </button>
+                             <button onClick={() => freezeMutation.mutate(p.id)} disabled={freezeMutation.isPending || approveMutation.isPending} className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors disabled:opacity-50" title="Lock and freeze payroll">
+                               {freezeMutation.isPending ? 'Freezing...' : 'Freeze'}
+                             </button>
                            </>
                         )}
                         {p.status === 'APPROVED' && (
                            <>
-                             <button onClick={() => { setSelectedPayrollId(p.id); setIsPayOpen(true); }} className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold">Pay</button>
-                             <button onClick={() => freezeMutation.mutate(p.id)} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">Freeze</button>
+                             <button onClick={() => { setSelectedPayrollId(p.id); setIsPayOpen(true); }} className="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg text-xs font-bold transition-colors">
+                               Pay
+                             </button>
+                             <button onClick={() => freezeMutation.mutate(p.id)} disabled={freezeMutation.isPending} className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold transition-colors disabled:opacity-50">
+                               {freezeMutation.isPending ? 'Freezing...' : 'Freeze'}
+                             </button>
                            </>
                         )}
-                        <button onClick={() => { setSelectedPayroll(p); setIsAuditLogOpen(true); }} className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold">Audit</button>
+                        {p.status === 'LOCKED' && (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+                           <button onClick={() => reopenMutation.mutate(p.id)} disabled={reopenMutation.isPending} className="px-3 py-1 bg-violet-50 hover:bg-violet-100 text-violet-700 rounded-lg text-xs font-bold transition-colors disabled:opacity-50">
+                             {reopenMutation.isPending ? 'Reopening...' : 'Unfreeze'}
+                           </button>
+                        )}
+                        <button onClick={() => { setSelectedPayroll(p); setIsAuditLogOpen(true); }} className="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs font-bold transition-colors">Audit</button>
                         {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && p.status !== 'PAID' && (
-                          <button onClick={() => handleDelete(p.id)} className="px-3 py-1 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors">Delete</button>
+                          <button onClick={() => handleDelete(p.id)} disabled={deleteMutation.isPending} className="px-3 py-1 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors disabled:opacity-50">Delete</button>
                         )}
                       </td>
                     </tr>
